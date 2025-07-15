@@ -22,7 +22,7 @@ impl Inst {
         s+= &*self.len.to_string();
         s+=" name:";
         s+=&*self.name;
-        if(self.constraints.is_some()) {
+        if self.constraints.is_some() {
             s+=" constraints:";
             s+= &*self.constraints.clone().unwrap().iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
         }
@@ -31,7 +31,7 @@ impl Inst {
     fn calculate_bin_mask(&self)->u32{
         let mut bin_mask: u32 = 0;
         for i in self.opcode.chars(){
-            if(i=='0'||i=='1'){
+            if i=='0'||i=='1' {
                 bin_mask<<=1;
                 bin_mask+=1;
                 continue
@@ -43,7 +43,7 @@ impl Inst {
     fn calculate_bin_opcode(&self)->u32{
         let mut opcode: u32 = 0;
         for i in self.opcode.chars(){
-            if(i=='1'){
+            if i=='1' {
                 opcode<<=1;
                 opcode+=1;
                 continue
@@ -61,7 +61,7 @@ impl Inst {
         s+=" ,name:\"";
         s+=&*self.name;
         s+="\" ,constraints: ";
-        if(self.constraints.is_some()) {
+        if self.constraints.is_some() {
             s+="Some(&[";
             for c in self.constraints.as_ref().unwrap() {
                 s+="'";
@@ -88,14 +88,14 @@ fn main(){
     let dest_path = Path::new(&out_dir).join("opcode.rs");
     let mut r:Vec<Inst> = vec![];
     for line in fs::read_to_string("src/opcode.def").unwrap().lines(){
-        if(line.starts_with("//")){
+        if line.starts_with("//") {
             continue;
         }
-        if(line.trim().len()==0){
+        if line.trim().len()==0 {
             continue;
         }
         let v:Vec<&str> = line.split(";").collect();
-        if(v.len()<4){
+        if v.len()<4 {
             println!("cargo::warning={}", line);
 
         }
@@ -104,7 +104,7 @@ fn main(){
             .iter()
             .flat_map(|s| s.chars().next())
             .collect();
-        if(c.len()>0){
+        if c.len()>0 {
             r.push(
             Inst{
                     opcode:v[0].to_string(),
