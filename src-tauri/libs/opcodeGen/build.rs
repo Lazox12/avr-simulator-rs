@@ -4,17 +4,22 @@ use std::env;
 use std::fs;
 use std::path::Path;
 
+pub struct ConstraintMap{
+    map:u32,
+    constraint:char
+}
+
 struct Inst {
     opcode: String,
     len:i8,
     name:String,
-    constraints:Option<Vec<char>>,
+    constraints:Option<Vec<ConstraintMap>>,
 }
 
 
 impl Inst {
     #[allow(dead_code)]
-    fn print(&self)->String {
+    /*fn print(&self)->String {
         let mut s:String = String::from("");
         s+="opcode:";
         s+=&*self.opcode;
@@ -27,7 +32,7 @@ impl Inst {
             s+= &*self.constraints.clone().unwrap().iter().map(|x| x.to_string()).collect::<Vec<String>>().join(",");
         }
         s
-    }
+    }*/
     fn calculate_bin_mask(&self)->u32{
         let mut bin_mask: u32 = 0;
         for i in self.opcode.chars(){
@@ -64,9 +69,12 @@ impl Inst {
         if self.constraints.is_some() {
             s+="Some(&[";
             for c in self.constraints.as_ref().unwrap() {
-                s+="'";
-                s+=c.to_string().as_str();
-                s+="',";
+                //s+="'";
+                s+="ConstraintMap{map:";
+                s+=c.map.to_string().as_str();
+                s+=",constraint:'";
+                s+=c.constraint.to_string().as_str();
+                s+="'},";
             }
             s+="])";
             
@@ -99,10 +107,26 @@ fn main(){
             println!("cargo::warning={}", line);
 
         }
-        let c:Vec<char> = v[3].split(",")
-            .collect::<Vec<_>>()
-            .iter()
-            .flat_map(|s| s.chars().next())
+        let c:Vec<ConstraintMap> = v[3].split(",")
+            .filter(|s| s.len() > 0)
+            .map(|s| {
+                let mut map = 0;
+                let ch = s.chars().next().unwrap();
+                
+                
+                for i in v[0].to_string().chars(){
+                    map = map<<1;
+                    if i == ch {
+                        map+=1;
+                    }
+                    
+                }
+                if v[1].parse::<i8>().unwrap()==2 {
+                    map = map<<16;
+                    map +=65535;
+                }
+                ConstraintMap { constraint: ch, map: map } 
+            })
             .collect();
         if c.len()>0 {
             r.push(
@@ -124,15 +148,16 @@ fn main(){
         
     };
 
-    let mut s:String = String::from("pub struct RawInst{
+    /*let mut s:String = String::from("pub struct RawInst{
     pub opcode:&'static str,
     pub len:i8,
     pub name:&'static str,
     pub constraints:Option<&'static [char]>,
-    pub bin_mask:u32,
-    pub bin_opcode:u32
+    pub bin_mask:u16,
+    pub bin_opcode:u16
 }
-");
+");*/
+    let mut s:String = String::from("");
     s+="pub const Opcode_list:[RawInst;";
     s+= &*r.len().to_string();
     s+="]=[\n";

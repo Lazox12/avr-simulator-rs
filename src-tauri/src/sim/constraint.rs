@@ -1,4 +1,8 @@
 #[allow(non_camel_case_types)]
+use strum::{EnumIter,EnumString};
+use crate::error::Result;
+use crate::error::Error;
+#[derive(Debug, EnumIter, EnumString, Clone, Copy)]
 pub enum Constraint {
     r, //- any register
     d, //- `ldi' register (r16-r31)
@@ -8,19 +12,17 @@ pub enum Constraint {
     e, //- pointer registers (X,Y,Z)
     b, //- base pointer register and displacement ([YZ]+disp)
     z, //- Z pointer register (for [e]lpm Rd,Z[+])
-    M, //- immediate value from 0 to 255
-    n, //- immediate value from 0 to 255 ( n = ~M ). Relocation impossible
-    N, //- immediate value from 0 to 255. Relocation impossible
-    s, //- immediate value from 0 to 7
-    P, //- Port address value from 0 to 63. (in, out)
-    p, //- Port address value from 0 to 31. (cbi, sbi, sbic, sbis)
-    K, //- immediate value from 0 to 63 (used in `adiw', `sbiw')
-    i, //- immediate value
-    j, //- 7 bit immediate value from 0x40 to 0xBF (for 16-bit 'lds'/'sts')
+    M, //- immediate Value from 0 to 255
+    n, //- immediate Value from 0 to 255 ( n = ~M ). Relocation impossible
+    s, //- immediate Value from 0 to 7
+    P, //- Port address Value from 0 to 63. (in, out)
+    p, //- Port address Value from 0 to 31. (cbi, sbi, sbic, sbis)
+    K, //- immediate Value from 0 to 63 (used in `adiw', `sbiw')
+    i, //- immediate Value
+    j, //- 7 bit immediate Value from 0x40 to 0xBF (for 16-bit 'lds'/'sts')
     l, //- signed pc relative offset from -64 to 63
     L, //- signed pc relative offset from -2048 to 2047
     h, //- absolute code address (call, jmp)
-    S, //- immediate value from 0 to 7 (S = s << 4)
-    E, //- immediate value from 0 to 15, shifted left by 4 (des)
-    Q, //- use this opcode entry if no parameters, else use next opcode entry
+    S, //- immediate Value from 0 to 7 (S = s << 4)
+    E, //- immediate Value from 0 to 15, shifted left by 4 (des)
 }

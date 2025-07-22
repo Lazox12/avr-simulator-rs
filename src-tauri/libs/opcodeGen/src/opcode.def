@@ -6,19 +6,19 @@
 //   e   pointer registers (X,Y,Z)
 //   b   base pointer register and displacement ([YZ]+disp)
 //   z   Z pointer register (for [e]lpm Rd,Z[+])
-//   M   immediate value from 0 to 255
-//   n   immediate value from 0 to 255 ( n = ~M ). Relocation impossible
-//   s   immediate value from 0 to 7
-//   P   Port address value from 0 to 63. (in, out)
-//   p   Port address value from 0 to 31. (cbi, sbi, sbic, sbis)
-//   K   immediate value from 0 to 63 (used in ‘adiw’, ‘sbiw’)
-//   i   immediate value
-//   j   7 bit immediate value from 0x40 to 0xBF (for 16-bit 'lds'/'sts')
+//   M   immediate Value from 0 to 255
+//   n   immediate Value from 0 to 255 ( n = ~M ). Relocation impossible
+//   s   immediate Value from 0 to 7
+//   P   Port address Value from 0 to 63. (in, out)
+//   p   Port address Value from 0 to 31. (cbi, sbi, sbic, sbis)
+//   K   immediate Value from 0 to 63 (used in ‘adiw’, ‘sbiw’)
+//   i   immediate Value
+//   j   7 bit immediate Value from 0x40 to 0xBF (for 16-bit 'lds'/'sts')
 //   l   signed pc relative offset from -64 to 63
 //   L   signed pc relative offset from -2048 to 2047
 //   h   absolute code address (call, jmp)
-//   S   immediate value from 0 to 7 (S = s << 4)
-//   E - immediate value from 0 to 15, shifted left by 4 (des)
+//   S   immediate Value from 0 to 7 (S = s << 4)
+//   E - immediate Value from 0 to 15, shifted left by 4 (des)
 //   ?   use this opcode entry if no parameters, else use next opcode entry
 
 // opcode     len name constraints
@@ -46,9 +46,9 @@
 1001010100001001;1;icall;
 1001010000001001;1;ijmp;
 
-1001010111001000;1;lpm;?;
+1001010111001000;1;lpm;
 1001000ddddd010+;1;lpm;r,z;
-1001010111011000;1;elpm;?;
+1001010111011000;1;elpm;
 1001000ddddd011+;1;elpm;r,z;
 
 0000000000000000;1;nop;
@@ -57,7 +57,7 @@
 1001010110001000;1;sleep;
 1001010110011000;1;break;
 1001010110101000;1;wdr;
-1001010111101000;1;spm;?;
+1001010111101000;1;spm;
 10010101111+1000;1;spm;z;
 
 000111rdddddrrrr;1;adc;r,r;
@@ -132,8 +132,8 @@
 1101LLLLLLLLLLLL;1;rcall;L;
 1100LLLLLLLLLLLL;1;rjmp;L;
 
-1001010hhhhh111hhhhhhhhhhhhhhhhh;2;call;h;
-1001010hhhhh110hhhhhhhhhhhhhhhhh;2;jmp;h;
+1001010hhhhh111h;2;call;h;
+1001010hhhhh110h;2;jmp;h;
 
 1001010rrrrr0101;1;asr;r;
 1001010rrrrr0000;1;com;r;
@@ -159,9 +159,9 @@
 000000111ddd1rrr;1;fmulsu;a,a;
 
 10101kkkddddkkkk;1;sts;j,d;
-1001001ddddd0000iiiiiiiiiiiiiiii;2;sts;i,r;
+1001001ddddd0000;2;sts;i,r;
 10100kkkddddkkkk;1;lds;d,j;
-1001000ddddd0000iiiiiiiiiiiiiiii;2;lds;r,i;
+1001000ddddd0000;2;lds;r,i;
 
 10o0oo0dddddbooo;1;ldd;r,b;
 100!000dddddee-+;1;ld;r,e;

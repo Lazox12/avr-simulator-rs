@@ -48,6 +48,20 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
                 .blocking_pick_file();
             if file_path.is_some() {
                 let result = parse_hex(file_path.unwrap().to_string());
+                if result.is_err() {
+                    print!("{}", format!("{}", result.err().unwrap()));
+                    return;
+                
+                }
+                for i in result.ok().unwrap() {
+                    if(i.operands.is_some()){
+                        print!("{:#x}:{1} ,",i.address,i.opcode.name);
+                        i.operands.unwrap().iter().for_each(|x| {
+                            print!("{},",x);
+                        });
+                        println!();
+                    }
+                }
             }
         }
     });

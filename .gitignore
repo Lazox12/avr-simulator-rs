@@ -42,3 +42,4 @@ testem.log
 Thumbs.db
 target
 Cargo.lock
+out.txt

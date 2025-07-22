@@ -3,8 +3,9 @@ use crate::error::Result;
 use std::fs;
 use std::io;
 use std::io::ErrorKind;
+use crate::error::Error::{InvalidRecordType, NotImplemented};
 
-const MAX_BYTE_COUNT: usize =10;//todo replace by something meaningful
+const MAX_BYTE_COUNT: usize =16;//todo replace by something meaningful
 struct RawData {
     data:[u8;MAX_BYTE_COUNT],
     len:u32,
@@ -24,9 +25,9 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instuction>>{
         if !calculate_checksum(&line)? {
             return Err(io::Error::new(ErrorKind::InvalidData, format!("file checksum does not match on line: {}", i)).into());
         }
-        let byte_count = u32::from_str_radix(&line[1..2], 16)?;
-        let address = u32::from_str_radix(&line[3..6], 16)?;
-        let rec_type = u32::from_str_radix(&line[7..8], 16)?;
+        let byte_count = u32::from_str_radix(&line[1..3], 16)?;
+        let address = u32::from_str_radix(&line[3..7], 16)?;
+        let rec_type = u32::from_str_radix(&line[7..9], 16)?;
         let mut data:[u8;MAX_BYTE_COUNT] = [0;MAX_BYTE_COUNT];
         for n in 0..byte_count as usize {
             data[n] = u8::from_str_radix(&line[(9 + 2*n).. 11 + (2 * n)], 16)?;
@@ -35,22 +36,32 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instuction>>{
             0=>{parsed_data.push(RawData{data, len: byte_count, address: address+address_mul});}
             1=>{break}
             2=>{address_mul = (u128::from_str_radix(&line[9..9 + (2 * byte_count) as usize], 16)? * 16) as u32 }
-            3=>{return Err(io::Error::new(ErrorKind::InvalidData,"record type 3 not implemented").into());}
-            4=>{return Err(io::Error::new(ErrorKind::InvalidData,"record type 4 not implemented").into());}
-            5=>{return Err(io::Error::new(ErrorKind::InvalidData,"record type 5 not implemented").into());}
-            _=>{return Err(io::Error::new(ErrorKind::InvalidData,"record type should be between 0 and 2").into());}
+            3=>{return Err(NotImplemented {err: "record type 3 not implemented".parse().unwrap() });}
+            4=>{return Err(NotImplemented {err: "record type 4 not implemented".parse().unwrap() });}
+            5=>{return Err(NotImplemented {err: "record type 5 not implemented".parse().unwrap() });}
+            _=>{return Err(InvalidRecordType {err:rec_type.to_string()});}
         }
 
     }
-    let mut inst :Vec<Instuction> = vec![];
+    let mut inst_list:Vec<Instuction> = vec![];
      for data in parsed_data.iter(){
-         let i:usize =0;
-         while i<(data.len-2) as usize {
-             let i:Instuction = Instuction::decode_from_opcode(((data.data[i]as u32) <<8) +(data.data[i+1]) as u32, data.address+i as u32)?;
-             inst.push(i);
+         let mut i:usize =0;
+         while i<=(data.len-2) as usize {
+             let mut inst:Instuction = Instuction::decode_from_opcode(((data.data[i+1] as u16)<<8)+data.data[i] as u16, data.address+i as u32)?;
+             i+=2;
+             if inst.opcode.len ==2{
+                 inst.raw_opcode= inst.raw_opcode<<16;
+                 inst.raw_opcode+=((data.data[i+1] as u32)<<8)+data.data[i] as u32;
+                 i+=2;
+             }
+             inst_list.push(inst);
          }
      }
-    Ok(inst)
+    
+    for inst in &mut inst_list{
+        inst.mach_registers()?;
+    }
+    Ok(inst_list)
 }
 fn calculate_checksum(line:&str) -> Result<bool>{
     let checksum = u32::from_str_radix(&line[line.len()-2 ..],16)?;
