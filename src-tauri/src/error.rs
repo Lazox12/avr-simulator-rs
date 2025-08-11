@@ -1,5 +1,8 @@
+
 use std::num::ParseIntError;
 use strum::ParseError;
+use std::backtrace::Backtrace;
+use crate::sim::constraint::Constraint::a;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -15,8 +18,8 @@ pub enum Error {
     #[error("invalid read: trying to read {current} from {expected}")]
     InvalidReadError{current:String, expected:String},
     
-    #[error("constraint Requirements not met: {err}")]
-    InvalidConstraintValue{err:String},
+    #[error("constraint Requirements not met: {err} at address {:#x}",address)]
+    InvalidConstraintValue{err:String, address:u32},
 
     #[error("function not implemented: {err}")]
     NotImplemented{err:String},

@@ -1,6 +1,8 @@
+use std::fmt;
 use std::fmt::{write, Display, Formatter, LowerHex};
 use crate::error::{Error, Result};
 use super::constraint::Constraint;
+#[derive(Debug)]
 pub struct Operand{
     pub(crate) name: String,
     pub(crate) constraint:Constraint,
@@ -14,12 +16,20 @@ impl Display for Operand{
 }
 
 #[repr(C)]
+
 pub union OperandValueType {
     u16:u16,
     u32:u32,
     i16:i16,
     i32:i32,
 }
+
+impl fmt::Debug for OperandValueType{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f,"{:?}",self)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OperandValueKind{
     u16,
@@ -27,6 +37,7 @@ pub enum OperandValueKind{
     i16,
     i32
 }
+#[derive(Debug)]
 pub struct OperandValue{
     kind:OperandValueKind,
     value:OperandValueType,

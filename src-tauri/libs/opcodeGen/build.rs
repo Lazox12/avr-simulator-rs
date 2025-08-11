@@ -1,7 +1,7 @@
-
-
+use std::collections::HashSet;
 use std::env;
 use std::fs;
+use std::iter::Map;
 use std::path::Path;
 
 pub struct ConstraintMap{
@@ -107,7 +107,10 @@ fn main(){
             println!("cargo::warning={}", line);
 
         }
-        let c:Vec<ConstraintMap> = v[3].split(",")
+        let mut chars: HashSet<char> = v[0].chars().collect();
+        chars.remove(&'0');
+        chars.remove(&'1');
+        let mut c:Vec<ConstraintMap> = v[3].split(",")
             .filter(|s| s.len() > 0)
             .map(|s| {
                 let mut map = 0;
@@ -125,9 +128,27 @@ fn main(){
                     map = map<<16;
                     map +=65535;
                 }
-                ConstraintMap { constraint: ch, map: map } 
+                if(map>0){
+                    chars.remove(&ch);
+                }
+                ConstraintMap { constraint: ch, map } 
             })
             .collect();
+        chars.iter().for_each(|ch|{
+           let pos = c.iter().position(|x| x.map==0);
+            if pos.is_none() {
+                return;
+            }
+            let map : &mut ConstraintMap = c.get_mut(pos.unwrap()).unwrap();
+            let mut count:u32 =0;
+            for i in v[0].to_string().chars(){
+                count = count<<1;
+                if i == *ch {
+                    count+=1;
+                }
+            }
+            map.map = count;
+        });
         if c.len()>0 {
             r.push(
             Inst{

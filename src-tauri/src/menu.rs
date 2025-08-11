@@ -49,17 +49,19 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
             if file_path.is_some() {
                 let result = parse_hex(file_path.unwrap().to_string());
                 if result.is_err() {
-                    print!("{}", format!("{}", result.err().unwrap()));
+                    eprint!("{}", format!("{}", result.err().unwrap()));
                     return;
                 
                 }
                 for i in result.ok().unwrap() {
                     if(i.operands.is_some()){
-                        print!("{:#x}:{1} ,",i.address,i.opcode.name);
+                        print!("{:#x}:{1}, opcode: {2:#x} ,",i.address,i.opcode.name,i.raw_opcode);
                         i.operands.unwrap().iter().for_each(|x| {
                             print!("{},",x);
                         });
                         println!();
+                    }else{
+                        println!("{:#x}:{1}, opcode: {2:#x} ,",i.address,i.opcode.name,i.raw_opcode);
                     }
                 }
             }

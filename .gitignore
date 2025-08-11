@@ -43,3 +43,9 @@ Thumbs.db
 target
 Cargo.lock
 out.txt
+
+#tests
+/tests/arduino/main.elf
+/tests/arduino/main.hex
+/tests/arduino/main.s
+/tests/arduino/out.txt

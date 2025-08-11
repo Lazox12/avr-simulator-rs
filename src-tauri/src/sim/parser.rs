@@ -1,4 +1,4 @@
-use super::instruction::Instuction;
+use super::instruction::Instruction;
 use crate::error::Result;
 use std::fs;
 use std::io;
@@ -12,7 +12,7 @@ struct RawData {
     address:u32
 }
 
-pub(crate) fn parse_hex(path:String) ->Result<Vec<Instuction>>{
+pub(crate) fn parse_hex(path:String) ->Result<Vec<Instruction>>{
     let contents = fs::read_to_string(path);
     let mut i =0;
     let mut address_mul:u32 = 0;
@@ -43,11 +43,11 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instuction>>{
         }
 
     }
-    let mut inst_list:Vec<Instuction> = vec![];
+    let mut inst_list:Vec<Instruction> = vec![];
      for data in parsed_data.iter(){
          let mut i:usize =0;
          while i<=(data.len-2) as usize {
-             let mut inst:Instuction = Instuction::decode_from_opcode(((data.data[i+1] as u16)<<8)+data.data[i] as u16, data.address+i as u32)?;
+             let mut inst:Instruction = Instruction::decode_from_opcode(((data.data[i+1] as u16)<<8)+data.data[i] as u16, data.address+i as u32)?;
              i+=2;
              if inst.opcode.len ==2{
                  inst.raw_opcode= inst.raw_opcode<<16;

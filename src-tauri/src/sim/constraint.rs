@@ -26,3 +26,12 @@ pub enum Constraint {
     S, //- immediate Value from 0 to 7 (S = s << 4)
     E, //- immediate Value from 0 to 15, shifted left by 4 (des)
 }
+
+impl PartialEq for Constraint {
+    fn eq(&self, other: &Self) -> bool {
+        if self ==other {
+            return true;
+        }
+        false
+    }
+}

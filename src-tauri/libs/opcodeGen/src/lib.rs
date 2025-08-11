@@ -1,8 +1,9 @@
-
+#[derive(Debug,Clone)]
 pub struct ConstraintMap{
     pub map:u32,
     pub constraint:char
 }
+#[derive(Debug)]
 pub struct RawInst{
     pub opcode:&'static str,
     pub len:i8,
