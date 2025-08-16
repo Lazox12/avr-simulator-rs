@@ -19,6 +19,7 @@
 //   h   absolute code address (call, jmp)
 //   S   immediate Value from 0 to 7 (S = s << 4)
 //   E - immediate Value from 0 to 15, shifted left by 4 (des)
+//   o - Displacement value from 0 to 63 (std,ldd)
 //   ?   use this opcode entry if no parameters, else use next opcode entry
 
 // opcode     len name constraints
@@ -47,9 +48,9 @@
 1001010000001001;1;ijmp;
 
 1001010111001000;1;lpm;
-1001000ddddd010+;1;lpm;r,z;
+1001000rrrrr010+;1;lpm;r,z;
 1001010111011000;1;elpm;
-1001000ddddd011+;1;elpm;r,z;
+1001000rrrrr011+;1;elpm;r,z;
 
 0000000000000000;1;nop;
 1001010100001000;1;ret;
@@ -146,10 +147,10 @@
 1001010rrrrr0111;1;ror;r;
 1001010rrrrr0010;1;swap;r;
 
-1001001rrrrr0100;1;xch;z,r;
-1001001rrrrr0101;1;las;z,r;
-1001001rrrrr0110;1;lac;z,r;
-1001001rrrrr0111;1;lat;z,r;
+1001001rrrrr0100;1;xch;r;
+1001001rrrrr0101;1;las;r;
+1001001rrrrr0110;1;lac;r;
+1001001rrrrr0111;1;lat;r;
 
 00000001ddddrrrr;1;movw;v,v;
 00000010ddddrrrr;1;muls;d,d;
@@ -159,13 +160,13 @@
 000000111ddd1rrr;1;fmulsu;a,a;
 
 10101kkkddddkkkk;1;sts;j,d;
-1001001ddddd0000;2;sts;i,r;
+1001001rrrrr0000;2;sts;i,r;
 10100kkkddddkkkk;1;lds;d,j;
-1001000ddddd0000;2;lds;r,i;
+1001000rrrrr0000;2;lds;r,i;
 
-10o0oo0dddddbooo;1;ldd;r,b;
-100!000dddddee-+;1;ld;r,e;
-10o0oo1rrrrrbooo;1;std;b,r;
+10o0oo0rrrrrbooo;1;ldd;r,b,o;
+100!000rrrrree-+;1;ld;r,e;
+10o0oo1rrrrrbooo;1;std;b,o,r;
 100!001rrrrree-+;1;st;e,r;
 
 1001010100011001;1;eicall;

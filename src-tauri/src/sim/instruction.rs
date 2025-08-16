@@ -103,7 +103,7 @@ impl Instruction{
                 value *=2;
                 value +24
             }
-            Constraint::h =>{ // maybee l,L too
+            Constraint::h =>{
                 value*2
             }
             _ =>{
@@ -244,7 +244,8 @@ impl Instruction{
                 }
             }
             Constraint::l =>{
-                let t = unsigned_to_signed(value,7);
+                let mut t = unsigned_to_signed(value,7);
+                t*=2; // 16 bit wide addresses
                 if(t>=-64 && t<64){
                     Ok(OperandValue::new(t))
                 }
@@ -253,7 +254,8 @@ impl Instruction{
                 }
             }
             Constraint::L =>{
-                let t = unsigned_to_signed(value,12);
+                let mut t = unsigned_to_signed(value,12);
+                t*=2; // 16 bit wide addresses
                 if(t>=-2048 && t<2048){
                     Ok(OperandValue::new(t))
                 }
@@ -283,6 +285,14 @@ impl Instruction{
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("E: immediate Value must be between from 0 to 15, got {}", value),address:0})
+                }
+            }
+            Constraint::o=>{
+                if(value<64){
+                    Ok(OperandValue::new(value))
+                }
+                else{
+                    Err(Error::InvalidConstraintValue {err:format!("o: Displacement value must be between 0 and 63, got {}", value),address:0})
                 }
             }
         }

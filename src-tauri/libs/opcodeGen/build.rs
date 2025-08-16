@@ -1,14 +1,15 @@
 use std::collections::HashSet;
 use std::env;
+use std::fmt::Display;
 use std::fs;
 use std::iter::Map;
 use std::path::Path;
 
+#[derive(Debug)]
 pub struct ConstraintMap{
     map:u32,
     constraint:char
 }
-
 struct Inst {
     opcode: String,
     len:i8,
@@ -110,13 +111,17 @@ fn main(){
         let mut chars: HashSet<char> = v[0].chars().collect();
         chars.remove(&'0');
         chars.remove(&'1');
-        let mut c:Vec<ConstraintMap> = v[3].split(",")
-            .filter(|s| s.len() > 0)
-            .map(|s| {
-                let mut map = 0;
+        let constraints: Vec<&str> = v[3].split(",").filter(|s| s.len() > 0).collect();
+        let mut c:Vec<ConstraintMap> = vec![];
+        println!("{:?}", constraints);
+         constraints.iter().for_each(|s| {
                 let ch = s.chars().next().unwrap();
-                
-                
+                if(chars.iter().find(|x| **x == ch).is_none()){
+                    c.push(ConstraintMap{ map: 0,constraint:ch});
+                    return;
+                }
+
+                let mut map = 0;
                 for i in v[0].to_string().chars(){
                     map = map<<1;
                     if i == ch {
@@ -124,31 +129,47 @@ fn main(){
                     }
                     
                 }
-                if v[1].parse::<i8>().unwrap()==2 {
-                    map = map<<16;
-                    map +=65535;
-                }
+             if(v[1].parse::<i8>().unwrap()==2){
+                 map = map<<16;
+                 
+             }
                 if(map>0){
                     chars.remove(&ch);
                 }
-                ConstraintMap { constraint: ch, map } 
-            })
-            .collect();
-        chars.iter().for_each(|ch|{
-           let pos = c.iter().position(|x| x.map==0);
-            if pos.is_none() {
+                c.push(ConstraintMap { constraint: ch, map });
+            });
+        print!("{}", v[2]);
+        println!("{:?}", c);
+        c.iter_mut().for_each(|map: &mut ConstraintMap| {
+            if(map.map >0){
                 return;
             }
-            let map : &mut ConstraintMap = c.get_mut(pos.unwrap()).unwrap();
+            let op_ch = chars.iter().next();
+            if(op_ch.is_none()){
+                if(v[1].parse::<i8>().unwrap()==2 && map.constraint =='i'){
+                    map.map =65535;
+                }
+                return;
+            }
+            let ch = op_ch.unwrap().clone();
+            chars.remove(&ch);
             let mut count:u32 =0;
             for i in v[0].to_string().chars(){
                 count = count<<1;
-                if i == *ch {
+                if i == ch {
                     count+=1;
                 }
             }
+            if(v[1].parse::<i8>().unwrap()==2){
+                count = count<<16;
+
+            }
             map.map = count;
         });
+        if(c.len()==1 && (c[0].map&65535) == 0){
+            c[0].map +=65535;
+        }
+        
         if c.len()>0 {
             r.push(
             Inst{
