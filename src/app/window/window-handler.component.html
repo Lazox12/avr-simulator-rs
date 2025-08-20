@@ -7,6 +7,6 @@
 <!-- Window Area -->
 <div>
     @if (activeWindow!=null){
-        <ng-container *ngComponentOutlet="activeWindow"></ng-container>
+        <ng-container *ngComponentOutlet="activeWindow| async"></ng-container>
     }
 </div>

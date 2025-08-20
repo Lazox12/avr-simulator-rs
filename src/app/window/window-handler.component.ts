@@ -4,7 +4,7 @@ export interface AppWindow{
     name:string;
     key:string;
     path:string;
-    component:Type<any>|null;
+    component: Promise<any> | undefined;
 }
 
 @Component({
@@ -15,11 +15,11 @@ export interface AppWindow{
 export class WindowHandlerComponent implements OnInit{
 
     windowList:AppWindow[]= [
-        {name:"home",key:"home",path:"./window-home/window-home.component",component:null},
-        {name:"disassembly",key:"asm",path:"./window-asm/window-asm.component",component:null},
-        {name:"cpp",key:"cpp",path:"./window-cpp/window-cpp.component",component:null},
+        {name:"home",key:"home",path:"./window-home/window-home.component",component:undefined},
+        {name:"disassembly",key:"asm",path:"./window-asm/window-asm.component",component:undefined},
+        {name:"cpp",key:"cpp",path:"./window-cpp/window-cpp.component",component:undefined},
     ];
-    activeWindow:Type<any>|null = null;
+    activeWindow:Promise<any> | undefined = undefined;
 
     ngOnInit(): void {
         this.loadComponents().then(()=>{})
@@ -27,7 +27,9 @@ export class WindowHandlerComponent implements OnInit{
 
     async loadComponents(){
         for (const item of this.windowList) {
-            let c = await import(item.path);
+            console.log(item);
+            item.component = import(/* webpackPrefetch: 1 */item.path).then(i => i.InformationComponent);
+            console.log(item);
         }
     }
 
