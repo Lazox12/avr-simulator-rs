@@ -1,18 +1,12 @@
 <nav style="background: #555; color: white; padding: 10px; display: flex; gap: 15px;">
-    @for(win of windows;track win.key){
-        <button (click)="setActive(win.key)"
-                [class.active]="activeWindowKey === win.key">
-            {{ win.title }}
-        </button>
+    @for (i of windowList; track i.key){
+        <button (click)="setActive(i.key)">{{i.name}}</button>
     }
-
 </nav>
 
 <!-- Window Area -->
-<main style="padding: 20px; border: 1px solid #ccc; margin-top: 10px;">
-    @for (win of windows;track win.key){
-        @if ( win.key == activeWindowKey){
-            <ng-container *ngComponentOutlet=win.component></ng-container>
-        }
+<div>
+    @if (activeWindow!=null){
+        <ng-container *ngComponentOutlet="activeWindow"></ng-container>
     }
-</main>
+</div>

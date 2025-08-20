@@ -1,20 +1,43 @@
-import {Component, Input,Type} from "@angular/core";
-import {WindowAsmComponent} from "./window-asm/window-asm.component";
-import {WindowCppComponent} from "./window-cpp/window-cpp.component";
-import {getComponentList,windows} from "./window-list.template";
+import {Component,ComponentRef, Input,Type,OnInit} from "@angular/core";
 
+export interface AppWindow{
+    name:string;
+    key:string;
+    path:string;
+    component:Type<any>|null;
+}
 
 @Component({
     selector: 'app-window-handler',
-    standalone: true,
+    standalone: false,
     templateUrl: "window-handler.component.html",
-    imports: getComponentList()
 })
-export class WindowHandlerComponent {
+export class WindowHandlerComponent implements OnInit{
 
-    activeWindowKey: string | null = 'home';
+    windowList:AppWindow[]= [
+        {name:"home",key:"home",path:"./window-home/window-home.component",component:null},
+        {name:"disassembly",key:"asm",path:"./window-asm/window-asm.component",component:null},
+        {name:"cpp",key:"cpp",path:"./window-cpp/window-cpp.component",component:null},
+    ];
+    activeWindow:Type<any>|null = null;
 
-    setActive(key: string) {
-        this.activeWindowKey = key;
+    ngOnInit(): void {
+        this.loadComponents().then(()=>{})
     }
+
+    async loadComponents(){
+        for (const item of this.windowList) {
+            item.component = await import(item.path);
+        }
+    }
+
+    async setActive(key: string) {
+        let win = this.windowList.find((item:AppWindow)=>item.key === key);
+        if (!win){
+            console.warn(`Window handler does not exist!`);
+            return;
+        }
+        this.activeWindow = win.component;
+    }
+
 }
