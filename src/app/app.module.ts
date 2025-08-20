@@ -7,7 +7,7 @@ import {WindowCppComponent} from "./window/window-cpp/window-cpp.component";
 import {WindowAsmComponent} from "./window/window-asm/window-asm.component";
 
 @NgModule({
-    declarations: [AppComponent,WindowHandlerComponent],
+    declarations: [AppComponent,WindowHandlerComponent,WindowHomeComponent,WindowAsmComponent,WindowCppComponent],
     imports: [
         BrowserModule,
     ],

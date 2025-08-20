@@ -27,7 +27,7 @@ export class WindowHandlerComponent implements OnInit{
 
     async loadComponents(){
         for (const item of this.windowList) {
-            item.component = await import(item.path);
+            let c = await import(item.path);
         }
     }
 
