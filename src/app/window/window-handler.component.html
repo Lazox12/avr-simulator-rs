@@ -1,12 +1,24 @@
 <nav style="background: #555; color: white; padding: 10px; display: flex; gap: 15px;">
-    @for (i of windowList; track i.key){
-        <button (click)="setActive(i.key)">{{i.name}}</button>
-    }
+    <button (click)="setActive('home')">home</button>
+    <button (click)="setActive('asm')">assembly</button>
+    <button (click)="setActive('cpp')">cpp</button>
 </nav>
 
 <!-- Window Area -->
 <div>
-    @if (activeWindow!=null){
-        <ng-container *ngComponentOutlet="activeWindow| async"></ng-container>
+    @switch (activeWindow){
+        @default {
+            <app-window-home></app-window-home>
+        }
+        @case ('home'){
+            <!--<ng-container *ngComponentOutlet="WindowHomeComponent"></ng-container>-->
+            <app-window-home></app-window-home>
+        }
+        @case ('asm'){
+            <app-window-asm></app-window-asm>
+        }
+        @case ('cpp'){
+            <app-window-cpp></app-window-cpp>
+        }
     }
 </div>
