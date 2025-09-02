@@ -20,156 +20,156 @@
 //   S   immediate Value from 0 to 7 (S = s << 4)
 //   E - immediate Value from 0 to 15, shifted left by 4 (des)
 //   o - Displacement value from 0 to 63 (std,ldd)
-//   ?   use this opcode entry if no parameters, else use next opcode entry
+//?   use this opcode entry if no parameters, else use next opcode entry
 
 // opcode     len name constraints
-1001010010001000;1;clc;
-1001010011011000;1;clh;
-1001010011111000;1;cli;
-1001010010101000;1;cln;
-1001010011001000;1;cls;
-1001010011101000;1;clt;
-1001010010111000;1;clv;
-1001010010011000;1;clz;
+1001010010001000;1;clc;C ← 0;Clear Carry
+1001010011011000;1;clh;H ← 0;Clear Half Carry Flag in SREG
+1001010011111000;1;cli;I ← 0;Global Interrupt Disable
+1001010010101000;1;cln;N ← 0;Clear Negative Flag
+1001010011001000;1;cls;S ← 0;Clear Sign Bit
+1001010011101000;1;clt;T ← 0;Clear T in SREG
+1001010010111000;1;clv;V ← 0;Clear Two’s ComplementOverflow
+1001010010011000;1;clz;Z ← 0;Clear Zero Flag
 
-1001010000001000;1;sec;
-1001010001011000;1;seh;
-1001010001111000;1;sei;
-1001010000101000;1;sen;
-1001010001001000;1;ses;
-1001010001101000;1;set;
-1001010000111000;1;sev;
-1001010000011000;1;sez;
+1001010000001000;1;sec;C ← 1;Set Carry
+1001010001011000;1;seh;H ← 1;Set Half Carry Flag in SREG
+1001010001111000;1;sei;I ← 1;Global Interrupt Enable
+1001010000101000;1;sen;N ← 1;Set Negative Flag
+1001010001001000;1;ses;S ← 1;Set Sign Bit
+1001010001101000;1;set;T ← 1;Set T in SREG
+1001010000111000;1;sev;V ← 1;Set Two’s Complement Overflow
+1001010000011000;1;sez;Z ← 1;Set Zero Flag
 
-100101001SSS1000;1;bclr;S;
-100101000SSS1000;1;bset;S;
+100101001SSS1000;1;bclr;S;SREG(s) ← 0;Flag Clear
+100101000SSS1000;1;bset;S;SREG(s) ← 1;Flag Set
 
-1001010100001001;1;icall;
-1001010000001001;1;ijmp;
+1001010100001001;1;icall;PC(15:0) ← Z,PC(21:16)←0;Indirect Call to (Z)
+1001010000001001;1;ijmp;PC(15:0) ← Z,PC(21:16)←0;Indirect Jump to (Z)
 
-1001010111001000;1;lpm;
-1001000rrrrr010+;1;lpm;r,z;
-1001010111011000;1;elpm;
-1001000rrrrr011+;1;elpm;r,z;
+1001010111001000;1;lpm;R0 ← PS(Z);Load Program Memory
+1001000rrrrr010+;1;lpm;r,z;Rd ← PS(Z),Z ← Z + 1;Load Program Memory
+1001010111011000;1;elpm;R0 ← PS(RAMPZ:Z);Extended Load Program Memory
+1001000rrrrr011+;1;elpm;r,z;Rd ← PS(RAMPZ:Z),Z ← Z + 1;Extended Load Program Memory
 
-0000000000000000;1;nop;
-1001010100001000;1;ret;
-1001010100011000;1;reti;
-1001010110001000;1;sleep;
-1001010110011000;1;break;
-1001010110101000;1;wdr;
-1001010111101000;1;spm;
-10010101111+1000;1;spm;z;
+0000000000000000;1;nop;NOP;No Operation
+1001010100001000;1;ret;PC ← STACK;Subroutine Return
+1001010100011000;1;reti;PC ← STACK;Interrupt Return
+1001010110001000;1;sleep;SLEEP;Sleep
+1001010110011000;1;break;BREAK;Break
+1001010110101000;1;wdr;WDR;Watchdog Reset
+1001010111101000;1;spm;PS(RAMPZ:Z) ← R1:R0;Store Program Memory
+10010101111+1000;1;spm;z;PS(RAMPZ:Z) ← R1:R0,Z ← Z + 2;Store Program Memory and PostIncrement by 2
 
-000111rdddddrrrr;1;adc;r,r;
-000011rdddddrrrr;1;add;r,r;
-001000rdddddrrrr;1;and;r,r;
-000101rdddddrrrr;1;cp;r,r;
-000001rdddddrrrr;1;cpc;r,r;
-000100rdddddrrrr;1;cpse;r,r;
-001001rdddddrrrr;1;eor;r,r;
-001011rdddddrrrr;1;mov;r,r;
-100111rdddddrrrr;1;mul;r,r;
-001010rdddddrrrr;1;or;r,r;
-000010rdddddrrrr;1;sbc;r,r;
-000110rdddddrrrr;1;sub;r,r;
+000111rdddddrrrr;1;adc;r,r;Rd ← Rd + Rr + C;Add with Carry
+000011rdddddrrrr;1;add;r,r;Rd ← Rd + Rr;Add without Carry
+001000rdddddrrrr;1;and;r,r;Rd ← Rd ∧ Rr;Logical AND
+000101rdddddrrrr;1;cp;r,r;Rd - Rr;Compare
+000001rdddddrrrr;1;cpc;r,r;Rd - Rr - C;Compare with Carry
+000100rdddddrrrr;1;cpse;r,r;if (Rd == Rr) PC ← PC + 2 or 3;Compare, skip if Equal
+001001rdddddrrrr;1;eor;r,r;Rd ← Rd ⊕ Rr;Exclusive OR
+001011rdddddrrrr;1;mov;r,r;Rd ← Rr;Copy Register
+100111rdddddrrrr;1;mul;r,r;R1:R0 ← Rd x Rr (UU);Multiply Unsigned
+001010rdddddrrrr;1;or;r,r;Rd ← Rd v Rr;Logical OR
+000010rdddddrrrr;1;sbc;r,r;Rd ← Rd - Rr - C;Subtract with Carry
+000110rdddddrrrr;1;sub;r,r;Rd ← Rd - Rr;Subtract without Carry
 
-001001rdddddrrrr;1;clr;r;
-000011rdddddrrrr;1;lsl;r;
-000111rdddddrrrr;1;rol;r;
-001000rdddddrrrr;1;tst;r;
+001001rdddddrrrr;1;clr;r;Rd ← Rd ⊕ Rd;Clear Register
+000011rdddddrrrr;1;lsl;r;C ← Rd(7),Rd(n+1) ← Rd(n) n=6..0,Rd(0) ← 0;Logical Shift Left
+000111rdddddrrrr;1;rol;r;temp ← C,C ← Rd(7),Rd(n+1) ← Rd(n) n=6...0,Rd(0) ← temp;Rotate Left Through Carry
+001000rdddddrrrr;1;tst;r;Rd ← Rd ∧ Rd;Test for Zero or Minus
 
-0111KKKKddddKKKK;1;andi;d,M;
-0111KKKKddddKKKK;1;cbr;d,n;
+0111KKKKddddKKKK;1;andi;d,M;Rd ← Rd ∧ K;Logical AND with Immediate
+0111KKKKddddKKKK;1;cbr;d,n;Rd ← Rd ∧ (0xFFh - K);Clear Bit(s) in Register
 
-1110KKKKddddKKKK;1;ldi;d,M;
-11101111dddd1111;1;ser;d;
+1110KKKKddddKKKK;1;ldi;d,M;Rd ← K;Load Immediate
+11101111dddd1111;1;ser;d;Rd ← 0xFF;Set Register
 
-0110KKKKddddKKKK;1;ori;d,M;
-0110KKKKddddKKKK;1;sbr;d,M;
+0110KKKKddddKKKK;1;ori;d,M;Rd ← Rd v K;Logical OR with Immediate
+0110KKKKddddKKKK;1;sbr;d,M;Rd ← Rd v K;Set Bit(s) in Register
 
-0011KKKKddddKKKK;1;cpi;d,M;
-0100KKKKddddKKKK;1;sbci;d,M;
-0101KKKKddddKKKK;1;subi;d,M;
+0011KKKKddddKKKK;1;cpi;d,M;Rd - K;Compare with Immediate
+0100KKKKddddKKKK;1;sbci;d,M;Rd ← Rd - K - C;Subtract Immediate with Carry
+0101KKKKddddKKKK;1;subi;d,M;Rd ← Rd - K;Subtract Immediate
 
-1111110rrrrr0sss;1;sbrc;r,s;
-1111111rrrrr0sss;1;sbrs;r,s
-1111100ddddd0sss;1;bld;r,s;
-1111101ddddd0sss;1;bst;r,s;
+1111110rrrrr0sss;1;sbrc;r,s;if (Rr(b) == 0) PC ← PC + 2 or 3;Skip if Bit in Register Cleared
+1111111rrrrr0sss;1;sbrs;r,s;if (Rr(b) == 1) PC ← PC + 2 or 3;Skip if Bit in Register Set
+1111100ddddd0sss;1;bld;r,s;Rd(b) ← T;Bit load from T to Register
+1111101ddddd0sss;1;bst;r,s;T ← Rr(b);Bit Store from Register to T
 
-10110PPdddddPPPP;1;in;r,P;
-10111PPrrrrrPPPP;1;out;P,r;
+10110PPdddddPPPP;1;in;r,P;Rd ← IO(A);In From I/O Location
+10111PPrrrrrPPPP;1;out;P,r;IO(A) ← Rr;Out To I/O Location
 
-10010110KKddKKKK;1;adiw;w,K;
-10010111KKddKKKK;1;sbiw;w,K;
+10010110KKddKKKK;1;adiw;w,K;R[d + 1]:Rd ← R[d + 1]:Rd + K;Add Immediate to Word
+10010111KKddKKKK;1;sbiw;w,K;R[d + 1]:Rd ← R[d + 1]:Rd - K;Subtract Immediate from Word
 
-10011000pppppsss;1;cbi;p,s;
-10011010pppppsss;1;sbi;p,s;
-10011001pppppsss;1;sbic;p,s;
-10011011pppppsss;1;sbis;p,s;
+10011000pppppsss;1;cbi;p,s;IO(A, b) ← 0;Clear Bit in I/O Register
+10011010pppppsss;1;sbi;p,s;IO(A, b) ← 1;Set Bit in I/O Register
+10011001pppppsss;1;sbic;p,s;if (I/O(A,b) == 0) PC ← PC + 2 or 3;Skip if Bit in I/O Register Cleared
+10011011pppppsss;1;sbis;p,s;if (I/O(A,b) == 1) PC ← PC + 2 or 3;Skip if Bit in I/O Register Set
 
-111101lllllll000;1;brcc;l;
-111100lllllll000;1;brcs;l;
-111100lllllll001;1;breq;l;
-111101lllllll100;1;brge;l;
-111101lllllll101;1;brhc;l;
-111100lllllll101;1;brhs;l;
-111101lllllll111;1;brid;l;
-111100lllllll111;1;brie;l;
-111100lllllll000;1;brlo;l;
-111100lllllll100;1;brlt;l;
-111100lllllll010;1;brmi;l;
-111101lllllll001;1;brne;l;
-111101lllllll010;1;brpl;l;
-111101lllllll000;1;brsh;l;
-111101lllllll110;1;brtc;l;
-111100lllllll110;1;brts;l;
-111101lllllll011;1;brvc;l;
-111100lllllll011;1;brvs;l;
+111101lllllll000;1;brcc;l;if (C == 0) then PC ← PC + k + 1;Branch if Carry Cleared
+111100lllllll000;1;brcs;l;if (C == 1) then PC ← PC + k + 1;Branch if Carry Set
+111100lllllll001;1;breq;l;if (Z == 1) then PC ← PC + k + 1;Branch if Equal
+111101lllllll100;1;brge;l;if (S == 0) then PC ← PC + k + 1;Branch if Greater or Equal,Signed
+111101lllllll101;1;brhc;l;if (H == 0) then PC ← PC + k + 1;Branch if Half Carry Flag Cleared
+111100lllllll101;1;brhs;l;if (H == 1) then PC ← PC + k + 1;Branch if Half Carry Flag Set
+111101lllllll111;1;brid;l;if (I == 0) then PC ← PC + k + 1;Branch if Interrupt Disabled
+111100lllllll111;1;brie;l;if (I == 1) then PC ← PC + k + 1;Branch if Interrupt Enabled
+111100lllllll000;1;brlo;l;if (C == 1) then PC ← PC + k + 1;Branch if Lower
+111100lllllll100;1;brlt;l;if (S == 1) then PC ← PC + k + 1;Branch if Less Than, Signed
+111100lllllll010;1;brmi;l;if (N == 1) then PC ← PC + k + 1;Branch if Minus
+111101lllllll001;1;brne;l;if (Z == 0) then PC ← PC + k + 1;Branch if Not Equal
+111101lllllll010;1;brpl;l;if (N == 0) then PC ← PC + k + 1;Branch if Plus
+111101lllllll000;1;brsh;l;if (C == 0) then PC ← PC + k + 1;Branch if Same or Higher
+111101lllllll110;1;brtc;l;if (T == 0) then PC ← PC + k + 1;Branch if T Bit Cleared
+111100lllllll110;1;brts;l;if (T == 1) then PC ← PC + k + 1;Branch if T Bit Set
+111101lllllll011;1;brvc;l;if (V == 0) then PC ← PC + k + 1;Branch if Overflow Flag is Cleared
+111100lllllll011;1;brvs;l;if (V == 1) then PC ← PC + k + 1;Branch if Overflow Flag is Set
 
-111101lllllllsss;1;brbc;s,l;
-111100lllllllsss;1;brbs;s,l;
+111101lllllllsss;1;brbc;s,l;if (SREG(s) == 0) PC ← PC + k + 1;Branch if Status Flag Cleared
+111100lllllllsss;1;brbs;s,l;if (SREG(s) == 1) PC ← PC + k + 1;Branch if Status Flag Set
 
-1101LLLLLLLLLLLL;1;rcall;L;
-1100LLLLLLLLLLLL;1;rjmp;L;
+1101LLLLLLLLLLLL;1;rcall;L;PC ← PC + k + 1;Relative Call Subroutine
+1100LLLLLLLLLLLL;1;rjmp;L;PC ← PC + k + 1;Relative Jump
 
-1001010hhhhh111h;2;call;h;
-1001010hhhhh110h;2;jmp;h;
+1001010hhhhh111h;2;call;h;PC ← k;Call Subroutine
+1001010hhhhh110h;2;jmp;h;PC ← k;Jump
 
-1001010rrrrr0101;1;asr;r;
-1001010rrrrr0000;1;com;r;
-1001010rrrrr1010;1;dec;r;
-1001010rrrrr0011;1;inc;r;
-1001010rrrrr0110;1;lsr;r;
-1001010rrrrr0001;1;neg;r;
-1001000rrrrr1111;1;pop;r;
-1001001rrrrr1111;1;push;r;
-1001010rrrrr0111;1;ror;r;
-1001010rrrrr0010;1;swap;r;
+1001010rrrrr0101;1;asr;r;C ← Rd(0),Rd(n) ← Rd(n+1) n=0...6,Rd(7);Arithmetic Shift Right
+1001010rrrrr0000;1;com;r;Rd ← 0xFF - Rd;One’s Complement
+1001010rrrrr1010;1;dec;r;Rd ← Rd - 1;Decrement
+1001010rrrrr0011;1;inc;r;Rd ← Rd + 1;Increment
+1001010rrrrr0110;1;lsr;r;C ← Rd(0),Rd(n) ← Rd(n+1) n=6..0,Rd(7) ← 0;Logical Shift Right
+1001010rrrrr0001;1;neg;r;Rd ← 0x00 - Rd;Two’s Complement
+1001000rrrrr1111;1;pop;r;Rd ← STACK;Pop Register from Stack
+1001001rrrrr1111;1;push;r;STACK ← Rr;Push Register on Stack
+1001010rrrrr0111;1;ror;r;temp ← C,C ← Rd(0),Rd(n) ← Rd(n+1) n=0...6,Rd(7) ← temp;Rotate Right Through Carry
+1001010rrrrr0010;1;swap;r;Rd(3..0) ↔ Rd(7..4);Swap Nibbles
 
-1001001rrrrr0100;1;xch;r;
-1001001rrrrr0101;1;las;r;
-1001001rrrrr0110;1;lac;r;
-1001001rrrrr0111;1;lat;r;
+1001001rrrrr0100;1;xch;r;DS(Z) ↔ Rd;Exchange
+1001001rrrrr0101;1;las;r;DS(Z) ← Rd v DS(Z),Rd ← DS(Z);Load and Set
+1001001rrrrr0110;1;lac;r;DS(Z) ← (0xFF – Rd) ∧ DS(Z),Rd ← DS(Z);Load and Clear
+1001001rrrrr0111;1;lat;r;DS(Z) ← Rd ⊕ DS(Z),Rd ← DS(Z);Load and Toggle
 
-00000001ddddrrrr;1;movw;v,v;
-00000010ddddrrrr;1;muls;d,d;
-000000110ddd0rrr;1;mulsu;a,a;
-000000110ddd1rrr;1;fmul;a,a;
-000000111ddd0rrr;1;fmuls;a,a;
-000000111ddd1rrr;1;fmulsu;a,a;
+00000001ddddrrrr;1;movw;v,v;R[d + 1]:Rd ← R[r + 1]:Rr;Copy Register Pair
+00000010ddddrrrr;1;muls;d,d;R1:R0 ← Rd x Rr (SS);Multiply Signed
+000000110ddd0rrr;1;mulsu;a,a;R1:R0 ← Rd x Rr (SU);Multiply Signed with Unsigned
+000000110ddd1rrr;1;fmul;a,a;R1:R0 ← Rd x Rr<<1 (UU); Fractional Multiply Unsigned
+000000111ddd0rrr;1;fmuls;a,a;R1:R0 ← Rd x Rr<<1 (SS);Fractional Multiply Signed
+000000111ddd1rrr;1;fmulsu;a,a;R1:R0 ← Rd x Rr<<1 (SU);Fractional Multiply Signed with Unsigned
 
-10101kkkddddkkkk;1;sts;j,d;
-1001001rrrrr0000;2;sts;i,r;
-10100kkkddddkkkk;1;lds;d,j;
-1001000rrrrr0000;2;lds;r,i;
+10101kkkddddkkkk;1;sts;j,d;DS(k) ← Rd;Store Direct to Data Space
+1001001rrrrr0000;2;sts;i,r;?;Store Direct to Data Space
+10100kkkddddkkkk;1;lds;d,j;Rd ← DS(k);Load Direct from Data Space
+1001000rrrrr0000;2;lds;r,i;?;Load Direct from Data Space
 
-10o0oo0rrrrrbooo;1;ldd;r,b,o;
-100!000rrrrree-+;1;ld;r,e;
-10o0oo1rrrrrbooo;1;std;b,o,r;
-100!001rrrrree-+;1;st;e,r;
+10o0oo0rrrrrbooo;1;ldd;r,b,o;Rd ← DS(Y|Z + q);Load Indirect with Displacement
+100!000rrrrree-+;1;ld;r,e;Rd ← DS(X|Y|Z);Load Indirect
+10o0oo1rrrrrbooo;1;std;b,o,r;DS(Y|Z + q) ← Rr;Store Indirect with Displacement
+100!001rrrrree-+;1;st;e,r;DS(X|Y|Z) ← Rr;Store Indirect
 
-1001010100011001;1;eicall;
-1001010000011001;1;eijmp;
+1001010100011001;1;eicall;PC(15:0) ← Z,PC(21:16)←EIND;Extended Indirect Call to (Z)
+1001010000011001;1;eijmp;PC(15:0) ← Z,PC(21:16)←EIND;Extended Indirect Jump to (Z)
 
-10010100EEEE1011;1;des;E;
+10010100EEEE1011;1;des;E;R15:R0 ← Encrypt(R15:R0, K) | R15:R0 ← Decrypt(R15:R0, K);Data Encryption

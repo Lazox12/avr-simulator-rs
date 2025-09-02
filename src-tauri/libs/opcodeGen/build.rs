@@ -15,6 +15,8 @@ struct Inst {
     len:i8,
     name:String,
     constraints:Option<Vec<ConstraintMap>>,
+    action:String,
+    description:String,
 }
 
 
@@ -87,7 +89,11 @@ impl Inst {
         s+=self.calculate_bin_mask().to_string().as_str();
         s+=" ,bin_opcode:";
         s+=self.calculate_bin_opcode().to_string().as_str();
-        s+="},\n";
+        s+=" ,action:\"";
+        s+=&*self.action;
+        s+="\" ,description:\"";
+        s+=&*self.description;
+        s+="\"},\n";
         s
     }
 }
@@ -111,7 +117,10 @@ fn main(){
         let mut chars: HashSet<char> = v[0].chars().collect();
         chars.remove(&'0');
         chars.remove(&'1');
-        let constraints: Vec<&str> = v[3].split(",").filter(|s| s.len() > 0).collect();
+        let mut constraints:Vec<&str> = vec![];
+        if(v.len()==6){
+            constraints = v[3].split(",").filter(|s| s.len() > 0).collect();
+        }
         let mut c:Vec<ConstraintMap> = vec![];
         println!("{:?}", constraints);
          constraints.iter().for_each(|s| {
@@ -173,10 +182,12 @@ fn main(){
         if c.len()>0 {
             r.push(
             Inst{
-                    opcode:v[0].to_string(),
-                    len:v[1].parse::<i8>().unwrap(),
-                    name:v[2].to_string(),
-                    constraints:Some(c),
+                opcode:v[0].to_string(),
+                len:v[1].parse::<i8>().unwrap(),
+                name:v[2].to_string(),
+                constraints:Some(c),
+                action: v[v.len()-2].to_string(),
+                description: v[v.len()-1].to_string(),
             });
         }else{
             r.push(
@@ -185,6 +196,8 @@ fn main(){
                     len:v[1].parse::<i8>().unwrap(),
                     name:v[2].to_string(),
                     constraints:None,
+                    action: v[v.len()-2].to_string(),
+                    description: v[v.len()-1].to_string(),
                 });
         }
         

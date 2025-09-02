@@ -1,16 +1,17 @@
 use std::cmp::PartialEq;
 use std::ptr::write;
 use std::str::FromStr;
+use serde::Serialize;
 use super::operand::{Operand, OperandValue};
 use opcodeGen::{RawInst, Opcode_list, ConstraintMap};
 use crate::error::{Error, Result};
 use crate::sim::constraint::Constraint;
+use crate::sim::gen_comment::gen_comment;
 
-
-
-#[derive(Debug)]
+#[derive(Debug,Serialize,Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Instruction{
-    pub(crate) name: String,
+    pub(crate) comment: String,
     pub(crate) opcode: RawInst,
     pub(crate) operands: Option<Vec<Operand>>,
     pub(crate) address: u32,
@@ -19,14 +20,14 @@ pub struct Instruction{
 
 
 impl Instruction{
-    pub fn new(name: String, opcode: RawInst, operands: Vec<Operand>) -> Instruction{
-        Instruction{name,opcode,operands: Some(operands),address:0,raw_opcode:0}
+    pub fn new(comment: String, opcode: RawInst, operands: Vec<Operand>) -> Instruction{
+        Instruction{comment,opcode,operands: Some(operands),address:0,raw_opcode:0}
     }
     pub fn decode_from_opcode(opcode: u16,address:u32) -> Result<Instruction>{
         let inst: RawInst = Self::mach_instruction(opcode)?;
         
         Ok(Instruction{
-            name: "".to_string(),
+            comment: "".to_string(),
             opcode: inst,
             operands: None,
             address,
@@ -298,6 +299,9 @@ impl Instruction{
         }
     }
 
+    pub(crate) fn gen_comment(&mut self){
+        super::gen_comment::gen_comment(self);
+    }
 }
 fn unsigned_to_signed(val:u32,len:u32)->i32{ //signed len in bits
     if(val>>len-1)==0{ // positive number

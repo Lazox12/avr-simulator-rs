@@ -1,8 +1,10 @@
+use serde::Serialize;
 #[allow(non_camel_case_types)]
 use strum::{EnumIter,EnumString};
 use crate::error::Result;
 use crate::error::Error;
-#[derive(Debug, EnumIter, EnumString, Clone, Copy)]
+#[derive(Debug, EnumIter, EnumString, Clone, Copy,Serialize)]
+
 pub enum Constraint {
     r, //- any register
     d, //- `ldi' register (r16-r31)

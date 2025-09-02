@@ -1,8 +1,11 @@
 use std::fmt;
 use std::fmt::{write, Display, Formatter, LowerHex};
+use serde::{Serialize, Serializer};
+use strum::Display;
 use crate::error::{Error, Result};
 use super::constraint::Constraint;
-#[derive(Debug)]
+#[derive(Debug,Serialize,Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Operand{
     pub(crate) name: String,
     pub(crate) constraint:Constraint,
@@ -62,124 +65,99 @@ fn constraint_z_into_pointer(val:&OperandValue) ->Result<String>{
     }
 }
 
-
-#[repr(C)]
-
-pub union OperandValueType {
-    u16:u16,
-    u32:u32,
-    i16:i16,
-    i32:i32,
+#[derive(Debug, Clone)]
+pub struct  OperandValue{
+    inner:IntValue,
 }
 
-impl fmt::Debug for OperandValueType{
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f,"{:?}",self)
+#[derive(Debug,Clone,Copy)]
+pub enum IntValue{
+    Unsigned(u32),
+    Signed(i32),
+}
+impl Serialize for OperandValue{
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer
+    {
+        match self.inner { 
+            IntValue::Unsigned(v) => serializer.serialize_u32(v),
+            IntValue::Signed(v) => serializer.serialize_i32 (v),
+        }
     }
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum OperandValueKind{
-    u16,
-    u32,
-    i16,
-    i32
-}
-#[derive(Debug)]
-pub struct OperandValue{
-    kind:OperandValueKind,
-    value:OperandValueType,
-}
-pub trait OperandType: Sized {
-    const KIND: OperandValueKind;
-    fn to_union(val: Self) -> OperandValueType;
-    unsafe fn read_from(value: &OperandValueType) -> Self;
-}
-
-impl OperandType for u16 {
-    const KIND: OperandValueKind = OperandValueKind::u16;
-    fn to_union(val: Self) -> OperandValueType {
-        OperandValueType { u16: val }
-    }
-    unsafe fn read_from(value: &OperandValueType) -> Self {
-        value.u16
+impl Display for OperandValue{
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self.inner {
+            IntValue::Unsigned(_) => {
+                write!(f,"{}",self.read::<u32>().map_err(|_| std::fmt::Error)?)
+            }
+            IntValue::Signed(_) => {
+                write!(f,"{}",self.read::<i32>().map_err(|_| std::fmt::Error)?)
+            }
+        }
     }
 }
-
-impl OperandType for u32 {
-    const KIND: OperandValueKind = OperandValueKind::u32;
-    fn to_union(val: Self) -> OperandValueType {
-        OperandValueType { u32: val }
-    }
-    unsafe fn read_from(value: &OperandValueType) -> Self {
-        value.u32
-    }
-}
-
-impl OperandType for i16 {
-    const KIND: OperandValueKind = OperandValueKind::i16;
-    fn to_union(val: Self) -> OperandValueType {
-        OperandValueType { i16: val }
-    }
-    unsafe fn read_from(value: &OperandValueType) -> Self {
-        value.i16
-    }
-}
-
-impl OperandType for i32 {
-    const KIND: OperandValueKind = OperandValueKind::i32;
-    fn to_union(val: Self) -> OperandValueType {
-        OperandValueType { i32: val }
-    }
-    unsafe fn read_from(value: &OperandValueType) -> Self {
-        value.i32
+impl LowerHex for OperandValue{
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self.inner {
+            IntValue::Unsigned(_) => {
+                write!(f,"{:#x}",self.read::<u32>().map_err(|_| std::fmt::Error)?)
+            }
+            IntValue::Signed(_) => {
+                write!(f,"{:#x}",self.read::<i32>().map_err(|_| std::fmt::Error)?)
+            }
+        }
     }
 }
 
 impl OperandValue {
-    pub fn new<T: OperandType>(val: T) -> Self {
-        OperandValue {
-            kind: T::KIND,
-            value: T::to_union(val),
-        }
+    pub fn new<T>(val: T) -> Self
+    where
+        T: Into<IntValue>,
+    {
+        OperandValue { inner: val.into() }
     }
-    pub fn read<T: OperandType>(&self) -> Result<T> {
-        if self.kind == T::KIND {
-            unsafe { Ok(T::read_from(&self.value)) }
-        } else {
-            Err(Error::InvalidReadError{expected:self.kind.try_into()?,current:T::KIND.try_into()?})
-        }
-    }
-}
-impl LowerHex for OperandValue {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self.kind {
-            OperandValueKind::u16 => {write!(f, "{:#x}", self.read::<u16>().map_err(|_| std::fmt::Error)?)},
-            OperandValueKind::u32 => {write!(f, "{:#x}", self.read::<u32>().map_err(|_| std::fmt::Error)?)},
-            OperandValueKind::i16 => {write!(f, "{:#x}", self.read::<i16>().map_err(|_| std::fmt::Error)?)},
-            OperandValueKind::i32 => {write!(f, "{:#x}", self.read::<i32>().map_err(|_| std::fmt::Error)?)},
-        }
-    }
-}
-impl Display for OperandValue {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self.kind {
-            OperandValueKind::u16 => {write!(f, "{}", self.read::<u16>().map_err(|_| std::fmt::Error)?)},
-            OperandValueKind::u32 => {write!(f, "{}", self.read::<u32>().map_err(|_| std::fmt::Error)?)},
-            OperandValueKind::i16 => {write!(f, "{}", self.read::<i16>().map_err(|_| std::fmt::Error)?)},
-            OperandValueKind::i32 => {write!(f, "{}", self.read::<i32>().map_err(|_| std::fmt::Error)?)},
-        }
-    }
-}
-impl TryInto<String> for OperandValueKind {
-    type Error = Error;
 
-    fn try_into(self) -> std::result::Result<String, Self::Error> {
-        match self {
-            OperandValueKind::u16 => {Ok(String::from("u16"))}
-            OperandValueKind::u32 => {Ok(String::from("u32"))}
-            OperandValueKind::i16 => {Ok(String::from("i16"))}
-            OperandValueKind::i32 => {Ok(String::from("i32"))}
+    pub fn read<T>(&self) -> Result<T>
+    where
+        IntValue: TryInto<T>,
+    {
+        match self.inner.clone().try_into() {
+            Ok(v) => Ok(v),
+            Err(_) => Err(Error::InvalidReadError { current: "".to_string(), expected: "".to_string() }),
+        }
+    }
+}
+
+impl From<u32> for IntValue {
+    fn from(v: u32) -> Self {
+        IntValue::Unsigned(v)
+    }
+}
+
+impl From<i32> for IntValue {
+    fn from(v: i32) -> Self {
+        IntValue::Signed(v)
+    }
+}
+
+impl TryFrom<IntValue> for u32 {
+    type Error = ();
+    fn try_from(v: IntValue) -> std::result::Result<u32, ()> {
+        match v {
+            IntValue::Unsigned(x) => Ok(x),
+            _ => Err(()),
+        }
+    }
+}
+
+impl TryFrom<IntValue> for i32 {
+    type Error = ();
+    fn try_from(v: IntValue) -> std::result::Result<i32, ()> {
+        match v {
+            IntValue::Signed(x) => Ok(x),
+            _ => Err(()),
         }
     }
 }

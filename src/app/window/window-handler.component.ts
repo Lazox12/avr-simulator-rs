@@ -15,6 +15,7 @@ export interface AppWindow{
     standalone: true,
     imports: [WindowAsmComponent,WindowHomeComponent,WindowCppComponent],
     templateUrl: "window-handler.component.html",
+    styleUrls: ["window-handler.component.css"]
 })
 export class WindowHandlerComponent {
     activeWindow:string|null = null;

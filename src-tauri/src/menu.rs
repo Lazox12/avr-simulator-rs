@@ -1,14 +1,10 @@
 use std::error::Error;
-use tauri::{
-    App,
-    menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder},
-
-};
+use tauri::{App, menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder}, Emitter};
 use crate::sim::parser::parse_hex;
 use tauri_plugin_dialog::DialogExt;
 
 pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
-    let open = MenuItemBuilder::new("Open...")
+    let open = MenuItemBuilder::new("Open")
         .id("open")
         .accelerator("CmdOrCtrlo")
         .build(app)?;
@@ -53,7 +49,10 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
                     return;
                 
                 }
-                for i in result.ok().unwrap() {
+                let result = result.unwrap();
+                
+                
+                for i in result.clone() { //print to console
                     if(i.operands.is_some()){
                         print!("{:#x}:{1}, opcode: {2:#x} ,",i.address,i.opcode.name,i.raw_opcode);
                         i.operands.unwrap().iter().for_each(|x| {
@@ -64,6 +63,12 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
                         println!("{:#x}:{1}, opcode: {2:#x} ,",i.address,i.opcode.name,i.raw_opcode);
                     }
                 }
+                println!("calling fe");
+                let res = app.emit("asm-update",result);
+                if res.is_err() {
+                    eprintln!("{}", format!("{}", res.err().unwrap()));
+                }
+                
             }
         }
     });

@@ -1,5 +1,37 @@
-<div>
-    <table>
-        
-    </table>
+
+<table>
+    <tr>
+        <th>address</th>
+        <th>instruction</th>
+        <th>Operand1</th>
+        <th>Operand2</th>
+        <th>Operand3</th>
+        <th>Comment</th>
+    </tr>
+    @for (inst of instructions;track inst.address){
+        <tr>
+        <td>{{"0x"+inst.address.toString(16)}}</td>
+        <td [id]="'asm-table-col-'+inst.address" (mouseenter)="mouseEnter(inst)" (mouseleave)="mouseLeave()">{{inst.opcode.name}}</td>
+        @if (inst.operands != null) {
+            <td>{{printOperand(inst.operands.at(0))}}</td>
+            <td>{{printOperand(inst.operands.at(1))}}</td>
+            <td>{{printOperand(inst.operands.at(2))}}</td>
+        } @else {
+            <td>0</td>
+            <td>0</td>
+            <td>0</td>
+        }
+        <td>{{inst.comment}}</td>
+        </tr>
+    }
+</table>
+<div id="asm-popup" class="popup">
+    @if (popupInst!==null){
+        <h4>description: </h4>
+        <p>{{popupInst!.opcode.description}}</p>
+        <br>
+        <h4>operation: </h4>
+        <p>{{popupInst!.opcode.action}}</p>
+    }
 </div>
+
