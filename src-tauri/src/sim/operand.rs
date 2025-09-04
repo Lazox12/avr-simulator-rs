@@ -15,6 +15,9 @@ pub struct Operand{
 impl Display for Operand{
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         //write!(f,"name:{},constraint:{:?},val:{:#x}",self.name,self.constraint,self.value);
+        if(self.name.len()>0){
+            write!(f,"{}",self.name)?;
+        }
         match self.constraint {
             Constraint::r =>{write!(f,"r{}",self.value)}
             Constraint::d =>{write!(f,"r{}",self.value)}

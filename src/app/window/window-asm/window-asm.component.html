@@ -17,11 +17,11 @@
             <td>{{printOperand(inst.operands.at(1))}}</td>
             <td>{{printOperand(inst.operands.at(2))}}</td>
         } @else {
-            <td>0</td>
-            <td>0</td>
-            <td>0</td>
+            <td></td>
+            <td></td>
+            <td></td>
         }
-        <td>{{inst.comment}}</td>
+        <td>{{printComment(inst)}}</td>
         </tr>
     }
 </table>
@@ -34,4 +34,7 @@
         <p>{{popupInst!.opcode.action}}</p>
     }
 </div>
+<div style="height: 80px">
 
+</div>
+<button class = "applyButton" (click)="applyChanges()" id="asm-apply-changes-button" disabled> apply changes</button>

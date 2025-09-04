@@ -56,6 +56,9 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
                     if(i.operands.is_some()){
                         print!("{:#x}:{1}, opcode: {2:#x} ,",i.address,i.opcode.name,i.raw_opcode);
                         i.operands.unwrap().iter().for_each(|x| {
+                            if(i.address==0x1bc){
+                                print!("test");
+                            }
                             print!("{},",x);
                         });
                         println!();

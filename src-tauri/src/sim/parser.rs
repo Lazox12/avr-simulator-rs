@@ -81,3 +81,25 @@ fn calculate_checksum(line:&str) -> Result<bool>{
     }
     Ok(false)
 }
+
+
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+    use std::process::Command;
+    #[test]
+    fn test_parse_hex(){ //todo
+       let out = parse_hex("D:\\projects\\avr-simulator-rs\\tests\\disassembly\\main.hex".to_string());
+        let f = fs::read_to_string("D:\\projects\\avr-simulator-rs\\tests\\disassembly\\main.s").unwrap();
+        let input = f.split("\n").collect::<Vec<&str>>();
+        let mut iter = 1;
+        for i in &out.unwrap()[65..183]{
+            iter+=1;
+            if(i.opcode.name.to_uppercase() != input[iter].split(" ").collect::<Vec<&str>>()[0]){
+                println!("expected : {} got {}", input[iter].split(" ").collect::<Vec<&str>>()[0],i.opcode.name.to_uppercase());
+            }
+        }
+        assert_eq!(1,1);
+    }
+}

@@ -6,12 +6,14 @@ use super::operand::{Operand, OperandValue};
 use opcodeGen::{RawInst, Opcode_list, ConstraintMap};
 use crate::error::{Error, Result};
 use crate::sim::constraint::Constraint;
+use crate::sim::display::Display;
 use crate::sim::gen_comment::gen_comment;
 
 #[derive(Debug,Serialize,Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Instruction{
     pub(crate) comment: String,
+    pub(crate) comment_display:Display,
     pub(crate) opcode: RawInst,
     pub(crate) operands: Option<Vec<Operand>>,
     pub(crate) address: u32,
@@ -21,13 +23,14 @@ pub struct Instruction{
 
 impl Instruction{
     pub fn new(comment: String, opcode: RawInst, operands: Vec<Operand>) -> Instruction{
-        Instruction{comment,opcode,operands: Some(operands),address:0,raw_opcode:0}
+        Instruction{comment, comment_display: Display::None, opcode,operands: Some(operands),address:0,raw_opcode:0}
     }
     pub fn decode_from_opcode(opcode: u16,address:u32) -> Result<Instruction>{
         let inst: RawInst = Self::mach_instruction(opcode)?;
         
         Ok(Instruction{
             comment: "".to_string(),
+            comment_display: Display::None,
             opcode: inst,
             operands: None,
             address,
@@ -156,7 +159,7 @@ impl Instruction{
                 }
             }
             Constraint::e=>{
-                if(value<3){
+                if(value<4){
                     Ok(OperandValue::new(value))
                 }
                 else{

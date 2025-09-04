@@ -7,7 +7,8 @@ type Instruction={
     operands: Operand[]|null,
     address: number,
     rawOpcode: number,
-    comment: String,
+    comment: string,
+    commentDisplay:String,
 }
 type RawInst = {
     opcode:String,
@@ -154,10 +155,11 @@ export class WindowAsmComponent {
                 return;
             }
             let rect = f.getBoundingClientRect();
-            pop.style.top = (rect.top) + "px";
+            console.log(rect);
+            pop.style.top = (rect.top+rect.height) + "px";
             pop.style.left = rect.left + "px";
             pop.style.visibility = "visible";
-        }, 3000)
+        }, 1500)
     }
     mouseLeave(){
         if (this.hovertimeout === null) {
@@ -170,6 +172,30 @@ export class WindowAsmComponent {
         }
         pop.style.visibility = "hidden";
         this.popupInst = null;
+    }
+    protected printComment(inst:Instruction):string{
+        switch(inst.commentDisplay){
+            case "Hex":{
+                return "0x"+parseInt(inst.comment).toString(16);
+            }
+            case "Dec":{
+                return inst.comment;
+            }
+            case "Bin":{
+                return "0b"+parseInt(inst.comment).toString(2);
+            }
+            case "Oct":{
+                return "0c"+parseInt(inst.comment).toString(8);
+            }
+            case "None":
+            default:{
+                return "";
+            }
+        }
+        return "";
+    }
+    protected applyChanges(){
+        console.log("applying changes...");
     }
 }
 ListenerService.instance.subscribe<Instruction[]>('asm-update', WindowAsmComponent.asmUpdateCallback);
