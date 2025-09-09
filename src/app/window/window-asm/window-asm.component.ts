@@ -1,4 +1,4 @@
-import { Component,OnInit,inject } from '@angular/core';
+import { Component} from '@angular/core';
 import { Event } from '@tauri-apps/api/event';
 import {ListenerService} from "../../listener.service";
 
@@ -40,7 +40,7 @@ type Operand = {
 })
 export class WindowAsmComponent {
     private hovertimeout :any|null = null;
-    private listener = inject(ListenerService);
+
     protected popupInst:Instruction|null = null;
     protected instructions : Instruction[]|null = null;
     constructor() {
@@ -56,6 +56,8 @@ export class WindowAsmComponent {
         localStorage.removeItem('asm-data');
         console.log(event);
         localStorage.setItem('asm-data', JSON.stringify(event.payload));
+        localStorage.setItem('window-handler-active', 'asm');
+        window.location.reload();
     }
     printOperand(op:Operand|undefined):string{
         if(op === undefined){
@@ -192,10 +194,13 @@ export class WindowAsmComponent {
                 return "";
             }
         }
-        return "";
     }
     protected applyChanges(){
         console.log("applying changes...");
+    }
+    protected clearTable(){
+        this.instructions = [];
+        localStorage.removeItem('asm-data');
     }
 }
 ListenerService.instance.subscribe<Instruction[]>('asm-update', WindowAsmComponent.asmUpdateCallback);

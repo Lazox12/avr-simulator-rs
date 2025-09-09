@@ -1,15 +1,14 @@
-import {Event,EventName,EventCallback,listen} from '@tauri-apps/api/event'
+import { Event, EventName, EventCallback, listen } from "@tauri-apps/api/event";
 
 type Listener<T> = {
-    event:EventName,
-    callback:EventCallback<T>,
-}
+    event: EventName;
+    callback: EventCallback<T>;
+};
 
-
-export class ListenerService{
+export class ListenerService {
     static #instance: ListenerService;
     private constructor() {}
-    public static get instance() : ListenerService {
+    public static get instance(): ListenerService {
         if (!ListenerService.#instance) {
             ListenerService.#instance = new ListenerService();
         }
@@ -17,22 +16,23 @@ export class ListenerService{
     }
 
     private listeners: Listener<any>[] = [];
-    private subscribed:string[] = [];
+    private subscribed: string[] = [];
 
-    public subscribe<T>(event:string, callback:EventCallback<T>):void {
-        this.listeners.push({event:event,callback:callback});
-        if(this.subscribed.find((i)=>i===event)===undefined){
+    public subscribe<T>(event: EventName, callback: EventCallback<T>): void {
+        this.listeners.push({ event, callback });
+        if (!this.subscribed.includes(event)) {
             this.subscribed.push(event);
-            listen<T>(event,(e)=>this.callback<T>(e));
+            listen<T>(event, (e) => this.callback<T>(e));
         }
-        console.log("subscribed");
+        console.log("subscribed to", event);
     }
-    private callback<T>(event:Event<T>){
-        console.log("received event:",event.event);
-        this.listeners.forEach(listener=>{
-            if(listener.event===event.event){
+
+    private callback<T>(event: Event<T>) {
+        console.log("received event:", event.event);
+        this.listeners.forEach((listener) => {
+            if (listener.event === event.event) {
                 listener.callback(event);
             }
-        })
+        });
     }
 }
