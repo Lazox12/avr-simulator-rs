@@ -43,29 +43,29 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
                 .add_filter("all files", &["*"])
                 .blocking_pick_file();
             if file_path.is_some() {
-                let result = parse_hex(file_path.unwrap().to_string());
-                if result.is_err() {
-                    eprint!("{}", format!("{}", result.err().unwrap()));
-                    return;
-                
-                }
-                let result = result.unwrap();
-                
-                
-                for i in result.clone() { //print to console
-                    if(i.operands.is_some()){
-                        print!("{:#x}:{1}, opcode: {2:#x} ,",i.address,i.opcode.name,i.raw_opcode);
-                        i.operands.unwrap().iter().for_each(|x| {
-                            if(i.address==0x1bc){
-                                print!("test");
-                            }
-                            print!("{},",x);
-                        });
-                        println!();
-                    }else{
-                        println!("{:#x}:{1}, opcode: {2:#x} ,",i.address,i.opcode.name,i.raw_opcode);
+                let result =match parse_hex(file_path.unwrap().to_string()) {
+                    Err(e) => {
+                        eprint!("{}", e);
+                        return;
                     }
-                }
+                    Ok(i) => i
+                };
+
+                result.iter().for_each(|i| {
+                    match &i.operands{
+                        Some(operands) => {
+                            print!("{:#x}:{1}, opcode: {2:#x} ,", i.address, i.opcode.name, i.raw_opcode);
+                            operands.iter().for_each(|x| {
+                                if (i.address == 0x1bc) {
+                                    print!("test");
+                                }
+                                print!("{},", x);
+                            });
+                            println!();
+                        }
+                        None=>println!("{:#x}:{1}, opcode: {2:#x} ,",i.address,i.opcode.name,i.raw_opcode)
+                    }
+                });
                 println!("calling fe");
                 let res = app.emit("asm-update",result);
                 if res.is_err() {
