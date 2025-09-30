@@ -47,7 +47,8 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instruction>>{
      for data in parsed_data.iter(){
          let mut i:usize =0;
          while i<=(data.len-2) as usize {
-             let mut inst:Instruction = Instruction::decode_from_opcode(((data.data[i+1] as u16)<<8)+data.data[i] as u16, data.address+i as u32)?;
+             let mut inst:Instruction = Instruction::decode_from_opcode(((data.data[i+1] as u16)<<8)+data.data[i] as u16)?;
+             inst.address = data.address+i as u32;
              i+=2;
              if inst.opcode.len ==2{
                  inst.raw_opcode= inst.raw_opcode<<16;
@@ -63,6 +64,14 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instruction>>{
         inst.gen_comment();
     }
     Ok(inst_list)
+}
+
+pub(crate) fn parse_vec(inst :&mut Vec<Instruction>)->Result<Vec<Instruction>>{
+    
+    for i in inst{
+        i.encode_opcode()?; 
+    }
+    Ok(vec![])
 }
 fn calculate_checksum(line:&str) -> Result<bool>{
     let checksum = u32::from_str_radix(&line[line.len()-2 ..],16)?;

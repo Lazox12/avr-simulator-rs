@@ -3,10 +3,9 @@ name = "avr-simulator-rs"
 version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
@@ -28,4 +27,4 @@ opcodeGen = {path = "libs/opcodeGen"}
 thiserror = { version = "2.0.12"}
 strum = { version = "0.27.1", features = ["derive"] }
 tauri-plugin-devtools = "2.0.0"
-
+rusqlite  = {version = "0.37.0", features = ["bundled"]}

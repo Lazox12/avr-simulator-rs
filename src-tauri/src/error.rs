@@ -1,8 +1,6 @@
 
 use std::num::ParseIntError;
 use strum::ParseError;
-use std::backtrace::Backtrace;
-use crate::sim::constraint::Constraint::a;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -36,5 +34,29 @@ pub enum Error {
     #[error("IO error: {0}")]
     IOError(#[from] std::io::Error),
     
+    
+    #[error("SQLite error: {0}")]
+    SQLError(#[from] rusqlite::Error),
+    
+    #[error("FileExists: {0}")]
+    FileExists(String),
+    
+    #[error("ProjectAlreadyOpened")]
+    ProjectAlreadyOpened,
+
+    #[error("ProjectNotOpened")]
+    ProjectNotOpened,
+    
+    #[error("SerdeError {0}")]
+    SerdeJsonError(#[from] serde_json::Error),
+
+    #[error("Invalid Instruction Name {0}")]
+    InvalidInstructionName(String),
+    
+    #[error("Invaild operand count expected:{expected}, instead got:{got}")]
+    InvalidOperandCount{expected:usize, got:usize},
+    
+    #[error("Invalid Value")]
+    InvalidValue,
 }
 

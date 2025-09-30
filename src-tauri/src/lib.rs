@@ -1,7 +1,10 @@
+use crate::project::PROJECT;
+
 mod error;
 mod menu;
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 mod sim;
+mod project;
 
 #[tauri::command]
 fn greet(name: &str) -> String {

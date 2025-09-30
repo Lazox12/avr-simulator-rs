@@ -1,4 +1,4 @@
-<table>
+<table (keyup)="tableOnKeyUp($event)">
     <tr>
         <th>address</th>
         <th>instruction</th>
@@ -9,18 +9,18 @@
     </tr>
     @for (inst of instructions;track inst.address){
         <tr>
-        <td>{{"0x"+inst.address.toString(16)}}</td>
-        <td [id]="'asm-table-col-'+inst.address" (mouseenter)="mouseEnter(inst)" (mouseleave)="mouseLeave()">{{inst.opcode.name}}</td>
+        <td contenteditable>{{"0x"+inst.address.toString(16)}}</td>
+        <td [id]="'asm-table-col-'+inst.address" (mouseenter)="mouseEnter(inst)" (mouseleave)="mouseLeave()" contenteditable>{{inst.opcode.name}}</td>
         @if (inst.operands != null) {
-            <td>{{printOperand(inst.operands.at(0))}}</td>
-            <td>{{printOperand(inst.operands.at(1))}}</td>
-            <td>{{printOperand(inst.operands.at(2))}}</td>
+            <td contenteditable>{{printOperand(inst.operands.at(0))}}</td>
+            <td contenteditable>{{printOperand(inst.operands.at(1))}}</td>
+            <td contenteditable>{{printOperand(inst.operands.at(2))}}</td>
         } @else {
             <td></td>
             <td></td>
             <td></td>
         }
-        <td>{{printComment(inst)}}</td>
+        <td contenteditable>{{printComment(inst)}}</td>
         </tr>
     }
 </table>

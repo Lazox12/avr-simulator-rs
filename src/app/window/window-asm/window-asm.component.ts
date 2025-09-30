@@ -197,10 +197,22 @@ export class WindowAsmComponent {
     }
     protected applyChanges(){
         console.log("applying changes...");
+        let el = document.getElementById('asm-apply-changes-button')
+        if (el === null) {
+            return;
+        }
+        (el as HTMLButtonElement).disabled = true;
     }
     protected clearTable(){
         this.instructions = [];
         localStorage.removeItem('asm-data');
+    }
+    protected tableOnKeyUp(event: KeyboardEvent){
+        let el = document.getElementById('asm-apply-changes-button')
+        if (el === null) {
+            return;
+        }
+        (el as HTMLButtonElement).disabled = false;
     }
 }
 ListenerService.instance.subscribe<Instruction[]>('asm-update', WindowAsmComponent.asmUpdateCallback);
