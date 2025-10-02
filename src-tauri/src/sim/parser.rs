@@ -1,8 +1,10 @@
-use super::instruction::Instruction;
+use super::instruction::{Instruction, PartialInstruction};
 use crate::error::Result;
 use std::fs;
 use std::io;
 use std::io::ErrorKind;
+use std::ops::Deref;
+use opcodeGen::RawInst;
 use crate::error::Error::{InvalidRecordType, NotImplemented};
 
 const MAX_BYTE_COUNT: usize =16;//todo replace by something meaningful
@@ -50,7 +52,7 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instruction>>{
              let mut inst:Instruction = Instruction::decode_from_opcode(((data.data[i+1] as u16)<<8)+data.data[i] as u16)?;
              inst.address = data.address+i as u32;
              i+=2;
-             if inst.opcode.len ==2{
+             if RawInst::get_inst_from_id(inst.opcode_id).unwrap().len ==2{
                  inst.raw_opcode= inst.raw_opcode<<16;
                  inst.raw_opcode+=((data.data[i+1] as u32)<<8)+data.data[i] as u32;
                  i+=2;
@@ -66,12 +68,8 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instruction>>{
     Ok(inst_list)
 }
 
-pub(crate) fn parse_vec(inst :&mut Vec<Instruction>)->Result<Vec<Instruction>>{
-    
-    for i in inst{
-        i.encode_opcode()?; 
-    }
-    Ok(vec![])
+pub(crate) fn parse_vec(inst :Vec<PartialInstruction>)->Result<Vec<Instruction>>{
+    inst.into_iter().map(|x| Instruction::try_from(x)).collect()
 }
 fn calculate_checksum(line:&str) -> Result<bool>{
     let checksum = u32::from_str_radix(&line[line.len()-2 ..],16)?;
@@ -97,6 +95,8 @@ fn calculate_checksum(line:&str) -> Result<bool>{
 mod tests{
     use super::*;
     use std::process::Command;
+    use opcodeGen::RawInst;
+
     #[test]
     fn test_parse_hex(){ //todo
        let out = parse_hex("D:\\projects\\avr-simulator-rs\\tests\\disassembly\\main.hex".to_string());
@@ -105,8 +105,8 @@ mod tests{
         let mut iter = 1;
         for i in &out.unwrap()[65..183]{
             iter+=1;
-            if(i.opcode.name.to_uppercase() != input[iter].split(" ").collect::<Vec<&str>>()[0]){
-                println!("expected : {} got {}", input[iter].split(" ").collect::<Vec<&str>>()[0],i.opcode.name.to_uppercase());
+            if(RawInst::get_inst_from_id(i.opcode_id).unwrap().name.to_uppercase() != input[iter].split(" ").collect::<Vec<&str>>()[0]){
+                println!("expected : {} got {:?}", input[iter].split(" ").collect::<Vec<&str>>()[0],RawInst::get_inst_from_id(i.opcode_id));
             }
         }
         assert_eq!(1,1);

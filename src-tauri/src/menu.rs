@@ -2,7 +2,9 @@ use std::error::Error;
 use tauri::{App, menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder}, Emitter};
 use crate::sim::parser::parse_hex;
 use tauri_plugin_dialog::DialogExt;
+use opcodeGen::RawInst;
 use crate::project::PROJECT;
+use crate::sim::instruction::PartialInstruction;
 
 pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
     let import_menu = MenuItemBuilder::new("Import")
@@ -74,13 +76,13 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
                     result.iter().for_each(|i| {
                         match &i.operands {
                             Some(operands) => {
-                                print!("{:#x}:{1}, opcode: {2:#x} ,", i.address, i.opcode.name, i.raw_opcode);
+                                print!("{:#x}:{1}, opcode: {2:#x} ,", i.address,RawInst::get_inst_from_id(i.opcode_id).unwrap().name, i.raw_opcode);
                                 operands.iter().for_each(|x| {
                                     print!("{},", x);
                                 });
                                 println!();
                             }
-                            None => println!("{:#x}:{1}, opcode: {2:#x} ,", i.address, i.opcode.name, i.raw_opcode)
+                            None => println!("{:#x}:{1}, opcode: {2:#x} ,", i.address, RawInst::get_inst_from_id(i.opcode_id).unwrap().name, i.raw_opcode)
                         }
                     });
                     println!("calling fe");
@@ -92,7 +94,7 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
                             return;
                         }
                     };
-                    let res = app.emit("asm-update", result);
+                    let res = app.emit("asm-update", result.into_iter().map(|x| PartialInstruction::from(x)).collect::<Vec<PartialInstruction>>());
                     if res.is_err() {
                         eprintln!("{}", format!("{}", res.err().unwrap()));
                     }

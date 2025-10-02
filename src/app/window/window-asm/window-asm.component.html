@@ -12,15 +12,15 @@
         <td contenteditable>{{"0x"+inst.address.toString(16)}}</td>
         <td [id]="'asm-table-col-'+inst.address" (mouseenter)="mouseEnter(inst)" (mouseleave)="mouseLeave()" contenteditable>{{inst.opcode.name}}</td>
         @if (inst.operands != null) {
-            <td contenteditable>{{printOperand(inst.operands.at(0))}}</td>
-            <td contenteditable>{{printOperand(inst.operands.at(1))}}</td>
-            <td contenteditable>{{printOperand(inst.operands.at(2))}}</td>
+            <td contenteditable>{{inst.operands.at(0)}}</td>
+            <td contenteditable>{{inst.operands.at(1)}}</td>
+            <td contenteditable>{{inst.operands.at(2)}}</td>
         } @else {
             <td></td>
             <td></td>
             <td></td>
         }
-        <td contenteditable>{{printComment(inst)}}</td>
+        <td contenteditable>{{inst.comment}}</td>
         </tr>
     }
 </table>
