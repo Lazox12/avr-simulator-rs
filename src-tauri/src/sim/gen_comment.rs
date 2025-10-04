@@ -1,8 +1,9 @@
+use opcodeGen::RawInst;
 use crate::sim::display::Display::{*};
 use crate::sim::instruction::Instruction;
 
 pub fn gen_comment(i: &mut Instruction) {
-    match i.opcode.name {
+    match RawInst::get_inst_from_id(i.opcode_id).unwrap().name {
 
         "rjmp"|"rcall" => {
             if let Some(ops) = &i.operands {

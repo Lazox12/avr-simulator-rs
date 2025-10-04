@@ -51,7 +51,7 @@ pub enum Error {
     SerdeJsonError(#[from] serde_json::Error),
 
     #[error("Invalid Instruction Name {0}")]
-    InvalidInstructionName(String),
+    InvalidInstructionName(u32),
     
     #[error("Invaild operand count expected:{expected}, instead got:{got}")]
     InvalidOperandCount{expected:usize, got:usize},

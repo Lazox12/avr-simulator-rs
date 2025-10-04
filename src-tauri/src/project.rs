@@ -63,7 +63,7 @@ impl Project {
         for i in inst {
             stmt.execute((
                 i.address,
-                serde_json::to_string(&i.opcode)?,
+                i.opcode_id,
                 i.raw_opcode,
                 serde_json::to_string(&i.operands)?,
                 &i.comment,

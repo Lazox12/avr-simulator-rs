@@ -6,7 +6,21 @@ type PartialInstruction={
     comment: String,
     operands: String[]|null,
     address: number,
+    opcode_id:number,
+}
+type RawInstruction = {
+    opcode:String,
+    len:number,
     name:String,
+    constraints:ConstraintMap[]|null,
+    bin_mask:number,
+    bin_opcode:number,
+    action:String,
+    description:String,
+}
+type ConstraintMap = {
+    map:number,
+    constraints:String,
 }
 
 
@@ -29,7 +43,9 @@ export class WindowAsmComponent {
         }
         this.instructions = JSON.parse(a);
     }
-
+    static getInstruction(opcode_id:number){
+        localStorage.getItem("instruction-list")
+    }
     static asmUpdateCallback(event:Event<PartialInstruction[]>){
         localStorage.removeItem('asm-data');
         console.log(event);
