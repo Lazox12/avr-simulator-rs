@@ -1,12 +1,13 @@
 import { Component} from '@angular/core';
 import { Event } from '@tauri-apps/api/event';
 import {ListenerService} from "../../listener.service";
+import {invoke} from "@tauri-apps/api/core";
 
 type PartialInstruction={
     comment: String,
     operands: String[]|null,
     address: number,
-    opcode_id:number,
+    opcodeId:number,
 }
 type RawInstruction = {
     opcode:String,
@@ -33,7 +34,7 @@ type ConstraintMap = {
 export class WindowAsmComponent {
     private hovertimeout :any|null = null;
 
-    protected popupInst:PartialInstruction|null = null;
+    protected popupInst:RawInstruction|null = null;
     protected instructions : PartialInstruction[]|null = null;
     constructor() {
         console.log('WindowAsmComponent initialized');
@@ -43,8 +44,20 @@ export class WindowAsmComponent {
         }
         this.instructions = JSON.parse(a);
     }
-    static getInstruction(opcode_id:number){
-        localStorage.getItem("instruction-list")
+    protected getInstruction(opcode_id:number):RawInstruction{
+        let x= localStorage.getItem("instruction-list");
+        let i:RawInstruction[];
+        if (x ===null){
+            invoke("get_instruction_list").then(data=>{
+                localStorage.setItem("instruction-list",JSON.stringify(data));
+                localStorage.setItem('window-handler-active', 'asm');
+                window.location.reload();
+            })
+            throw "error get_instruction_list";
+        }else{
+            i = JSON.parse(x)
+        }
+        return i[opcode_id];
     }
     static asmUpdateCallback(event:Event<PartialInstruction[]>){
         localStorage.removeItem('asm-data');
@@ -55,10 +68,10 @@ export class WindowAsmComponent {
     }
 
 
-    mouseEnter(inst:PartialInstruction){
+    mouseEnter(inst:RawInstruction,address:number):void{
         this.hovertimeout = setTimeout(() => {
             this.popupInst = inst;
-            let f = document.getElementById("asm-table-col-"+inst.address);
+            let f = document.getElementById("asm-table-col-"+address);
             let pop = document.getElementById("asm-popup");
             if(f===null || pop===null){
                 return;
@@ -101,6 +114,8 @@ export class WindowAsmComponent {
         }
         (el as HTMLButtonElement).disabled = false;
     }
+
+    protected readonly console = console;
 }
 ListenerService.instance.subscribe<PartialInstruction[]>('asm-update', WindowAsmComponent.asmUpdateCallback);
 

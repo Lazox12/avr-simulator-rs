@@ -183,7 +183,7 @@ impl From<Instruction> for PartialInstruction {
     fn from(value:Instruction) -> PartialInstruction {
         PartialInstruction{
             comment: value.comment,
-            operands: value.operands.map_or(None,|x:Vec<Operand>| Some(x.into_iter().map(|x1| {x1.value.to_string()}).collect())),          
+            operands: value.operands.map_or(None,|x:Vec<Operand>| Some(x.into_iter().map(|x1| {x1.map_string_from_value()}).collect())),          
             address: value.address,
             opcode_id: value.opcode_id,
         }

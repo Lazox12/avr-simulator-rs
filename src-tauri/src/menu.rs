@@ -85,7 +85,6 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
                             None => println!("{:#x}:{1}, opcode: {2:#x} ,", i.address, RawInst::get_inst_from_id(i.opcode_id).unwrap().name, i.raw_opcode)
                         }
                     });
-                    println!("calling fe");
                     
                     match PROJECT.lock().unwrap().insert_instruction_list(&result){
                         Ok(_) => {}
@@ -94,6 +93,7 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
                             return;
                         }
                     };
+                    println!("calling fe");
                     let res = app.emit("asm-update", result.into_iter().map(|x| PartialInstruction::from(x)).collect::<Vec<PartialInstruction>>());
                     if res.is_err() {
                         eprintln!("{}", format!("{}", res.err().unwrap()));
@@ -139,10 +139,8 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
                         }
                     });
             }
-            val if val == new_menu.id() =>{
-                app.dialog().file().save_file(|file_path| {
-                    PROJECT.lock().unwrap().close().unwrap();
-                });
+            val if val == close_menu.id() =>{
+                PROJECT.lock().unwrap().close().unwrap();
             }
             val =>{
                 eprint!("unknown id handler {:?}",val);

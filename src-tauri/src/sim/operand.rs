@@ -1,11 +1,11 @@
 use std::fmt;
 use std::fmt::{write, Display, Formatter, LowerHex};
 use std::str::FromStr;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use crate::error::{Error, Result};
 use super::constraint::Constraint;
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug,Serialize,Deserialize,Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Operand{
     pub(crate) name: String,
@@ -237,6 +237,34 @@ impl Operand{
             }
         }
     }
+
+    pub(crate) fn map_string_from_value(&self) -> Result<String> {
+        let value = self.value.clone();
+        match self.constraint {
+            Constraint::r =>{Ok(format!("r{}",value))}
+            Constraint::d =>{Ok(format!("r{}",value))}
+            Constraint::v =>{Ok(format!("r{}",value))}
+            Constraint::a =>{Ok(format!("r{}",value))}
+            Constraint::w =>{Ok(format!("r{}",value))}
+            Constraint::e =>{Ok(format!("{}",constraint_e_into_pointer(&self.value)?))}
+            Constraint::b =>{Ok(format!("{}",constraint_b_into_pointer(&self.value)?))}
+            Constraint::z =>{Ok(format!("{}",constraint_z_into_pointer(&self.value)?))}
+            Constraint::M =>{Ok(format!("{:#x}",value))}
+            Constraint::n =>{Ok(format!("{:#x}",value))}
+            Constraint::s =>{Ok(format!("{:#x}",value))}
+            Constraint::P =>{Ok(format!("{:#x}",value))}
+            Constraint::p =>{Ok(format!("{:#x}",value))}
+            Constraint::K =>{Ok(format!("{:#x}",value))}
+            Constraint::i =>{Ok(format!("{:#x}",value))}
+            Constraint::j =>{Ok(format!("{:#x}",value))}
+            Constraint::l =>{Ok(format!(".{}",value))}
+            Constraint::L =>{Ok(format!(".{}",value))}
+            Constraint::h =>{Ok(format!("{:#x}",value))}
+            Constraint::S =>{Ok(format!("{:#x}",value))}
+            Constraint::E =>{Ok(format!("{:#x}",value))}
+            Constraint::o =>{Ok(format!("+{}",value))}
+        }
+    }
     fn unsigned_to_signed(val:u32,len:u32)->i32{ //signed len in bits
         if(val>>len-1)==0{ // positive number
             val as i32
@@ -339,27 +367,17 @@ fn pointer_into_constraint_z(val:&str) ->Result<OperandValue>{
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,Serialize,Deserialize)]
 pub struct  OperandValue{
     inner:IntValue,
 }
 
-#[derive(Debug,Clone,Copy)]
+#[derive(Debug,Clone,Copy,Serialize,Deserialize)]
 pub enum IntValue{
     Unsigned(u32),
     Signed(i32),
 }
-impl Serialize for OperandValue{
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: Serializer
-    {
-        match self.inner { 
-            IntValue::Unsigned(v) => serializer.serialize_u32(v),
-            IntValue::Signed(v) => serializer.serialize_i32 (v),
-        }
-    }
-}
+
 impl Display for OperandValue{
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.inner {

@@ -10,7 +10,7 @@
     @for (inst of instructions;track inst.address){
         <tr>
         <td contenteditable>{{"0x"+inst.address.toString(16)}}</td>
-        <td [id]="'asm-table-col-'+inst.address" (mouseenter)="mouseEnter(inst)" (mouseleave)="mouseLeave()" contenteditable>{{inst.opcode.name}}</td>
+        <td [id]="'asm-table-col-'+inst.address" (mouseenter)="mouseEnter(getInstruction(inst.opcodeId),inst.address)" (mouseleave)="mouseLeave()" contenteditable>{{getInstruction(inst.opcodeId).name}}</td>
         @if (inst.operands != null) {
             <td contenteditable>{{inst.operands.at(0)}}</td>
             <td contenteditable>{{inst.operands.at(1)}}</td>
@@ -27,10 +27,10 @@
 <div id="asm-popup" class="popup">
     @if (popupInst!==null){
         <h4>description: </h4>
-        <p>{{popupInst!.opcode.description}}</p>
+        <p>{{popupInst!.description}}</p>
         <br>
         <h4>operation: </h4>
-        <p>{{popupInst!.opcode.action}}</p>
+        <p>{{popupInst!.action}}</p>
     }
 </div>
 <div style="height: 80px">

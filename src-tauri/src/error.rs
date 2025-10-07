@@ -1,5 +1,6 @@
 
 use std::num::ParseIntError;
+use std::sync::PoisonError;
 use strum::ParseError;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -58,5 +59,16 @@ pub enum Error {
     
     #[error("Invalid Value")]
     InvalidValue,
+
+    #[error("Lock poisoned: {0}")]
+    Poison(String),
+    
+    #[error("Tauri error: {0}")]
+    TauriError(#[from] tauri::Error),
 }
 
+impl<T> From<PoisonError<T>> for Error {
+    fn from(err: PoisonError<T>) -> Self {
+        Error::Poison(err.to_string())
+    }
+}

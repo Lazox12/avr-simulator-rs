@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS instruction(
     address INT PRIMARY KEY NOT NULL,
-    opcode TEXT,
+    opcode INT,
     rawOpcode INT,
     operands TEXT,
     comment TEXT,

@@ -1,9 +1,9 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 #[allow(non_camel_case_types)]
 use strum::{EnumIter,EnumString};
 use crate::error::Result;
 use crate::error::Error;
-#[derive(Debug, EnumIter, EnumString, Clone, Copy,Serialize)]
+#[derive(Debug, EnumIter, EnumString, Clone, Copy,Serialize,Deserialize)]
 
 pub enum Constraint {
     r, //- any register

@@ -1,8 +1,8 @@
 use std::str::FromStr;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use strum::{EnumIter, EnumString};
 
-#[derive(Debug, EnumIter, EnumString, Clone, Copy,Serialize)]
+#[derive(Debug, EnumIter, EnumString, Clone, Copy,Serialize,Deserialize)]
 pub enum Display {
     None,
     Bin,

@@ -1,10 +1,12 @@
 use std::sync::Mutex;
 use crate::error::{Error, Result};
-use rusqlite::Connection;
+use rusqlite::{Connection};
+use rusqlite::Error as SqlError;
 use serde::Serialize;
 use tauri::AppHandle;
-use crate::sim::instruction::Instruction;
-
+use crate::APP_HANDLE;
+use crate::sim::instruction::{Instruction, PartialInstruction};
+use tauri::{App,Emitter};
 pub static PROJECT: Mutex<Project> = Mutex::new(Project::new());
 
 
@@ -28,11 +30,19 @@ impl Project {
             return Err(Error::ProjectAlreadyOpened);
         }
         self.connection = Some(Connection::open(path)?);
-        Ok(true)
         
+
+        APP_HANDLE.get().unwrap().lock()?
+            .emit("asm-update", self.get_instruction_list()?.into_iter().map(|x| PartialInstruction::from(x)).collect::<Vec<PartialInstruction>>())?;
+
+        Ok(true)
     }
     pub fn close(&mut self) -> Result<bool>{
         self.connection = None;
+        
+        APP_HANDLE.get().unwrap().lock()?
+            .emit("asm-update", ())?;
+        
         Ok(true)
     }
     
@@ -74,4 +84,31 @@ impl Project {
         tx.commit()?;
         Ok(true)
     }
+    pub fn get_instruction_list(&mut self) -> Result<Vec<Instruction>>{
+        self.table_exists("instruction")?;
+        let mut stmt = self.connection.as_ref().unwrap().prepare("SELECT * FROM instruction")?;
+        let instructions = stmt.query_map([], |row| {
+            let operands_json: String = row.get(3)?;
+            let operands = serde_json::from_str(&operands_json)
+                .map_err(|e| SqlError::UserFunctionError(Box::new(e)))?;
+
+            let comment_json: String = row.get(5)?;
+            let comment_display = serde_json::from_str(&comment_json)
+                .map_err(|e| SqlError::UserFunctionError(Box::new(e)))?;
+
+            Ok(Instruction {
+                address: row.get(0)?,
+                opcode_id: row.get(1)?,
+                raw_opcode: row.get(2)?,
+                operands,
+                comment: row.get(4)?,
+                comment_display,
+            })
+        })?.collect::<std::result::Result<Vec<_>, _>>()?;
+        
+        Ok(instructions)
+        
+    }
 }
+
+
