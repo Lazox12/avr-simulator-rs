@@ -30,7 +30,7 @@ impl Project {
             return Err(Error::ProjectAlreadyOpened);
         }
         self.connection = Some(Connection::open(path)?);
-        
+
 
         APP_HANDLE.get().unwrap().lock()?
             .emit("asm-update", self.get_instruction_list()?.into_iter().map(|x| PartialInstruction::from(x)).collect::<Vec<PartialInstruction>>())?;
@@ -39,10 +39,10 @@ impl Project {
     }
     pub fn close(&mut self) -> Result<bool>{
         self.connection = None;
-        
+
         APP_HANDLE.get().unwrap().lock()?
             .emit("asm-update", ())?;
-        
+
         Ok(true)
     }
     
@@ -105,9 +105,9 @@ impl Project {
                 comment_display,
             })
         })?.collect::<std::result::Result<Vec<_>, _>>()?;
-        
+
         Ok(instructions)
-        
+
     }
 }
 

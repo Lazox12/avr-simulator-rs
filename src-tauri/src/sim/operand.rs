@@ -17,7 +17,7 @@ impl Operand{
         match constraint {
             Constraint::r => {
                 if(value<32){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("r: regiter number can`t be higher than 31, got {}", value),address:0})
@@ -26,7 +26,7 @@ impl Operand{
             Constraint::d => {
 
                 if(value >15 && value<32){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("d: ldi regiter number must be between 16 and 31, got {}", value),address:0})
@@ -34,7 +34,7 @@ impl Operand{
             }
             Constraint::v => {
                 if(value<32){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("v: movw regiter number must be even and less 32, got {}", value),address:0})
@@ -42,7 +42,7 @@ impl Operand{
             }
             Constraint::a => {
                 if(value >15 && value<24){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("a: fmul regiter number must be between 16 and 23, got {}", value),address:0})
@@ -50,7 +50,7 @@ impl Operand{
             }
             Constraint::w => {
                 if(value>23 && value<31){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("w: adiw regiter number must 24, 26, 28 or 30, got {}", value),address:0})
@@ -58,7 +58,7 @@ impl Operand{
             }
             Constraint::e=>{
                 if(value<4){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("e: pointer register must be less than 4, got {}", value),address:0})
@@ -66,7 +66,7 @@ impl Operand{
             }
             Constraint::b => {
                 if(value<2){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("b: base pointer register and displacement must be less that 2, got {}", value),address:0})
@@ -74,7 +74,7 @@ impl Operand{
             }
             Constraint::z =>{
                 if(value<2){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("z: Z pointer register must be less than 2, got {}", value),address:0})
@@ -82,7 +82,7 @@ impl Operand{
             }
             Constraint::M =>{
                 if(value<256){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("M: immediate Value must be between from 0 to 255, got {}", value),address:0})
@@ -90,7 +90,7 @@ impl Operand{
             }
             Constraint::n =>{
                 if(value<256){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("n: immediate Value must be between from 0 to 255, got {}", value),address:0})
@@ -98,7 +98,7 @@ impl Operand{
             }
             Constraint::s=>{
                 if(value<8){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("s: immediate Value must be between from 0 to 7, got {}", value),address:0})
@@ -106,7 +106,7 @@ impl Operand{
             }
             Constraint::P=>{
                 if(value<64){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("P: Port address Value must be between from 0 to 63., got {}", value),address:0})
@@ -114,7 +114,7 @@ impl Operand{
             }
             Constraint::p =>{
                 if(value<32){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("p: Port address Value must be between from 0 to 31, got {}", value),address:0})
@@ -122,7 +122,7 @@ impl Operand{
             }
             Constraint::K=>{
                 if(value<64){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("K: immediate Value must be between from 0 to 63, got {}", value),address:0})
@@ -130,7 +130,7 @@ impl Operand{
             }
             Constraint::i=>{
                 if(value>=0){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("M: immediate Value, got {}", value),address:0})
@@ -139,7 +139,7 @@ impl Operand{
             Constraint::j=>{
                 value += 0x40;
                 if(value<0xbf){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("j: 7 bit immediate Value that must be between from 0x40 to 0xBF, got {}", value),address:0})
@@ -149,7 +149,7 @@ impl Operand{
                 let mut t = Operand::unsigned_to_signed(value, 7);
                 t*=2; // 16 bit wide addresses
                 if(t>=-64 && t<64){
-                    Ok(OperandValue::new(t))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("l: signed pc relative offset must be between  -64 to 63, got {}", value),address:0})
@@ -159,7 +159,7 @@ impl Operand{
                 let mut t = Operand::unsigned_to_signed(value, 12);
                 t*=2; // 16 bit wide addresses
                 if(t>=-2048 && t<2048){
-                    Ok(OperandValue::new(t))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("l: signed pc relative offset must be between  -2048 to 2047, got {}", value),address:0})
@@ -167,7 +167,7 @@ impl Operand{
             }
             Constraint::h=>{
                 if(value>=0){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("h: absolute code address, got {}", value),address:0})
@@ -175,7 +175,7 @@ impl Operand{
             }
             Constraint::S=>{
                 if(value<8){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("S: immediate Value must be between from 0 to 7, got {}", value),address:0})
@@ -183,7 +183,7 @@ impl Operand{
             }
             Constraint::E=>{
                 if(value<16){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("E: immediate Value must be between from 0 to 15, got {}", value),address:0})
@@ -191,7 +191,7 @@ impl Operand{
             }
             Constraint::o=>{
                 if(value<64){
-                    Ok(OperandValue::new(value))
+                    Ok(value as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("o: Displacement value must be between 0 and 63, got {}", value),address:0})
@@ -208,7 +208,7 @@ impl Operand{
             Constraint::a|
             Constraint::w => {
                 value.remove(0);
-                Ok(OperandValue::new(u32::from_str(&*value)?))
+                Ok(OperandValue::from_str(&*value)?)
             }
             Constraint::e => {pointer_into_constraint_e(&*value)}
             Constraint::b => {pointer_into_constraint_b(&*value)}
@@ -224,16 +224,16 @@ impl Operand{
             Constraint::S|
             Constraint::E|
             Constraint::j=> {
-                Ok(OperandValue::new(u32::from_str_radix(value.trim_start_matches("0X"), 16)?))
+                Ok(OperandValue::from_str_radix(value.trim_start_matches("0X"), 16)?)
             }
             Constraint::l|
             Constraint::L => {
                 value.remove(0);
-                Ok(OperandValue::new(i32::from_str(&*value)?))
+                Ok(OperandValue::from_str(&*value)?)
             }
             Constraint::o => {
                 value.remove(0);
-                Ok(OperandValue::new(u32::from_str(&*value)?))
+                Ok(OperandValue::from_str(&*value)?)
             }
         }
     }
@@ -246,9 +246,9 @@ impl Operand{
             Constraint::v =>{Ok(format!("r{}",value))}
             Constraint::a =>{Ok(format!("r{}",value))}
             Constraint::w =>{Ok(format!("r{}",value))}
-            Constraint::e =>{Ok(format!("{}",constraint_e_into_pointer(&self.value)?))}
-            Constraint::b =>{Ok(format!("{}",constraint_b_into_pointer(&self.value)?))}
-            Constraint::z =>{Ok(format!("{}",constraint_z_into_pointer(&self.value)?))}
+            Constraint::e =>{Ok(format!("{}",constraint_e_into_pointer(self.value)?))}
+            Constraint::b =>{Ok(format!("{}",constraint_b_into_pointer(self.value)?))}
+            Constraint::z =>{Ok(format!("{}",constraint_z_into_pointer(self.value)?))}
             Constraint::M =>{Ok(format!("{:#x}",value))}
             Constraint::n =>{Ok(format!("{:#x}",value))}
             Constraint::s =>{Ok(format!("{:#x}",value))}
@@ -286,9 +286,9 @@ impl Display for Operand{
             Constraint::v =>{write!(f,"r{}",self.value)}
             Constraint::a =>{write!(f,"r{}",self.value)}
             Constraint::w =>{write!(f,"r{}",self.value)}
-            Constraint::e =>{write!(f,"{}",constraint_e_into_pointer(&self.value).map_err(|_| {fmt::Error})?)}
-            Constraint::b =>{write!(f,"{}",constraint_b_into_pointer(&self.value).map_err(|_| {fmt::Error})?)}
-            Constraint::z =>{write!(f,"{}",constraint_z_into_pointer(&self.value).map_err(|_| {fmt::Error})?)}
+            Constraint::e =>{write!(f,"{}",constraint_e_into_pointer(self.value).map_err(|_| {fmt::Error})?)}
+            Constraint::b =>{write!(f,"{}",constraint_b_into_pointer(self.value).map_err(|_| {fmt::Error})?)}
+            Constraint::z =>{write!(f,"{}",constraint_z_into_pointer(self.value).map_err(|_| {fmt::Error})?)}
             Constraint::M =>{write!(f,"{:#x}",self.value)}
             Constraint::n =>{write!(f,"{:#x}",self.value)}
             Constraint::s =>{write!(f,"{:#x}",self.value)}
@@ -308,23 +308,23 @@ impl Display for Operand{
 }
 
 
-fn constraint_e_into_pointer(val:&OperandValue) ->Result<String>{
-    match val.read::<u32>()? {
+fn constraint_e_into_pointer(val:OperandValue) ->Result<String>{
+    match val {
         3 => Ok(String::from('X')),
         2 => Ok(String::from('Y')),
         0 => Ok(String::from('Z')),
         _ => Ok(String::from("Invalid Value")),
     }
 }
-fn constraint_b_into_pointer(val:&OperandValue) ->Result<String>{
-    match val.read::<u32>()? {
+fn constraint_b_into_pointer(val:OperandValue) ->Result<String>{
+    match val {
         0 => Ok(String::from('Z')),
         1 => Ok(String::from('Y')),
         _ => Ok(String::from("Invalid Value")),
     }
 }
-fn constraint_z_into_pointer(val:&OperandValue) ->Result<String>{
-    match val.read::<u32>()? {
+fn constraint_z_into_pointer(val:OperandValue) ->Result<String>{
+    match val {
         0 => Ok(String::new()),
         1 => Ok(String::from("Z+")),
         _ => Ok(String::from("Invalid Value")),
@@ -337,9 +337,9 @@ fn pointer_into_constraint_e(val:&str) ->Result<OperandValue>{
     }
 
     match val.to_uppercase().chars().next().unwrap() {
-        'X' => Ok(OperandValue::new(3u32)),
-        'Y' => Ok(OperandValue::new(2u32)),
-        'Z' => Ok(OperandValue::new(0u32)),
+        'X' => Ok(3),
+        'Y' => Ok(2),
+        'Z' => Ok(0),
         _ => Err(Error::InvalidValue),
     }
 }
@@ -349,8 +349,8 @@ fn pointer_into_constraint_b(val:&str) ->Result<OperandValue>{
     }
 
     match val.to_uppercase().as_str() {
-        "" => Ok(OperandValue::new(0u32)),
-        "Z+" => Ok(OperandValue::new(1u32)),
+        "" => Ok(0),
+        "Z+" => Ok(1),
         _ => Err(Error::InvalidValue),
     }
 }
@@ -360,99 +360,14 @@ fn pointer_into_constraint_z(val:&str) ->Result<OperandValue>{
     }
 
     match val.to_uppercase().chars().next().unwrap() {
-        'X' => Ok(OperandValue::new(3u32)),
-        'Y' => Ok(OperandValue::new(2u32)),
-        'Z' => Ok(OperandValue::new(0u32)),
+        'X' => Ok(3),
+        'Y' => Ok(2),
+        'Z' => Ok(0),
         _ => Err(Error::InvalidValue),
     }
 }
 
-#[derive(Debug, Clone,Serialize,Deserialize)]
-pub struct  OperandValue{
-    inner:IntValue,
-}
-
-#[derive(Debug,Clone,Copy,Serialize,Deserialize)]
-pub enum IntValue{
-    Unsigned(u32),
-    Signed(i32),
-}
-
-impl Display for OperandValue{
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self.inner {
-            IntValue::Unsigned(_) => {
-                write!(f,"{}",self.read::<u32>().map_err(|_| std::fmt::Error)?)
-            }
-            IntValue::Signed(_) => {
-                write!(f,"{}",self.read::<i32>().map_err(|_| std::fmt::Error)?)
-            }
-        }
-    }
-}
-impl LowerHex for OperandValue{
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self.inner {
-            IntValue::Unsigned(_) => {
-                write!(f,"{:#x}",self.read::<u32>().map_err(|_| std::fmt::Error)?)
-            }
-            IntValue::Signed(_) => {
-                write!(f,"{:#x}",self.read::<i32>().map_err(|_| std::fmt::Error)?)
-            }
-        }
-    }
-}
-
-impl OperandValue {
-    pub fn new<T>(val: T) -> Self
-    where
-        T: Into<IntValue>,
-    {
-        OperandValue { inner: val.into() }
-    }
-
-    pub fn read<T>(&self) -> Result<T>
-    where
-        IntValue: TryInto<T>,
-    {
-        match self.inner.clone().try_into() {
-            Ok(v) => Ok(v),
-            Err(_) => Err(Error::InvalidReadError { current: "".to_string(), expected: "".to_string() }),
-        }
-    }
-}
-
-impl From<u32> for IntValue {
-    fn from(v: u32) -> Self {
-        IntValue::Unsigned(v)
-    }
-}
-
-impl From<i32> for IntValue {
-    fn from(v: i32) -> Self {
-        IntValue::Signed(v)
-    }
-}
-
-impl TryFrom<IntValue> for u32 {
-    type Error = ();
-    fn try_from(v: IntValue) -> std::result::Result<u32, ()> {
-        match v {
-            IntValue::Unsigned(x) => Ok(x),
-            _ => Err(()),
-        }
-    }
-}
-
-impl TryFrom<IntValue> for i32 {
-    type Error = ();
-    fn try_from(v: IntValue) -> std::result::Result<i32, ()> {
-        match v {
-            IntValue::Signed(x) => Ok(x),
-            _ => Err(()),
-        }
-    }
-}
+pub type OperandValue = i64;
 
 #[cfg(test)]
 mod tests {

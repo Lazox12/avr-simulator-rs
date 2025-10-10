@@ -65,7 +65,7 @@ impl Instruction{
                 let result: OperandValue;
                 let mut name:String = "".to_string();
                 if( rresult.is_err()){
-                    result = OperandValue::new(1);
+                    result = 1;
                     name = "opcode:".to_string();
                     name+= self.raw_opcode.to_string().as_str();
                     name += &*"error: ".to_string();
