@@ -66,9 +66,9 @@ impl Inst {
         s+=&*self.opcode;
         s+="\" ,len:";
         s+= &*self.len.to_string();
-        s+=" ,name:\"";
-        s+=&*self.name;
-        s+="\" ,constraints: ";
+        s+=" ,name:Opcode::";
+        s+=&*self.name.to_uppercase();
+        s+=",constraints: ";
         if self.constraints.is_some() {
             s+="Some(&[";
             for c in self.constraints.as_ref().unwrap() {
@@ -102,6 +102,7 @@ fn main(){
     let out_dir = env::var_os("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("opcode.rs");
     let mut r:Vec<Inst> = vec![];
+    let mut instList:HashSet<String> = HashSet::new();
     for line in fs::read_to_string("src/opcode.def").unwrap().lines(){
         if line.starts_with("//") {
             continue;
@@ -149,6 +150,9 @@ fn main(){
             });
         print!("{}", v[2]);
         println!("{:?}", c);
+
+
+        instList.insert(v[2].to_string());
         c.iter_mut().for_each(|map: &mut ConstraintMap| {
             if(map.map >0){
                 return;
@@ -213,6 +217,14 @@ fn main(){
 }
 ");*/
     let mut s:String = String::from("");
+
+    s+="#[derive(Debug,Serialize,Clone)]\n";
+    s+="pub enum Opcode{\n";
+    instList.into_iter().for_each(|i| {
+        s+= &*(i.to_uppercase() + ",\n");
+    });
+    s+="}\n\n";
+
     s+="pub const Opcode_list:[RawInst;";
     s+= &*r.len().to_string();
     s+="]=[\n";

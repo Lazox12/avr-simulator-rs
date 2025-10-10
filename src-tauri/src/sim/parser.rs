@@ -105,7 +105,7 @@ mod tests{
         let mut iter = 1;
         for i in &out.unwrap()[65..183]{
             iter+=1;
-            if(RawInst::get_inst_from_id(i.opcode_id).unwrap().name.to_uppercase() != input[iter].split(" ").collect::<Vec<&str>>()[0]){
+            if(RawInst::get_inst_from_id(i.opcode_id).unwrap().name.to_string().to_uppercase() != input[iter].split(" ").collect::<Vec<&str>>()[0]){
                 println!("expected : {} got {:?}", input[iter].split(" ").collect::<Vec<&str>>()[0],RawInst::get_inst_from_id(i.opcode_id));
             }
         }

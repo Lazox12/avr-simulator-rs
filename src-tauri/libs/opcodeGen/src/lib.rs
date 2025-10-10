@@ -1,4 +1,6 @@
+use std::fmt;
 use serde::Serialize;
+use serde::Deserialize;
 
 
 #[derive(Debug,Clone,Serialize)]
@@ -12,7 +14,7 @@ pub struct ConstraintMap{
 pub struct RawInst{
     pub opcode:&'static str,
     pub len:i8,
-    pub name:&'static str,
+    pub name:Opcode,
     pub constraints:Option<&'static [ConstraintMap]>,
     pub bin_mask:u16,
     pub bin_opcode:u16,
@@ -33,7 +35,11 @@ impl RawInst{
 
 include!(concat!(env!("OUT_DIR"), "/opcode.rs"));
 
-
+impl fmt::Display for Opcode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
 
 #[cfg(test)]
 mod tests {

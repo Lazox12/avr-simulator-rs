@@ -132,7 +132,7 @@ impl Instruction{
 impl TryFrom<PartialInstruction> for Instruction {
     type Error = Error;
 
-    fn try_from(value:PartialInstruction) -> std::result::Result<Instruction, self::Error> { //todo
+    fn try_from(value:PartialInstruction) -> std::result::Result<Instruction, Error> { //todo
 
         let opcode = match RawInst::get_inst_from_id(value.opcode_id){
             None => {return Err(Error::OpcodeNotFound { opcode: value.opcode_id as u32 })}
@@ -183,7 +183,7 @@ impl From<Instruction> for PartialInstruction {
     fn from(value:Instruction) -> PartialInstruction {
         PartialInstruction{
             comment: value.comment,
-            operands: value.operands.map_or(None,|x:Vec<Operand>| Some(x.into_iter().map(|x1| {x1.map_string_from_value()}).collect())),          
+            operands: value.operands.map_or(None,|x:Vec<Operand>| Some(x.into_iter().map(|x1| {x1.map_string_from_value().or::<u8>(Ok(format!("Value Error:{}",x1))).unwrap()}).collect())),          
             address: value.address,
             opcode_id: value.opcode_id,
         }
