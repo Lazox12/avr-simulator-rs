@@ -1,3 +1,3 @@
 fn main() {
-    deviceParser::run().expect("TODO: panic message");
+    deviceParser::get_tree_map().expect("TODO: panic message");
 }
