@@ -10,11 +10,11 @@
     @for (inst of instructions;track inst.address){
         <tr>
         <td contenteditable>{{"0x"+inst.address.toString(16)}}</td>
-        <td [id]="'asm-table-col-'+inst.address" (mouseenter)="mouseEnter(getInstruction(inst.opcodeId),inst.address)" (mouseleave)="mouseLeave()" contenteditable>{{getInstruction(inst.opcodeId).name}}</td>
+        <td [id]="'asm-table-col-inst-'+inst.address" (mouseenter)="mouseInstEnter(getInstruction(inst.opcodeId),inst.address)" (mouseleave)="mouseLeave()" contenteditable>{{getInstruction(inst.opcodeId).name}}</td>
         @if (inst.operands != null) {
-            <td contenteditable>{{inst.operands.at(0)}}</td>
-            <td contenteditable>{{inst.operands.at(1)}}</td>
-            <td contenteditable>{{inst.operands.at(2)}}</td>
+            <td [id]="'asm-table-col-op1-'+inst.address" (mouseenter)="mouseRegEnter(,inst.address)" contenteditable>{{inst.operands.at(0) }}</td>
+            <td [id]="'asm-table-col-op2-'+inst.address" contenteditable>{{inst.operands.at(1)}}</td>
+            <td [id]="'asm-table-col-op3-'+inst.address" contenteditable>{{inst.operands.at(2)}}</td>
         } @else {
             <td></td>
             <td></td>

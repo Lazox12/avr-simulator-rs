@@ -21,9 +21,9 @@ impl From<&Element> for Module{
 }
 #[derive(Debug)]
 pub struct ModuleRegisterGroup{
-    caption:Option<String>,
-    name: String,
-    register: Vec<Register>
+    pub caption:Option<String>,
+    pub name: String,
+    pub register: Vec<Register>
 }
 impl From<&Element> for ModuleRegisterGroup{
     fn from(x:&Element) -> Self{

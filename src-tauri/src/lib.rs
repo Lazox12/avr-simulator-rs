@@ -10,21 +10,16 @@ mod sim;
 mod project;
 mod commands;
 
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 pub static APP_HANDLE: OnceLock<Mutex<AppHandle>> = OnceLock::new();
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[cfg(debug_assertions)] // only enable instrumentation in development builds
     let devtools = tauri_plugin_devtools::init();
-
+    deviceParser::get_tree_map().unwrap();
 
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![commands::get_instruction_list])
+        .invoke_handler(tauri::generate_handler![commands::get_instruction_list,commands::get_mcu_list])
         .setup(|app| {
             APP_HANDLE
                 .set(Mutex::new(app.app_handle().to_owned()))

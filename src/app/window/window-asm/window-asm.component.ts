@@ -23,6 +23,9 @@ type ConstraintMap = {
     map:number,
     constraints:String,
 }
+type RegInfo= {
+
+}
 
 
 @Component({
@@ -35,6 +38,7 @@ export class WindowAsmComponent {
     private hovertimeout :any|null = null;
 
     protected popupInst:RawInstruction|null = null;
+    protected popupReg: RegInfo|null = null;
     protected instructions : PartialInstruction[]|null = null;
     constructor() {
         console.log('WindowAsmComponent initialized');
@@ -68,7 +72,22 @@ export class WindowAsmComponent {
     }
 
 
-    mouseEnter(inst:RawInstruction,address:number):void{
+    mouseInstEnter(inst:RawInstruction,address:number):void{
+        this.hovertimeout = setTimeout(() => {
+            this.popupInst = inst;
+            let f = document.getElementById("asm-table-col-inst-"+address);
+            let pop = document.getElementById("asm-popup");
+            if(f===null || pop===null){
+                return;
+            }
+            let rect = f.getBoundingClientRect();
+            console.log(rect);
+            pop.style.top = (rect.top+rect.height) + "px";
+            pop.style.left = rect.left + "px";
+            pop.style.visibility = "visible";
+        }, 1500)
+    }
+    mouseRegEnter(inst:RawInstruction,address:number):void{
         this.hovertimeout = setTimeout(() => {
             this.popupInst = inst;
             let f = document.getElementById("asm-table-col-"+address);
