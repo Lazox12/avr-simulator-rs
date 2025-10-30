@@ -1,4 +1,9 @@
+use tauri::ipc::Invoke;
 use opcodeGen::RawInst;
+use crate::project::PROJECT;
+
+pub(crate) const HANDLER: fn(Invoke) -> bool = tauri::generate_handler![get_instruction_list,get_mcu_list,set_mcu];
+
 #[tauri::command]
 pub fn get_instruction_list() -> Option<Vec<RawInst>> {
     println!("test");
@@ -11,4 +16,9 @@ pub fn get_mcu_list() -> Option<Vec<&'static String>> {
         Ok(list) => Some(list),
         Err(_) => None,
     }
+}
+
+#[tauri::command]
+pub fn set_mcu(mcu:String) {
+    PROJECT.lock().unwrap().state.set_mcu(mcu).expect("TODO: panic message");
 }

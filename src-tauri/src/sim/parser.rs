@@ -63,7 +63,6 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instruction>>{
     
     for inst in &mut inst_list{
         inst.mach_registers()?;
-        inst.gen_comment();
     }
     Ok(inst_list)
 }

@@ -11,6 +11,7 @@ pub struct Operand{
     pub(crate) name: String,
     pub(crate) constraint:Constraint,
     pub(crate) value: OperandValue,
+    pub(crate) operand_info: Option<OperandInfo>,
 }
 impl Operand{
     pub(crate) fn map_value(mut value:u32, constraint: Constraint) ->Result<OperandValue>{ // todo std does not work
@@ -380,4 +381,11 @@ mod tests {
         assert_eq!(Operand::unsigned_to_signed(0b1111,4),-1);
 
     }
+}
+
+#[derive(Debug, Default, Clone, PartialEq,Serialize,Deserialize)]
+pub struct OperandInfo {
+    pub register_name:String,
+    pub register_mask:String,
+    pub description:String,
 }

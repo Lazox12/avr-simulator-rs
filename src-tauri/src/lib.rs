@@ -19,7 +19,7 @@ pub fn run() {
 
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![commands::get_instruction_list,commands::get_mcu_list])
+        .invoke_handler(commands::HANDLER)
         .setup(|app| {
             APP_HANDLE
                 .set(Mutex::new(app.app_handle().to_owned()))

@@ -59,12 +59,18 @@ pub enum Error {
     
     #[error("Invalid Value")]
     InvalidValue,
+    
+    #[error("Invalid mcu: {0}")]
+    InvalidMcu(String),
 
     #[error("Lock poisoned: {0}")]
     Poison(String),
     
     #[error("Tauri error: {0}")]
     TauriError(#[from] tauri::Error),
+    
+    #[error("xml tree error: {0}")]
+    XmlTreeError(#[from] deviceParser::Error)
 }
 
 impl<T> From<PoisonError<T>> for Error {

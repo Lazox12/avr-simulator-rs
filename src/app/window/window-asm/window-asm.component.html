@@ -10,27 +10,23 @@
     @for (inst of instructions;track inst.address){
         <tr>
         <td contenteditable>{{"0x"+inst.address.toString(16)}}</td>
-        <td [id]="'asm-table-col-inst-'+inst.address" (mouseenter)="mouseInstEnter(getInstruction(inst.opcodeId),inst.address)" (mouseleave)="mouseLeave()" contenteditable>{{getInstruction(inst.opcodeId).name}}</td>
-        @if (inst.operands != null) {
-            <td [id]="'asm-table-col-op1-'+inst.address" (mouseenter)="mouseRegEnter(,inst.address)" contenteditable>{{inst.operands.at(0) }}</td>
-            <td [id]="'asm-table-col-op2-'+inst.address" contenteditable>{{inst.operands.at(1)}}</td>
-            <td [id]="'asm-table-col-op3-'+inst.address" contenteditable>{{inst.operands.at(2)}}</td>
-        } @else {
-            <td></td>
-            <td></td>
-            <td></td>
+        <td [id]="'asm-table-col-1-'+inst.address" (mouseenter)="mouseEnter(printInstructionPopup(inst.opcodeId),inst.address,1)" (mouseleave)="mouseLeave()" contenteditable>{{getInstruction(inst.opcodeId).name}}</td>
+
+        @for (op of renderOperand(inst.operands)  ; track $index) {
+            @if (op.constraint=="-1"){
+                <td [id]="'asm-table-col-'+$index+2+'-'+inst.address"></td>
+            } @else {
+                <td [id]="'asm-table-col-'+$index+2+'-'+inst.address" (mouseenter)="mouseEnter(printOperandPopup(op),inst.address,3)" (mouseleave)="mouseLeave()" contenteditable>{{printOperandValue(op)}}</td>
+            }
         }
-        <td contenteditable>{{inst.comment}}</td>
+
+        <td [id]="'asm-table-col-4-'+inst.address" contenteditable>{{inst.comment}}</td>
         </tr>
     }
 </table>
 <div id="asm-popup" class="popup">
-    @if (popupInst!==null){
-        <h4>description: </h4>
-        <p>{{popupInst!.description}}</p>
-        <br>
-        <h4>operation: </h4>
-        <p>{{popupInst!.action}}</p>
+    @if (popupData!==null){
+        <p [innerHTML]="popupData"></p>
     }
 </div>
 <div style="height: 80px">

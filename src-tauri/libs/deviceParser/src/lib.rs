@@ -2,12 +2,10 @@ mod utils;
 mod r#struct;
 
 use std::collections::HashMap;
-use std::error::Error;
 use std::{fs, io};
 use std::fs::DirEntry;
 use std::io::ErrorKind;
 use std::path::Path;
-use std::str::FromStr;
 use xmltree::{Element, XMLNode};
 use r#struct::avr_device_file::AvrDeviceFile;
 use crate::r#struct::module::Register;
@@ -80,20 +78,20 @@ mod tests{
         let (res,time) = time_function(get_tree_map);
         info!("{:?}",time);
         info!("{:?}",res.unwrap().len());
-        
+
     }
-    
+
     #[test]
     fn register_map_test(){
         let res = get_register_map("Atmega328P".to_string().to_lowercase());
         info!("{:?}",res);
     }
-    
+
     #[test]
     fn get_mcu_list_test(){
         let res = get_mcu_list();
         info!("{:?}",res);
     }
-}
+} 
 
-
+pub type Error = xmltree::Error;

@@ -1,25 +1,28 @@
+use std::ops::Deref;
 use std::sync::Mutex;
 use crate::error::{Error, Result};
 use rusqlite::{Connection};
 use rusqlite::Error as SqlError;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 use crate::APP_HANDLE;
 use crate::sim::instruction::{Instruction, PartialInstruction};
 use tauri::{App,Emitter};
 pub static PROJECT: Mutex<Project> = Mutex::new(Project::new());
 
-
 pub struct Project {
     connection: Option<Connection>,
+    pub state: ProjectState,
 }
+
+//db
 impl Project {
     pub const fn new() -> Project {
-        Project {connection: None}
+        Project {connection: None, state: ProjectState::new() }
     }
     pub fn create(&mut self,path:&str) -> Result<bool>{
         if(std::fs::exists(path)?){
-            std::fs::remove_file(path)?;
+            return Err(Error::FileExists(path.to_string()));
         }
         self.open(path)?;
         self.create_table("instruction")
@@ -30,11 +33,13 @@ impl Project {
             return Err(Error::ProjectAlreadyOpened);
         }
         self.connection = Some(Connection::open(path)?);
-
-
-        APP_HANDLE.get().unwrap().lock()?
-            .emit("asm-update", self.get_instruction_list()?.into_iter().map(|x| PartialInstruction::from(x)).collect::<Vec<PartialInstruction>>())?;
-
+        
+        if(self.table_exists("instruction").is_err()){
+            self.create_table("instruction")?;
+        }else{
+            APP_HANDLE.get().unwrap().lock()?
+                .emit("asm-update", self.get_instruction_list()?.into_iter().map(|x| PartialInstruction::from(x)).collect::<Vec<PartialInstruction>>())?;
+        }
         Ok(true)
     }
     pub fn close(&mut self) -> Result<bool>{
@@ -96,14 +101,17 @@ impl Project {
             let comment_display = serde_json::from_str(&comment_json)
                 .map_err(|e| SqlError::UserFunctionError(Box::new(e)))?;
 
-            Ok(Instruction {
+            let mut i =Instruction {
                 address: row.get(0)?,
                 opcode_id: row.get(1)?,
                 raw_opcode: row.get(2)?,
                 operands,
                 comment: row.get(4)?,
                 comment_display,
-            })
+            };
+            self.state.mcu = Some("atmega328".to_string()); //todo
+            i.gen_comment(&self.state).map_err(|e| SqlError::UserFunctionError(Box::new(e)))?;
+            Ok(i)
         })?.collect::<std::result::Result<Vec<_>, _>>()?;
 
         Ok(instructions)
@@ -111,4 +119,25 @@ impl Project {
     }
 }
 
-
+#[derive(Serialize,Deserialize)]
+pub struct ProjectState{
+    pub mcu:Option<String>,  
+}
+//commands
+impl ProjectState{
+    pub const fn new() -> ProjectState{
+        ProjectState{mcu:None}
+    }
+    pub fn set_mcu(&mut self, mcu:String) -> Result<()>{
+        let device = deviceParser::get_mcu_list()?.into_iter().find(|x| {
+            **x==mcu
+        });
+        if(device.is_some()){
+            self.mcu= Some(device.unwrap().deref().parse().unwrap());
+            return Ok(())
+        }
+        Err(Error::InvalidMcu(mcu))
+        
+        
+    } 
+}

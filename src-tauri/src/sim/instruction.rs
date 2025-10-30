@@ -5,6 +5,7 @@ use crate::sim::display::Display;
 use opcodeGen::RawInst;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+use crate::project::ProjectState;
 
 #[derive(Debug,Serialize,Clone)]
 #[serde(rename_all = "camelCase")]
@@ -77,6 +78,7 @@ impl Instruction{
                     name,
                     constraint,
                     value:result,
+                    operand_info: None,
                 }
                 );
             })
@@ -124,8 +126,10 @@ impl Instruction{
     }
     
 
-    pub(crate) fn gen_comment(&mut self){
-        super::gen_comment::gen_comment(self);
+    pub(crate) fn gen_comment(&mut self,state:&ProjectState)->Result<()>{
+        super::gen_comment::gen_comment(self)?;
+        super::gen_comment::gen_operand_details(self,state)?;
+        Ok(())
     }
 }
 
@@ -139,31 +143,12 @@ impl TryFrom<PartialInstruction> for Instruction {
             Some(i) => i
         };
         let  comment_display = Display::decode(&*value.comment);
-        let mut operands:Option<Vec<Operand>>;
-        if value.operands.is_none(){
-            operands = None;
-        }
-        else {
-            operands = Some(vec![]);
-            if(value.operands.as_ref().unwrap().len() != opcode.constraints.unwrap().len()){
-                return Err(Error::InvalidOperandCount{expected:opcode.constraints.unwrap().len(), got:value.operands.unwrap().len()})
-            }
-            let mut iter = opcode.constraints.unwrap().iter();
-            operands = Some(value.operands
-                .unwrap()
-                .iter()
-                .map(|x| {
-                    let constraint = Constraint::from_str(&*String::from(iter.next().unwrap().constraint))?;
-                    Ok(Operand{name:"".to_string(),constraint,value:Operand::map_value_from_string(x, constraint)? })
-                })
-                .collect::<Result<Vec<Operand>>>()?);
 
-        }
         Ok(Instruction{
             comment:value.comment,
             comment_display,
             opcode_id:value.opcode_id,
-            operands,
+            operands:value.operands,
             address:value.address,
             raw_opcode:0
         })
@@ -174,7 +159,7 @@ impl TryFrom<PartialInstruction> for Instruction {
 #[serde(rename_all = "camelCase")]
 pub struct PartialInstruction{
     pub(crate) comment: String,
-    pub(crate) operands: Option<Vec<String>>,
+    pub(crate) operands: Option<Vec<Operand>>,
     pub(crate) address: u32,
     pub(crate) opcode_id:usize,
 }
@@ -183,7 +168,7 @@ impl From<Instruction> for PartialInstruction {
     fn from(value:Instruction) -> PartialInstruction {
         PartialInstruction{
             comment: value.comment,
-            operands: value.operands.map_or(None,|x:Vec<Operand>| Some(x.into_iter().map(|x1| {x1.map_string_from_value().or::<u8>(Ok(format!("Value Error:{}",x1))).unwrap()}).collect())),          
+            operands: value.operands,          
             address: value.address,
             opcode_id: value.opcode_id,
         }
