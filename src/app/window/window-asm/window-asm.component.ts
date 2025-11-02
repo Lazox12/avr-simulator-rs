@@ -78,10 +78,11 @@ export class WindowAsmComponent {
 
     }
     protected printOperandPopup(operand:Operand):String{
-        return `address: ${operand.value} <br>register mask: ${operand.value} <br>description: ${operand.operandInfo?.description}`;
+        return `value: ${operand.value.toString(16)} <br>register mask: ${operand.operandInfo?.registerMask} <br>description: ${operand.operandInfo?.description}`;
     }
     protected printOperandValue(op:Operand):String{
         if (op.operandInfo!=null){
+            console.log(op.operandInfo);
             return op.operandInfo.registerName
         }
 
@@ -201,10 +202,12 @@ export class WindowAsmComponent {
 
     mouseEnter(data:String,address:number,column:number):void{
         this.hovertimeout = setTimeout(() => {
+            console.log("test")
             this.popupData = data;
             let f = document.getElementById("asm-table-col-"+column+"-"+address);
             let pop = document.getElementById("asm-popup");
             if(f===null || pop===null){
+                console.error(data,address,column);
                 return;
             }
             let rect = f.getBoundingClientRect();

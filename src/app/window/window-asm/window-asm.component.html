@@ -14,9 +14,11 @@
 
         @for (op of renderOperand(inst.operands)  ; track $index) {
             @if (op.constraint=="-1"){
-                <td [id]="'asm-table-col-'+$index+2+'-'+inst.address"></td>
+                <td [id]="'asm-table-col-'+($index+2)+'-'+inst.address"></td>
+            } @else if (op.operandInfo ===null){
+                <td [id]="'asm-table-col-'+($index+2)+'-'+inst.address"  contenteditable>{{printOperandValue(op)}}</td>
             } @else {
-                <td [id]="'asm-table-col-'+$index+2+'-'+inst.address" (mouseenter)="mouseEnter(printOperandPopup(op),inst.address,3)" (mouseleave)="mouseLeave()" contenteditable>{{printOperandValue(op)}}</td>
+                <td [id]="'asm-table-col-'+($index+2)+'-'+inst.address" (mouseenter)="mouseEnter(printOperandPopup(op),inst.address,$index+2)" (mouseleave)="mouseLeave()" contenteditable>{{printOperandValue(op)}}</td>
             }
         }
 
