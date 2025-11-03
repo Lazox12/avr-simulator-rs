@@ -5,7 +5,7 @@ use opcodeGen::Opcode;
 use crate::sim::constraint::Constraint;
 use crate::sim::display::Display;
 use crate::sim::operand::{Operand, OperandInfo};
-use deviceParser::get_tree_map;
+use deviceParser::{get_register_map, get_tree_map};
 use crate::project::{Project, ProjectState, PROJECT};
 use crate::error::{Error, Result};
 
@@ -36,18 +36,23 @@ pub fn gen_operand_details(i: &mut Instruction,state:&ProjectState)->Result<()>{
                         if(mcu.is_none()){
                             return Err(Error::InvalidMcu("select mcu".to_string()));
                         }
-                        let tree = &get_tree_map()?[&mcu.unwrap()];
+                        let tree = get_register_map(mcu.unwrap())?;
+                        let reg_opt = tree.get(&(x.value as u64 +0x20));
+                        if reg_opt.is_none() {
+                            continue
+                        }
+                        let reg= reg_opt.unwrap();
                         let info = OperandInfo{
-                            register_name: "test1".to_string(),
-                            register_mask: "test2".to_string(),
-                            description: "test3".to_string(),
+                            register_name: reg.name.clone(),
+                            register_mask:serde_json::to_string(&reg.bitfields)?,
+                            description: reg.caption.clone().unwrap_or(reg.name.clone()),
                         };
                         x.operand_info = Some(info);
                         
-                        return Ok(())
+                        continue
                     }
                     _=>{
-                        return Ok(())
+                        continue
                     }
                 }
             };

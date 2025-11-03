@@ -22,7 +22,7 @@
             }
         }
 
-        <td [id]="'asm-table-col-4-'+inst.address" contenteditable>{{inst.comment}}</td>
+        <td [id]="'asm-table-col-4-'+inst.address" contenteditable>{{printComment(inst)}}</td>
         </tr>
     }
 </table>

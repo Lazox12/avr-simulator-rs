@@ -150,7 +150,7 @@ impl Operand{
                 let mut t = Operand::unsigned_to_signed(value, 7);
                 t*=2; // 16 bit wide addresses
                 if(t>=-64 && t<64){
-                    Ok(value as OperandValue)
+                    Ok(t as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("l: signed pc relative offset must be between  -64 to 63, got {}", value),address:0})
@@ -160,7 +160,7 @@ impl Operand{
                 let mut t = Operand::unsigned_to_signed(value, 12);
                 t*=2; // 16 bit wide addresses
                 if(t>=-2048 && t<2048){
-                    Ok(value as OperandValue)
+                    Ok(t as OperandValue)
                 }
                 else{
                     Err(Error::InvalidConstraintValue {err:format!("l: signed pc relative offset must be between  -2048 to 2047, got {}", value),address:0})
@@ -384,6 +384,7 @@ mod tests {
 }
 
 #[derive(Debug, Default, Clone, PartialEq,Serialize,Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OperandInfo {
     pub register_name:String,
     pub register_mask:String,

@@ -5,36 +5,37 @@ import {ListenerService} from "../../listener.service";
 import {invoke} from "@tauri-apps/api/core";
 
 type PartialInstruction={
-    comment: String,
+    comment: string,
+    commentDisplay:string,
     operands: Operand[]|null,
     address: number,
     opcodeId:number,
 }
 type RawInstruction = {
-    opcode:String,
+    opcode:string,
     len:number,
-    name:String,
+    name:string,
     constraints:ConstraintMap[]|null,
     bin_mask:number,
     bin_opcode:number,
-    action:String,
-    description:String,
+    action:string,
+    description:string,
 }
 type ConstraintMap = {
     map:number,
-    constraints:String,
+    constraints:string,
 }
 type Operand= {
-    name: String,
-    constraint:String,
+    name: string,
+    constraint:string,
     value: number,
     operandInfo: OperandInfo|null,
 
 }
 type OperandInfo = {
-    registerName:String,
-    registerMask:String,
-    description:String,
+    registerName:string,
+    registerMask:string,
+    description:string,
 }
 
 @Component({
@@ -46,7 +47,7 @@ type OperandInfo = {
 export class WindowAsmComponent {
     private hovertimeout :any|null = null;
 
-    protected popupData:String|null = null;
+    protected popupData:string|null = null;
     protected instructions : PartialInstruction[]|null = null;
     constructor() {
         console.log('WindowAsmComponent initialized');
@@ -70,17 +71,34 @@ export class WindowAsmComponent {
         }else{
             i = JSON.parse(x)
         }
-        return i[opcode_id];
+        let res = i.at(opcode_id);
+        if(res!==undefined){
+            return res;
+        }
+        if(opcode_id==999){
+            return {
+                action: "nothing",
+                bin_mask: 0xffff,
+                bin_opcode: -1,
+                constraints: null,
+                description: "not a valid instruction, probably a constant stored in flash",
+                len: -1,
+                name: "word",
+                opcode: ".word"
+
+            }
+        }
+        throw "error get_instruction_list";
     }
-    protected printInstructionPopup(opcode_id:number):String{
+    protected printInstructionPopup(opcode_id:number):string{
         let i = this.getInstruction(opcode_id);
         return `description: ${i.description}<br>action: ${i.action}`;
 
     }
-    protected printOperandPopup(operand:Operand):String{
+    protected printOperandPopup(operand:Operand):string{
         return `value: ${operand.value.toString(16)} <br>register mask: ${operand.operandInfo?.registerMask} <br>description: ${operand.operandInfo?.description}`;
     }
-    protected printOperandValue(op:Operand):String{
+    protected printOperandValue(op:Operand):string{
         if (op.operandInfo!=null){
             console.log(op.operandInfo);
             return op.operandInfo.registerName
@@ -195,12 +213,12 @@ export class WindowAsmComponent {
         localStorage.setItem('window-handler-active', 'asm');
         window.location.reload();
     }
-    static closeCallback(event:Event<String>){
+    static closeCallback(event:Event<string>){
         localStorage.removeItem('asm-data');
     }
 
 
-    mouseEnter(data:String,address:number,column:number):void{
+    mouseEnter(data:string,address:number,column:number):void{
         this.hovertimeout = setTimeout(() => {
             console.log("test")
             this.popupData = data;
@@ -249,8 +267,26 @@ export class WindowAsmComponent {
         (el as HTMLButtonElement).disabled = false;
     }
 
+    printComment(i:PartialInstruction):string|undefined{
+        switch (i.commentDisplay) {
+            case "None":
+                return "";
+            case "Bin":
+                return "0b"+parseInt(i.comment).toString(2);
+            case "Dec":
+                return parseInt(i.comment).toString(10);
+            case "Oct":
+                return "0c"+parseInt(i.comment).toString(8);
+            case "Hex":
+                return "0x"+parseInt(i.comment).toString(16);
+            case "String":
+                return i.comment;
+        }
+        return undefined;
+    }
+
     protected readonly console = console;
 }
 ListenerService.instance.subscribe<PartialInstruction[]>('asm-update', WindowAsmComponent.asmUpdateCallback);
-ListenerService.instance.subscribe<String>('tauri://close-requested', WindowAsmComponent.closeCallback);
+ListenerService.instance.subscribe<string>('tauri://close-requested', WindowAsmComponent.closeCallback);
 

@@ -48,11 +48,39 @@ pub fn get_register_map(device_name:String)->Result<HashMap<u64,&'static Registe
             t.modules.iter().for_each(|x| {
                 x.register_group.iter().for_each(|x1| {
                     x1.register.iter().for_each(|x2| {
-                        reg_map.insert(x2.offset,x2);
+                        match x2.size{
+                            1=>{
+                                reg_map.insert(x2.offset,x2);
+                            }   
+                            2=>{
+                                if(x2.size ==2){
+                                    let leaked1: &'static Register = Box::leak(Box::new(Register {
+                                        caption: x2.caption.clone(),
+                                        name: x2.name.clone() + "(H)",
+                                        offset: x2.offset,
+                                        size: 1,
+                                        initval: x2.initval,
+                                        bitfields: x2.bitfields.clone(),
+                                    }));
+                                    let leaked2: &'static Register = Box::leak(Box::new(Register {
+                                        caption:x2.caption.clone(),
+                                        name: x2.name.clone() + "(L)",
+                                        offset: x2.offset,
+                                        size: 1,
+                                        initval: x2.initval,
+                                        bitfields: x2.bitfields.clone(),
+                                    }));
+                                    
+                                    reg_map.insert(x2.offset+1, leaked1);
+                                    reg_map.insert(x2.offset, leaked2);
+                                }
+                            }
+                            _=>{}
+                        }
                     })
                 })
             });
-
+            
             Ok(reg_map)
         }
         None=>{

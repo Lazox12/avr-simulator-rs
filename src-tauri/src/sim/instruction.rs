@@ -31,7 +31,9 @@ impl Instruction{
         }
     }
     pub fn decode_from_opcode(opcode: u16) -> Result<Instruction>{
-        let inst = Self::match_raw_instruction_from_opcode(opcode)?;
+        let inst = Self::match_raw_instruction_from_opcode(opcode).unwrap_or_else(|x|{
+            999
+        });
         
         Ok(Instruction{
             comment: "".to_string(),
@@ -159,6 +161,7 @@ impl TryFrom<PartialInstruction> for Instruction {
 #[serde(rename_all = "camelCase")]
 pub struct PartialInstruction{
     pub(crate) comment: String,
+    pub(crate) comment_display: Display,
     pub(crate) operands: Option<Vec<Operand>>,
     pub(crate) address: u32,
     pub(crate) opcode_id:usize,
@@ -168,6 +171,7 @@ impl From<Instruction> for PartialInstruction {
     fn from(value:Instruction) -> PartialInstruction {
         PartialInstruction{
             comment: value.comment,
+            comment_display:value.comment_display,
             operands: value.operands,          
             address: value.address,
             opcode_id: value.opcode_id,

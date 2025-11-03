@@ -47,6 +47,7 @@ out.txt
 #tests
 /tests/arduino/main.elf
 /tests/arduino/main.hex
+/tests/arduino/main-1.hex
 /tests/arduino/main.s
 /tests/arduino/out.txt
 /tests/disassembly/out.txt

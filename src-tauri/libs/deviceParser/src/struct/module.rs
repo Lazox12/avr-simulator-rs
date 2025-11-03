@@ -1,4 +1,5 @@
 use xmltree::Element;
+use serde::Serialize;
 use crate::r#struct::device_property_group::PropertyValue;
 use crate::utils::find_childs;
 
@@ -36,6 +37,7 @@ impl From<&Element> for ModuleRegisterGroup{
 }
 #[derive(Debug)]
 pub struct Register{
+    pub caption:Option<String>,
     pub name: String,
     pub offset: u64,
     pub size: u64,
@@ -45,6 +47,7 @@ pub struct Register{
 impl From<&Element> for Register{
     fn from(x:&Element) -> Self{
         Register{
+            caption:x.attributes.get("caption").map(|x1| x1.to_string()),
             name: x.attributes["name"].to_string(),
             offset: u64::from_str_radix(x.attributes["offset"].to_string().strip_prefix("0x").unwrap(), 16).unwrap(),
             size: x.attributes["size"].to_string().parse().unwrap(),
@@ -53,7 +56,8 @@ impl From<&Element> for Register{
         }
     }
 }
-#[derive(Debug)]
+#[derive(Debug,Serialize,Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct BitField{
     pub caption: Option<String>,
     pub mask: u64,
