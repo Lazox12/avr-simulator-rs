@@ -2,7 +2,7 @@ use super::operand::{Operand, OperandValue};
 use crate::error::{Error, Result};
 use crate::sim::constraint::Constraint;
 use crate::sim::display::Display;
-use opcodeGen::RawInst;
+use opcodeGen::{Opcode, RawInst};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use crate::project::ProjectState;
@@ -56,38 +56,59 @@ impl Instruction{
         }
     }
     pub(crate) fn mach_registers(&mut self) ->Result<()>{
-        if self.get_raw_inst()?.constraints.is_none(){
-            return Ok(());
-        }
-        let r:Result<Vec<Operand>> = self.get_raw_inst()?.constraints
-            .unwrap()
-            .iter()
-            .map(|x| {
-                let constraint = Constraint::from_str(String::from(x.constraint).as_str())?;
-                let rresult = Operand::map_value(Instruction::map_register_number(Instruction::decode_val(x.map, self.raw_opcode), constraint), constraint);
-                let result: OperandValue;
-                let mut name:String = "".to_string();
-                if( rresult.is_err()){
-                    result = 1;
-                    name = "opcode:".to_string();
-                    name+= self.raw_opcode.to_string().as_str();
-                    name += &*"error: ".to_string();
-                    name += rresult.err().unwrap().to_string().as_str();
-                }else{
-                    result = rresult.unwrap();
-                }
-                return Ok(Operand{
-                    name,
-                    constraint,
-                    value:result,
-                    operand_info: None,
-                }
-                );
-            })
-            .collect();
 
-        self.operands = Some(r?);
-        Ok(())
+        match RawInst::get_inst_from_id(self.opcode_id) {
+            None => {
+                Err(Error::InvalidInstructionName(self.opcode_id as u32))
+            }
+            Some(RawInst{name:Opcode::CUSTOM_INST(_),..  }) => {
+                self.operands = Some(vec![Operand{
+                    name: "".to_string(),
+                    constraint: Constraint::h,
+                    value: self.raw_opcode.clone() as OperandValue,
+                    operand_info: None,
+                }]);
+                Ok(())
+            }
+            Some(i)=>{
+                if self.get_raw_inst()?.constraints.is_none(){
+                    return Ok(());
+                }
+                match i.constraints.unwrap().iter()
+                    .map(|x| {
+                        let constraint = Constraint::from_str(String::from(x.constraint).as_str())?;
+                        let rresult = Operand::map_value(Instruction::map_register_number(Instruction::decode_val(x.map, self.raw_opcode), constraint), constraint);
+                        let result: OperandValue;
+                        let mut name:String = "".to_string();
+                        if( rresult.is_err()){
+                            result = 1;
+                            name = "opcode:".to_string();
+                            name+= self.raw_opcode.to_string().as_str();
+                            name += &*"error: ".to_string();
+                            name += rresult.err().unwrap().to_string().as_str();
+                        }else{
+                            result = rresult.unwrap();
+                        }
+                        return Ok(Operand{
+                            name,
+                            constraint,
+                            value:result,
+                            operand_info: None,
+                        }
+                        );
+                    })
+                    .collect::<Result<Vec<Operand>>>()
+                {
+                    Ok(i)=>{
+                        self.operands = Some(i);
+                        Ok(())
+                    }
+                    Err(e)=>{
+                        Err(e)
+                    }
+                }
+            }
+        }
     }
     fn decode_val(mask: u32, opcode: u32) -> u32 {
         let mut result = 0;

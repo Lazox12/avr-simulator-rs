@@ -1,14 +1,7 @@
-
 <nav  class="header">
     <button (click)="setActive('home')">home</button>
     <button (click)="setActive('asm')">assembly</button>
     <button (click)="setActive('cpp')">cpp</button>
-
-    <select>
-        @for (mcu of mcuList;track mcu){
-            <option [value]="mcu">{{mcu}}</option>
-        }
-    </select>
 </nav>
 
 <!-- Window Area -->
@@ -29,3 +22,7 @@
         }
     }
 </div>
+<!--<div class="footer">
+    footer
+</div>
+-->

@@ -21,6 +21,16 @@ pub struct RawInst{
     pub action:&'static str,
     pub description:&'static str,
 }
+pub const CUSTOM_INST:RawInst=RawInst{
+    opcode: "",
+    len: 0,
+    name: Opcode::CUSTOM_INST(0),
+    constraints: None,
+    bin_mask: 0xff,
+    bin_opcode: 0x00,
+    action: "nothing",
+    description: "custom instruction (not executable)",
+};
 impl RawInst{
     pub fn get_inst_id_from_opcode(opcode:u16) ->Option<usize>{
         Opcode_list.iter().position(|i| {
@@ -28,7 +38,18 @@ impl RawInst{
         })
     }
     pub fn get_inst_from_id(id:usize)->Option<&'static RawInst>{
-        Opcode_list.get(id)
+        Opcode_list.get(id).or({
+            let mut i = CUSTOM_INST.clone();
+            i.name = Opcode::CUSTOM_INST(id as u32);
+            match id {
+                999=>{
+                    i.opcode= ".word";
+                }
+                _=>{}
+            }
+            Some(Box::leak(Box::new(i)))
+        })
+
     }
 }
 

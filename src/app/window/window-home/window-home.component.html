@@ -1,1 +1,8 @@
-<p>window-home works!</p>
+<div class="home">
+    <select>
+        <option [value]=""></option>
+        @for (mcu of mcuList;track mcu){
+            <option [value]="mcu">{{mcu}}</option>
+        }
+    </select>
+</div>

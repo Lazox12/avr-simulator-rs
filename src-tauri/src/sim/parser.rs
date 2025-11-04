@@ -3,7 +3,6 @@ use crate::error::Result;
 use std::fs;
 use std::io;
 use std::io::ErrorKind;
-use std::ops::Deref;
 use opcodeGen::RawInst;
 use crate::error::Error::{InvalidRecordType, NotImplemented};
 
@@ -45,17 +44,30 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instruction>>{
         }
 
     }
+    let mut continue_prev = false;
     let mut inst_list:Vec<Instruction> = vec![];
      for data in parsed_data.iter(){
          let mut i:usize =0;
+         if continue_prev{
+             continue_prev = false;
+             let mut inst = inst_list.pop().unwrap();
+             inst.raw_opcode+=((data.data[i+1] as u32)<<8)+data.data[i] as u32;
+             inst_list.push(inst);
+             i+=2;
+         }
          while i<=(data.len-2) as usize {
              let mut inst:Instruction = Instruction::decode_from_opcode(((data.data[i+1] as u16)<<8)+data.data[i] as u16)?;
              inst.address = data.address+i as u32;
              i+=2;
              if RawInst::get_inst_from_id(inst.opcode_id).unwrap().len ==2{
                  inst.raw_opcode= inst.raw_opcode<<16;
-                 inst.raw_opcode+=((data.data[i+1] as u32)<<8)+data.data[i] as u32;
-                 i+=2;
+                 if data.data.get(i).is_none() {
+                     continue_prev = true;
+
+                 }else {
+                     inst.raw_opcode+=((data.data[i+1] as u32)<<8)+data.data[i] as u32;
+                     i+=2;
+                 }
              }
              inst_list.push(inst);
          }

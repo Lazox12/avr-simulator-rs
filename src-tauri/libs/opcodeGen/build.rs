@@ -103,6 +103,7 @@ fn main(){
     let dest_path = Path::new(&out_dir).join("opcode.rs");
     let mut r:Vec<Inst> = vec![];
     let mut instList:HashSet<String> = HashSet::new();
+    instList.insert("CUSTOM_INST(u32)".to_string());
     for line in fs::read_to_string("src/opcode.def").unwrap().lines(){
         if line.starts_with("//") {
             continue;
@@ -152,7 +153,7 @@ fn main(){
         println!("{:?}", c);
 
 
-        instList.insert(v[2].to_string());
+        instList.insert(v[2].to_string().to_uppercase());
         c.iter_mut().for_each(|map: &mut ConstraintMap| {
             if(map.map >0){
                 return;
@@ -221,7 +222,7 @@ fn main(){
     s+="#[derive(Debug,Serialize,Clone)]\n";
     s+="pub enum Opcode{\n";
     instList.into_iter().for_each(|i| {
-        s+= &*(i.to_uppercase() + ",\n");
+        s+= &*(i + ",\n");
     });
     s+="}\n\n";
 

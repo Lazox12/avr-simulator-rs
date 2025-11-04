@@ -119,14 +119,15 @@ impl Project {
     }
 }
 
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize,Deserialize,Clone)]
 pub struct ProjectState{
+    pub name:Option<String>,
     pub mcu:Option<String>,  
 }
 //commands
 impl ProjectState{
     pub const fn new() -> ProjectState{
-        ProjectState{mcu:None}
+        ProjectState{ name: None, mcu:None}
     }
     pub fn set_mcu(&mut self, mcu:String) -> Result<()>{
         let device = deviceParser::get_mcu_list()?.into_iter().find(|x| {

@@ -16,8 +16,8 @@ type RawInstruction = {
     len:number,
     name:string,
     constraints:ConstraintMap[]|null,
-    bin_mask:number,
-    bin_opcode:number,
+    binMask:number,
+    binOpcode:number,
     action:string,
     description:string,
 }
@@ -78,12 +78,12 @@ export class WindowAsmComponent {
         if(opcode_id==999){
             return {
                 action: "nothing",
-                bin_mask: 0xffff,
-                bin_opcode: -1,
+                binMask: 0xffff,
+                binOpcode: -1,
                 constraints: null,
                 description: "not a valid instruction, probably a constant stored in flash",
                 len: -1,
-                name: "word",
+                name: ".word",
                 opcode: ".word"
 
             }

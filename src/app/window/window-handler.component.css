@@ -8,16 +8,31 @@
     left:1%;
     right:1%;
     top: 0;
-    position:fixed;
-    border: aqua 1px solid;
+    margin: 0;
+    position:sticky;
+    pointer-events: auto;
 }
 .window{
     text-align: center;
 
     left:1%;
     right:1%;
-    border: red 1px solid;
-    position: absolute;
+    #border: red 1px solid;
+    #position: absolute;
     top: 60px;
     z-index: -10;
+    pointer-events: auto;
+    flex: 1;              /* also fills inside window */
+    display: flex;
+    flex-direction: column;
+    #overflow-y: auto;
+}
+
+.footer{
+    pointer-events: auto;
+    text-align: center;
+    background: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
