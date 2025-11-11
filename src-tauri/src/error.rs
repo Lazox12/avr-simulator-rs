@@ -1,12 +1,12 @@
 
 use std::num::ParseIntError;
 use std::sync::PoisonError;
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use strum::ParseError;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug,thiserror::Error,Serialize)]
+#[derive(Debug,thiserror::Error)]
 pub enum Error {
 
     #[error("OpcodeNotFound found: {opcode:?}")]
@@ -77,5 +77,13 @@ pub enum Error {
 impl<T> From<PoisonError<T>> for Error {
     fn from(err: PoisonError<T>) -> Self {
         Error::Poison(err.to_string())
+    }
+}
+impl Serialize for Error {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer
+    {
+        serializer.serialize_str(&self.to_string())
     }
 }

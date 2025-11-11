@@ -32,11 +32,8 @@ pub fn gen_operand_details(i: &mut Instruction,state:&ProjectState)->Result<()>{
             for x in operands.into_iter(){
                 match x.constraint {
                     Constraint::p|Constraint::P=>{
-                        let mcu = state.mcu.clone();
-                        if(mcu.is_none()){
-                            return Err(Error::InvalidMcu("select mcu".to_string()));
-                        }
-                        let tree = get_register_map(mcu.unwrap())?;
+
+                        let tree = get_register_map(&state.mcu)?;
                         let reg_opt = tree.get(&(x.value as u64 +0x20));
                         if reg_opt.is_none() {
                             continue

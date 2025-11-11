@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "com.Lazox12.avr-simulator.app",
   "build": {
-    "beforeDevCommand": "npm run start",
+    "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist/avr-simulator-rs/browser"

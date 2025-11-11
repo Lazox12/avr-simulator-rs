@@ -41,7 +41,7 @@ pub fn get_tree(file:&DirEntry) -> Result<AvrDeviceFile,xmltree::Error>{
     Ok(a)
 }
 
-pub fn get_register_map(device_name:String)->Result<HashMap<u64,&'static Register>,xmltree::Error>{
+pub fn get_register_map(device_name:&String)->Result<HashMap<u64,&'static Register>,xmltree::Error>{
     match get_tree_map()?.get(device_name.as_str()){
         Some(t)=>{
             let mut reg_map = HashMap::<u64,&'static Register>::new();
@@ -111,7 +111,7 @@ mod tests{
 
     #[test]
     fn register_map_test(){
-        let res = get_register_map("Atmega328P".to_string().to_lowercase());
+        let res = get_register_map(&"Atmega328P".to_string().to_lowercase());
         info!("{:?}",res);
     }
 
