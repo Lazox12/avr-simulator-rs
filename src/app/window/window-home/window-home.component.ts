@@ -1,5 +1,5 @@
-import { Component,OnInit } from '@angular/core';
-import {invoke} from "@tauri-apps/api/core"
+import {Component, OnInit} from '@angular/core';
+import {execute} from "../../command.service";
 
 @Component({
   selector: 'app-window-home',
@@ -12,12 +12,7 @@ export class WindowHomeComponent implements OnInit{
         this.get_mcu_list()
     }
     protected mcuList:string[]|null = null;
-    private get_mcu_list(){
-        console.log("get_mcu_list");
-        invoke("get_mcu_list").then(data=>{
-            let data_new = data as Array<string>
-            //console.log(data_new);
-            this.mcuList = data_new.sort();
-        })
+    private async get_mcu_list(){
+        this.mcuList = await execute<Array<string>>("get_mcu_list");
     }
 }

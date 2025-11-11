@@ -1,3 +1,7 @@
 .home{
 
 }
+.property{
+    position: absolute;
+    display: ruby;
+}

@@ -10,7 +10,13 @@
     @for (inst of instructions;track inst.address){
         <tr>
         <td contenteditable>{{"0x"+inst.address.toString(16)}}</td>
-        <td [id]="'asm-table-col-1-'+inst.address" (mouseenter)="mouseEnter(printInstructionPopup(inst.opcodeId),inst.address,1)" (mouseleave)="mouseLeave()" contenteditable>{{getInstruction(inst.opcodeId).name}}</td>
+            <td
+                    [id]="'asm-table-col-1-'+inst.address"
+                    (mouseenter)="mouseEnter(printInstructionPopup(inst.opcodeId), inst.address, 1)"
+                    (mouseleave)="mouseLeave()"
+                    contenteditable>
+                {{ (getInstruction(inst.opcodeId) | async)?.name }}
+            </td>
 
         @for (op of renderOperand(inst.operands)  ; track $index) {
             @if (op.constraint=="-1"){

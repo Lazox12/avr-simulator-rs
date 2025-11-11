@@ -1,9 +1,8 @@
 import { Component} from '@angular/core';
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Event } from '@tauri-apps/api/event';
 import {ListenerService} from "../../listener.service";
-import {invoke} from "@tauri-apps/api/core";
-
+import {execute} from "../../command.service";
+import {CommonModule} from "@angular/common";
 type PartialInstruction={
     comment: string,
     commentDisplay:string,
@@ -42,7 +41,10 @@ type OperandInfo = {
     selector: 'app-window-asm',
     standalone: true,
     templateUrl: './window-asm.component.html',
-    styleUrl: './window-asm.component.css'
+    styleUrl: './window-asm.component.css',
+    imports:[
+        CommonModule,
+    ]
 })
 export class WindowAsmComponent {
     private hovertimeout :any|null = null;
@@ -58,16 +60,16 @@ export class WindowAsmComponent {
         this.instructions = JSON.parse(a);
         console.log(this.instructions);
     }
-    protected getInstruction(opcode_id:number):RawInstruction{
+    protected async getInstruction(opcode_id: number): Promise<RawInstruction>{
         let x= localStorage.getItem("instruction-list");
         let i:RawInstruction[];
         if (x ===null){
-            invoke("get_instruction_list").then(data=>{
-                localStorage.setItem("instruction-list",JSON.stringify(data));
-                localStorage.setItem('window-handler-active', 'asm');
-                window.location.reload();
-            })
-            throw "error get_instruction_list";
+            let a = await execute<RawInstruction[]>("get_instruction_list")
+            if(a!==null){
+                localStorage.setItem("instruction-list",JSON.stringify(a));
+                i = a;
+            }
+            i = [];
         }else{
             i = JSON.parse(x)
         }
@@ -90,8 +92,8 @@ export class WindowAsmComponent {
         }
         throw "error get_instruction_list";
     }
-    protected printInstructionPopup(opcode_id:number):string{
-        let i = this.getInstruction(opcode_id);
+    protected async printInstructionPopup(opcode_id:number):Promise<string>{
+        let i = await this.getInstruction(opcode_id);
         return `description: ${i.description}<br>action: ${i.action}`;
 
     }
@@ -218,9 +220,12 @@ export class WindowAsmComponent {
     }
 
 
-    mouseEnter(data:string,address:number,column:number):void{
-        this.hovertimeout = setTimeout(() => {
+    mouseEnter(data:Promise<string>|string,address:number,column:number):void{
+        this.hovertimeout = setTimeout(async () => {
             console.log("test")
+            if(typeof data !== "string"){
+                data = await data;
+            }
             this.popupData = data;
             let f = document.getElementById("asm-table-col-"+column+"-"+address);
             let pop = document.getElementById("asm-popup");

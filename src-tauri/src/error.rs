@@ -1,11 +1,12 @@
 
 use std::num::ParseIntError;
 use std::sync::PoisonError;
+use serde::Serialize;
 use strum::ParseError;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug,thiserror::Error)]
+#[derive(Debug,thiserror::Error,Serialize)]
 pub enum Error {
 
     #[error("OpcodeNotFound found: {opcode:?}")]
