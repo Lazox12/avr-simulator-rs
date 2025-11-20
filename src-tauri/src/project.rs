@@ -1,87 +1,114 @@
+use std::fmt;
+use std::fmt::Display;
 use std::ops::Deref;
 use std::sync::Mutex;
 use crate::error::{Error, Result};
 use rusqlite::{Connection};
 use rusqlite::Error as SqlError;
+use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ValueRef};
 use serde::{Deserialize, Serialize};
+use strum::{EnumIter, IntoEnumIterator};
 use tauri::AppHandle;
 use crate::APP_HANDLE;
 use crate::sim::instruction::{Instruction, PartialInstruction};
 use tauri::{App,Emitter};
-use crate::error::Error::ProjectNotOpened;
 
 pub static PROJECT: Mutex<Project> = Mutex::new(Project::new());
+
+#[derive(Debug, EnumIter,Clone)]
+pub enum Tables {
+    instruction,
+    project
+}
+impl Display for Tables {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", format!("{:?}", self))
+    }
+}
 
 pub struct Project {
     connection: Option<Connection>,
     pub state: Option<ProjectState>,
 }
 
+
 //db
 impl Project {
     pub const fn new() -> Project {
         Project {connection: None, state: None }
     }
-    pub fn create(&mut self,path:&str) -> Result<bool>{
+    pub fn create(&mut self,path:&str) -> Result<()>{
         if(std::fs::exists(path)?){
             return Err(Error::FileExists(path.to_string()));
         }
         self.open(path)?;
-        self.create_table("instruction")
+
+        Tables::iter().map(|t|{
+            self.create_table(t)
+        }).collect::<Result<()>>()
         
     }
     pub fn get_state(&mut self) -> Result<&mut ProjectState> {
         match self.state {
             Some(ref mut state) => Ok(state),
             None => {
-                Err(ProjectNotOpened)
+                Err(Error::ProjectNotOpened)
             }
         }
     }
-    pub fn open(&mut self, path:&str) -> Result<bool>{
+    pub fn open(&mut self, path:&str) -> Result<()>{
         if(self.connection.is_some()){
             return Err(Error::ProjectAlreadyOpened);
         }
         self.connection = Some(Connection::open(path)?);
-        
-        if(self.table_exists("instruction").is_err()){
-            self.create_table("instruction")?;
-        }else{
-            APP_HANDLE.get().unwrap().lock()?
-                .emit("asm-update", self.get_instruction_list()?.into_iter().map(|x| PartialInstruction::from(x)).collect::<Vec<PartialInstruction>>())?;
-        }
-        Ok(true)
+        Tables::iter().map(|t|{
+            if(self.table_exists(t.clone()).is_err()){
+                self.create_table(t)?;
+            }
+            Ok(())
+        }).collect::<Result<()>>()?;
+        self.state = Some(*self.get_project()?);
+        APP_HANDLE.get().unwrap().lock()?
+            .emit("asm-update", self.get_instruction_list()?.into_iter().map(|x| PartialInstruction::from(x)).collect::<Vec<PartialInstruction>>())?;
+
+        APP_HANDLE.get().unwrap().lock()?
+            .emit("project-update",self.get_project()?)?;
+        Ok(())
     }
-    pub fn close(&mut self) -> Result<bool>{
+    pub fn close(&mut self) -> Result<()>{
         self.connection = None;
 
         APP_HANDLE.get().unwrap().lock()?
             .emit("asm-update", ())?;
 
-        Ok(true)
+        Ok(())
     }
-    
+    pub fn save(&mut self) -> Result<()>{
+    self.is_open()?;
+    self.insert_project()?;
+        Ok(())
+    }
     pub fn is_open(&self) -> Result<()>{
         if(self.connection.is_some()){
             return Ok(());
         }
         Err(Error::ProjectNotOpened)
     }
-    pub fn create_table(&mut self,name:&str) -> Result<bool>{
+    pub fn create_table(&mut self,name:Tables) -> Result<()>{
         self.is_open()?;
-        let query = std::fs::read_to_string("sql/".to_owned() +name+".sql")?;
+        let query = std::fs::read_to_string(format!("sql/{:?}.sql", name))?;
         self.connection.as_ref().unwrap().execute(&*query, ())?;
-        Ok(true)
+        Ok(())
     }
-    pub fn table_exists(&mut self,name:&str) -> Result<String>{
+    pub fn table_exists(&self,name:Tables) -> Result<String>{
         self.is_open()?;
         let mut stmt = self.connection.as_ref().unwrap().prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?")?;
 
-        let r:String =stmt.query_one(&[name], |x|  x.get(0))?;
+        let r:String =stmt.query_one([name.to_string()], |x|  x.get(0))?;
         Ok(r)
     }
     pub fn insert_instruction_list(&mut self,inst:&Vec<Instruction>) -> Result<bool>{
-        self.table_exists("instruction")?;
+        self.table_exists(Tables::instruction)?;
         let tx = self.connection.as_mut().unwrap().transaction()?;
         {
         let mut stmt = tx.prepare("INSERT INTO instruction (address,opcode,RawOpcode,operands,comment,commentDisplay) VALUES (?,?,?,?,?,?)")?;
@@ -100,9 +127,9 @@ impl Project {
         Ok(true)
     }
     pub fn get_instruction_list(&mut self) -> Result<Vec<Instruction>>{
-        self.table_exists("instruction")?;
+        self.table_exists(Tables::instruction)?;
         let mut stmt = self.connection.as_ref().unwrap().prepare("SELECT * FROM instruction")?;
-        let mut instructions = stmt.query_map([], |row| {
+        let instructions = stmt.query_map([], |row| {
             let operands_json: String = row.get(3)?;
             let operands = serde_json::from_str(&operands_json)
                 .map_err(|e| SqlError::UserFunctionError(Box::new(e)))?;
@@ -122,9 +149,11 @@ impl Project {
 
             Ok(i)
         })?.collect::<std::result::Result<Vec<_>, _>>()?;
-
         match self.state {
             Some(ref state) => {
+                if(state.mcu.is_empty()){
+                    return Ok(instructions);
+                }
                 instructions.into_iter().map(|mut x| {
                     x.gen_comment(&state)?;
                     Ok(x)
@@ -134,6 +163,35 @@ impl Project {
                 Err(Error::ProjectNotOpened)
             }
         }
+    }
+
+    pub fn get_project(&mut self) -> Result<Box<ProjectState>> { //                self.connection.as_ref().unwrap().prepare("INSERT INTO project (text) VALUES (?)")?
+        self.table_exists(Tables::project)?;
+        let mut stmt = self.connection.as_ref().unwrap().prepare("SELECT * FROM project")?;
+        let proj = match stmt.query_one([], |row| {
+            Ok(ProjectState::from(row.get(0)?))
+        }){
+            Ok(project_state) => Ok(project_state),
+            Err(SqlError::QueryReturnedNoRows) =>{
+                let mut instert_stmt = self.connection.as_ref().unwrap().prepare("INSERT INTO project (text) VALUES (?)")?;
+                let proj = ProjectState::default();
+                let r = instert_stmt.execute([serde_json::to_string(&proj)?])?;
+                if(r !=1) {
+                    return Err(Error::ProjectError("querry returned more than 1 row"))
+                }
+                Ok(proj)
+            },
+            Err(e) => {
+                Err(e)
+            }
+        }?;
+        Ok(Box::from(proj))
+    }
+    pub fn insert_project(&mut self) -> Result<()> {
+        self.table_exists(Tables::project)?;
+        let mut stmt = self.connection.as_ref().unwrap().prepare("UPDATE project SET text =?")?;
+        stmt.execute([serde_json::to_string(&self.state.clone())?])?;
+        Ok(())
     }
 }
 
@@ -154,4 +212,9 @@ impl ProjectState{
         }
         Err(Error::InvalidMcu(mcu))
     } 
+}
+impl FromSql for ProjectState {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        serde_json::from_str::<ProjectState>(value.as_str()?).map_err(|e| FromSqlError::Other(Box::new(e)))
+    }
 }

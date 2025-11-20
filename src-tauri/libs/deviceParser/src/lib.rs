@@ -14,7 +14,7 @@ static mut TREE_MAP:Option<HashMap<String,AvrDeviceFile>> = None;
 #[allow(static_mut_refs)]
 pub fn get_tree_map() ->Result<&'static HashMap<String,AvrDeviceFile>,xmltree::Error>{
     if(unsafe{ TREE_MAP.is_none()}){
-        let files = std::fs::read_dir(Path::new(env!("CARGO_MANIFEST_DIR")).join("atdf")).unwrap();
+        let files = std::fs::read_dir(Path::new(env!("CARGO_MANIFEST_DIR")).join("atdf"))?;
         let mut map = HashMap::new();
         for file in files{
             let dir_entry = file?;

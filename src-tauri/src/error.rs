@@ -7,7 +7,7 @@ use strum::ParseError;
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug,thiserror::Error)]
-pub enum Error {
+pub enum Error{
 
     #[error("OpcodeNotFound found: {opcode:?}")]
     OpcodeNotFound {opcode:u32},
@@ -71,7 +71,10 @@ pub enum Error {
     TauriError(#[from] tauri::Error),
     
     #[error("xml tree error: {0}")]
-    XmlTreeError(#[from] deviceParser::Error)
+    XmlTreeError(#[from] deviceParser::Error),
+    
+    #[error("Project Handler Error: {0}")]
+    ProjectError(&'static str)
 }
 
 impl<T> From<PoisonError<T>> for Error {

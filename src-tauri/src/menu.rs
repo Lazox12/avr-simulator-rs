@@ -23,6 +23,9 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
     let close_menu = MenuItemBuilder::new("Close")
         .id("close")
         .build(app)?;
+    let save_menu = MenuItemBuilder::new("Save")
+        .id("save")
+        .build(app)?;
     // my custom app submenu
     let app_submenu = SubmenuBuilder::new(app, "file")
         .item(&new_menu)
@@ -30,6 +33,7 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
         .separator()
         .item(&close_menu)
         .item(&import_menu)
+        .item(&save_menu)
         .separator()
         .services()
         .separator()
@@ -141,6 +145,9 @@ pub fn setup_menu(app:  &App) -> Result<(),Box<dyn Error>> {
             }
             val if val == close_menu.id() =>{
                 PROJECT.lock().unwrap().close().unwrap();
+            }
+            val if val == save_menu.id() => {
+                PROJECT.lock().unwrap().save().unwrap();
             }
             val =>{
                 eprint!("unknown id handler {:?}",val);
