@@ -56,7 +56,17 @@ impl Project {
             }
         }
     }
-    pub fn open(&mut self, path:&str) -> Result<()>{
+    pub fn open(&mut self,path:&str) -> Result<()>{
+        match self.open_db(path){
+            Ok(t)=>{
+                Ok(t)
+            }
+            Err(e)=>{
+                self.close()
+            }
+        }
+    }
+    fn open_db(&mut self, path:&str) -> Result<()>{
         if(self.connection.is_some()){
             return Err(Error::ProjectAlreadyOpened);
         }
@@ -81,6 +91,8 @@ impl Project {
         APP_HANDLE.get().unwrap().lock()?
             .emit("asm-update", ())?;
 
+        APP_HANDLE.get().unwrap().lock()?
+            .emit("project-update", ProjectState::default())?;
         Ok(())
     }
     pub fn save(&mut self) -> Result<()>{
@@ -199,6 +211,7 @@ impl Project {
 pub struct ProjectState{
     pub name:String,
     pub mcu:String,
+    pub freq:u32,
 }
 //commands
 impl ProjectState{

@@ -1,12 +1,12 @@
 use tauri::ipc::Invoke;
 use opcodeGen::RawInst;
-use crate::project::{ProjectState, PROJECT};
+use crate::project::{Project, ProjectState, PROJECT};
 use crate::error::{Result};
 
 pub(crate) const HANDLER: fn(Invoke) -> bool = tauri::generate_handler![
     get_instruction_list,
     get_mcu_list,
-    set_mcu,
+    set_project_data,
     get_project_info
 ];
 
@@ -21,9 +21,9 @@ pub fn get_mcu_list() -> Result<Vec<&'static String>> {
 }
 
 #[tauri::command]
-pub fn set_mcu(mcu:String) ->Result<()>{
+pub fn set_project_data(project:ProjectState) ->Result<()>{
 
-    PROJECT.lock()?.get_state()?.set_mcu(mcu)?;
+    PROJECT.lock()?.state = Some(project);
     Ok(())
 }
 
