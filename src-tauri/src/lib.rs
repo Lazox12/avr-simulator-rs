@@ -4,7 +4,6 @@ use tauri::{AppHandle, Manager};
 use crate::project::PROJECT;
 
 mod error;
-mod menu;
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 mod sim;
 mod project;
@@ -24,7 +23,7 @@ pub fn run() {
             APP_HANDLE
                 .set(Mutex::new(app.app_handle().to_owned()))
                 .unwrap();
-            menu::setup_menu(app)
+            Ok(())
         });
 
     #[cfg(debug_assertions)]

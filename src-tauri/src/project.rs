@@ -119,7 +119,7 @@ impl Project {
         let r:String =stmt.query_one([name.to_string()], |x|  x.get(0))?;
         Ok(r)
     }
-    pub fn insert_instruction_list(&mut self,inst:&Vec<Instruction>) -> Result<bool>{
+    pub fn insert_instruction_list(&mut self,inst:&Vec<Instruction>) -> Result<()>{
         self.table_exists(Tables::instruction)?;
         let tx = self.connection.as_mut().unwrap().transaction()?;
         {
@@ -136,7 +136,7 @@ impl Project {
         }
         }
         tx.commit()?;
-        Ok(true)
+        Ok(())
     }
     pub fn get_instruction_list(&mut self) -> Result<Vec<Instruction>>{
         self.table_exists(Tables::instruction)?;
