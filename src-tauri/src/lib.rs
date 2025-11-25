@@ -1,17 +1,25 @@
 use std::cell::OnceCell;
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Mutex, MutexGuard, OnceLock};
+use anyhow::anyhow;
 use tauri::{AppHandle, Manager};
 use crate::project::PROJECT;
+use error::Result;
 
 mod error;
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 mod sim;
 mod project;
 mod commands;
+mod macros;
 
-pub static APP_HANDLE: OnceLock<Mutex<AppHandle>> = OnceLock::new();
+static APP_HANDLE: OnceLock<Mutex<AppHandle>> = OnceLock::new();
+
+pub fn get_app_handle() -> Result<MutexGuard<'static, AppHandle>> {
+    APP_HANDLE.get().unwrap().lock().map_err(|e| anyhow!("Poison Error:{}",e))
+}
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+
     #[cfg(debug_assertions)] // only enable instrumentation in development builds
     let devtools = tauri_plugin_devtools::init();
     deviceParser::get_tree_map().unwrap();

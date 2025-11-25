@@ -53,3 +53,5 @@ out.txt
 /tests/disassembly/out.txt
 /tests/disassembly/main.hex
 /tests/disassembly/main.elf
+
+*.spro

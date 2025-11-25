@@ -5,6 +5,7 @@ use crate::sim::display::Display;
 use opcodeGen::{Opcode, RawInst};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+use anyhow::anyhow;
 use crate::project::ProjectState;
 
 #[derive(Debug,Serialize,Clone)]
@@ -26,7 +27,7 @@ impl Instruction{
     }
     fn get_raw_inst(&self)->Result<&RawInst>{
         match RawInst::get_inst_from_id(self.opcode_id){
-            None => Err(Error::OpcodeNotFound{ opcode: self.opcode_id as u32 }),
+            None => Err(anyhow!(Error::OpcodeNotFound{ opcode: self.opcode_id as u32 })),
             Some(i) => Ok(i)
         }
     }
@@ -48,7 +49,7 @@ impl Instruction{
     fn match_raw_instruction_from_opcode(opcode: u16) -> Result<usize>{
         match RawInst::get_inst_id_from_opcode(opcode){
             None => {
-                Err(Error::OpcodeNotFound{opcode: opcode as u32 })
+                Err(anyhow!(Error::OpcodeNotFound{opcode: opcode as u32 }))
             }
             Some(i) => {
                 Ok(i)
@@ -59,7 +60,7 @@ impl Instruction{
 
         match RawInst::get_inst_from_id(self.opcode_id) {
             None => {
-                Err(Error::InvalidInstructionName(self.opcode_id as u32))
+                Err(anyhow!(Error::InvalidInstructionName(self.opcode_id as u32)))
             }
             Some(RawInst{name:Opcode::CUSTOM_INST(_),..  }) => {
                 self.operands = Some(vec![Operand{

@@ -1,8 +1,9 @@
 use super::instruction::{Instruction, PartialInstruction};
-use crate::error::Result;
+use crate::error::{Result,Error};
 use std::fs;
 use std::io;
 use std::io::ErrorKind;
+use anyhow::anyhow;
 use opcodeGen::RawInst;
 use crate::error::Error::{InvalidRecordType, NotImplemented};
 
@@ -37,10 +38,10 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instruction>>{
             0=>{parsed_data.push(RawData{data, len: byte_count, address: address+address_mul});}
             1=>{break}
             2=>{address_mul = (u128::from_str_radix(&line[9..9 + (2 * byte_count) as usize], 16)? * 16) as u32 }
-            3=>{return Err(NotImplemented {err: "record type 3 not implemented".parse().unwrap() });}
-            4=>{return Err(NotImplemented {err: "record type 4 not implemented".parse().unwrap() });}
-            5=>{return Err(NotImplemented {err: "record type 5 not implemented".parse().unwrap() });}
-            _=>{return Err(InvalidRecordType {err:rec_type.to_string()});}
+            3=>{return Err(anyhow!(NotImplemented {err: "record type 3 not implemented".parse()? }));}
+            4=>{return Err(anyhow!(NotImplemented {err: "record type 4 not implemented".parse()? }));}
+            5=>{return Err(anyhow!(NotImplemented {err: "record type 5 not implemented".parse()? }));}
+            _=>{return Err(anyhow!(InvalidRecordType {err:rec_type.to_string()}));}
         }
 
     }
@@ -80,7 +81,12 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instruction>>{
 }
 
 pub(crate) fn parse_vec(inst :Vec<PartialInstruction>)->Result<Vec<Instruction>>{
-    inst.into_iter().map(|x| Instruction::try_from(x)).collect()
+    let a :std::result::Result<Vec<Instruction>,Error> = inst.into_iter()
+        .map(|x| Instruction::try_from(x)).collect();
+    match a{
+        Ok(a) => Ok(a),
+        Err(e)=>Err(anyhow!(Error::from(e)))
+    }
 }
 fn calculate_checksum(line:&str) -> Result<bool>{
     let checksum = u32::from_str_radix(&line[line.len()-2 ..],16)?;

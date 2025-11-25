@@ -1,7 +1,8 @@
 use std::fmt;
 use std::fmt::Display;
 use std::ops::Deref;
-use std::sync::Mutex;
+use std::sync::{Mutex, MutexGuard};
+use anyhow::{anyhow, Context};
 use crate::error::{Error, Result};
 use rusqlite::{Connection};
 use rusqlite::Error as SqlError;
@@ -9,11 +10,14 @@ use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ValueRef};
 use serde::{Deserialize, Serialize};
 use strum::{EnumIter, IntoEnumIterator};
 use tauri::AppHandle;
-use crate::APP_HANDLE;
+use crate::{get_app_handle};
 use crate::sim::instruction::{Instruction, PartialInstruction};
 use tauri::{App,Emitter};
 
 pub static PROJECT: Mutex<Project> = Mutex::new(Project::new());
+pub fn get_project()->Result<MutexGuard<'static, Project>> {
+    PROJECT.lock().map_err(|e| anyhow!("Poison Error :{}",e))
+}
 
 #[derive(Debug, EnumIter,Clone)]
 pub enum Tables {
@@ -39,7 +43,7 @@ impl Project {
     }
     pub fn create(&mut self,path:&str) -> Result<()>{
         if(std::fs::exists(path)?){
-            return Err(Error::FileExists(path.to_string()));
+            return Err(anyhow!(Error::FileExists(path.to_string())));
         }
         self.open(path)?;
 
@@ -52,7 +56,7 @@ impl Project {
         match self.state {
             Some(ref mut state) => Ok(state),
             None => {
-                Err(Error::ProjectNotOpened)
+                Err(anyhow!(Error::ProjectNotOpened))
             }
         }
     }
@@ -68,7 +72,7 @@ impl Project {
     }
     fn open_db(&mut self, path:&str) -> Result<()>{
         if(self.connection.is_some()){
-            return Err(Error::ProjectAlreadyOpened);
+            return Err(anyhow!(Error::ProjectAlreadyOpened));
         }
         self.connection = Some(Connection::open(path)?);
         Tables::iter().map(|t|{
@@ -78,21 +82,17 @@ impl Project {
             Ok(())
         }).collect::<Result<()>>()?;
         self.state = Some(*self.get_project()?);
-        APP_HANDLE.get().unwrap().lock()?
-            .emit("asm-update", self.get_instruction_list()?.into_iter().map(|x| PartialInstruction::from(x)).collect::<Vec<PartialInstruction>>())?;
+        get_app_handle()?.emit("asm-update", self.get_instruction_list()?.into_iter().map(|x| PartialInstruction::from(x)).collect::<Vec<PartialInstruction>>())?;
 
-        APP_HANDLE.get().unwrap().lock()?
-            .emit("project-update",self.get_project()?)?;
+        get_app_handle()?.emit("project-update",self.get_project()?)?;
         Ok(())
     }
     pub fn close(&mut self) -> Result<()>{
         self.connection = None;
 
-        APP_HANDLE.get().unwrap().lock()?
-            .emit("asm-update", ())?;
+        get_app_handle()?.emit("asm-update", ())?;
 
-        APP_HANDLE.get().unwrap().lock()?
-            .emit("project-update", ProjectState::default())?;
+        get_app_handle()?.emit("project-update", ProjectState::default())?;
         Ok(())
     }
     pub fn save(&mut self) -> Result<()>{
@@ -104,7 +104,7 @@ impl Project {
         if(self.connection.is_some()){
             return Ok(());
         }
-        Err(Error::ProjectNotOpened)
+        Err(anyhow!(Error::ProjectNotOpened))
     }
     pub fn create_table(&mut self,name:Tables) -> Result<()>{
         self.is_open()?;
@@ -172,7 +172,7 @@ impl Project {
                 }).collect::<Result<Vec<Instruction>>>()
             }
             None => {
-                Err(Error::ProjectNotOpened)
+                Err(anyhow!(Error::ProjectNotOpened))
             }
         }
     }
@@ -189,7 +189,7 @@ impl Project {
                 let proj = ProjectState::default();
                 let r = instert_stmt.execute([serde_json::to_string(&proj)?])?;
                 if(r !=1) {
-                    return Err(Error::ProjectError("querry returned more than 1 row"))
+                    return Err(anyhow!(Error::ProjectError("querry returned more than 1 row")))
                 }
                 Ok(proj)
             },
@@ -207,7 +207,7 @@ impl Project {
     }
 }
 
-#[derive(Serialize,Deserialize,Clone,Default)]
+#[derive(Debug,Serialize,Deserialize,Clone,Default)]
 pub struct ProjectState{
     pub name:String,
     pub mcu:String,
@@ -223,7 +223,7 @@ impl ProjectState{
             self.mcu= device.unwrap().deref().parse().unwrap();
             return Ok(())
         }
-        Err(Error::InvalidMcu(mcu))
+        Err(anyhow!(Error::InvalidMcu(mcu)))
     } 
 }
 impl FromSql for ProjectState {

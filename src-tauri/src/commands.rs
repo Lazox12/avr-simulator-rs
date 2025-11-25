@@ -1,8 +1,11 @@
+use tauri::Error;
 use tauri::ipc::Invoke;
 use opcodeGen::RawInst;
-use crate::project::{Project, ProjectState, PROJECT};
+use crate::project::{get_project, Project, ProjectState, PROJECT};
 use crate::error::{Result};
 use crate::sim::parser::parse_hex;
+use crate::wrap_anyhow;
+
 
 pub(crate) const HANDLER: fn(Invoke) -> bool = tauri::generate_handler![
     get_instruction_list,
@@ -16,39 +19,39 @@ pub(crate) const HANDLER: fn(Invoke) -> bool = tauri::generate_handler![
     menu_save
 ];
 
-#[tauri::command]
-pub fn get_instruction_list() -> Vec<RawInst> {
-    Vec::from(opcodeGen::Opcode_list)
-}
 
-#[tauri::command]
-pub fn get_mcu_list() -> Result<Vec<&'static String>> {
+wrap_anyhow!(get_instruction_list() -> Vec<RawInst> {
+    Ok(Vec::from(opcodeGen::Opcode_list))
+});
+
+
+wrap_anyhow!(get_mcu_list() -> Vec<&'static String> {
     Ok(deviceParser::get_mcu_list()?)
-}
+});
 
-#[tauri::command]
-pub fn set_project_data(project:ProjectState) ->Result<()>{
 
-    PROJECT.lock()?.state = Some(project);
+wrap_anyhow!(set_project_data(project:ProjectState) ->(){
+
+    get_project()?.state = Some(project);
     Ok(())
-}
-
-#[tauri::command]
-pub fn get_project_info() -> Result<ProjectState> {
-    Ok(PROJECT.lock()?.get_state()?.clone())
-}
+});
 
 
-#[tauri::command]
-pub fn menu_new(file:String)->Result<()>{
-    PROJECT.lock()?.create(&*file.to_string())
-}
-#[tauri::command]
-pub fn menu_open(file:String)->Result<()>{
-    PROJECT.lock()?.open(&*file.to_string())
-}
-#[tauri::command]
-pub fn menu_import(file:String)->Result<()>{
+wrap_anyhow!(get_project_info() -> ProjectState {
+    get_project()?.get_state().cloned()
+});
+
+
+
+wrap_anyhow!(menu_new(file:String)->(){
+    get_project()?.create(&*file.to_string())
+});
+
+wrap_anyhow!(menu_open(file:String)->(){
+    get_project()?.open(&*file.to_string())
+});
+
+wrap_anyhow!(menu_import(file:String)->(){
     let result = parse_hex(file)?;
 
     result.iter().for_each(|i| {
@@ -63,13 +66,13 @@ pub fn menu_import(file:String)->Result<()>{
             None => println!("{:#x}:{1}, opcode: {2:#x} ,", i.address, RawInst::get_inst_from_id(i.opcode_id).unwrap().name, i.raw_opcode)
         }
     });
-    PROJECT.lock()?.insert_instruction_list(&result)
-}
-#[tauri::command]
-pub fn menu_close()->Result<()>{
-    PROJECT.lock()?.close()
-}
-#[tauri::command]
-pub fn menu_save()->Result<()>{
-    PROJECT.lock()?.save()
-}
+    get_project()?.insert_instruction_list(&result)
+});
+
+wrap_anyhow!(menu_close()->(){
+    get_project()?.close()
+});
+
+wrap_anyhow!(menu_save()->(){
+    get_project()?.save()
+});

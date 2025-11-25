@@ -1,10 +1,12 @@
 
 use std::num::ParseIntError;
 use std::sync::PoisonError;
+use anyhow::anyhow;
 use serde::{Serialize, Serializer};
 use strum::ParseError;
+use crate::error::Error::ProjectError;
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = anyhow::Result<T>;
 
 #[derive(Debug,thiserror::Error)]
 pub enum Error{
