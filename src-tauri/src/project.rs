@@ -45,7 +45,7 @@ impl Project {
         if(std::fs::exists(path)?){
             return Err(anyhow!(Error::FileExists(path.to_string())));
         }
-        self.open(path)?;
+        self.open_conn(path)?;
 
         Tables::iter().map(|t|{
             self.create_table(t)
@@ -66,7 +66,8 @@ impl Project {
                 Ok(t)
             }
             Err(e)=>{
-                self.close()
+                self.close()?;
+                Err(e)
             }
         }
     }
@@ -74,7 +75,7 @@ impl Project {
         if(self.connection.is_some()){
             return Err(anyhow!(Error::ProjectAlreadyOpened));
         }
-        self.connection = Some(Connection::open(path)?);
+        self.open_conn(path)?;
         Tables::iter().map(|t|{
             if(self.table_exists(t.clone()).is_err()){
                 self.create_table(t)?;
@@ -85,6 +86,10 @@ impl Project {
         get_app_handle()?.emit("asm-update", self.get_instruction_list()?.into_iter().map(|x| PartialInstruction::from(x)).collect::<Vec<PartialInstruction>>())?;
 
         get_app_handle()?.emit("project-update",self.get_project()?)?;
+        Ok(())
+    }
+    fn open_conn(&mut self,path:&str) -> Result<()> {
+        self.connection = Some(Connection::open(path)?);
         Ok(())
     }
     pub fn close(&mut self) -> Result<()>{
@@ -108,7 +113,7 @@ impl Project {
     }
     pub fn create_table(&mut self,name:Tables) -> Result<()>{
         self.is_open()?;
-        let query = std::fs::read_to_string(format!("sql/{:?}.sql", name))?;
+        let query = std::fs::read_to_string(format!("{}/sql/{:?}.sql",env!("CARGO_MANIFEST_DIR"), name))?;
         self.connection.as_ref().unwrap().execute(&*query, ())?;
         Ok(())
     }
