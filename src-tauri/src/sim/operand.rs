@@ -1,5 +1,7 @@
 use std::fmt;
 use std::fmt::{write, Display, Formatter, LowerHex};
+use std::ops::Index;
+use std::slice::SliceIndex;
 use std::str::FromStr;
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
@@ -370,6 +372,8 @@ fn pointer_into_constraint_z(val:&str) ->Result<OperandValue>{
 }
 
 pub type OperandValue = i64;
+
+
 
 #[cfg(test)]
 mod tests {

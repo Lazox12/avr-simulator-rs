@@ -25,11 +25,8 @@ impl Instruction{
     pub fn new(comment: String, opcode_id: usize, operands: Vec<Operand>) -> Instruction{
         Instruction{comment, comment_display: Display::None, opcode_id,operands: Some(operands),address:0,raw_opcode:0}
     }
-    fn get_raw_inst(&self)->Result<&RawInst>{
-        match RawInst::get_inst_from_id(self.opcode_id){
-            None => Err(anyhow!(Error::OpcodeNotFound{ opcode: self.opcode_id as u32 })),
-            Some(i) => Ok(i)
-        }
+    pub fn get_raw_inst(&self)->Result<&RawInst>{
+        RawInst::get_inst_from_id(self.opcode_id)
     }
     pub fn decode_from_opcode(opcode: u16) -> Result<Instruction>{
         let inst = Self::match_raw_instruction_from_opcode(opcode).unwrap_or_else(|x|{
@@ -58,11 +55,8 @@ impl Instruction{
     }
     pub(crate) fn mach_registers(&mut self) ->Result<()>{
 
-        match RawInst::get_inst_from_id(self.opcode_id) {
-            None => {
-                Err(anyhow!(Error::InvalidInstructionName(self.opcode_id as u32)))
-            }
-            Some(RawInst{name:Opcode::CUSTOM_INST(_),..  }) => {
+        match self.get_raw_inst()? {
+            RawInst{name:Opcode::CUSTOM_INST(_),..  } => {
                 self.operands = Some(vec![Operand{
                     name: "".to_string(),
                     constraint: Constraint::h,
@@ -71,7 +65,7 @@ impl Instruction{
                 }]);
                 Ok(())
             }
-            Some(i)=>{
+            i=>{
                 if self.get_raw_inst()?.constraints.is_none(){
                     return Ok(());
                 }
@@ -158,14 +152,11 @@ impl Instruction{
 }
 
 impl TryFrom<PartialInstruction> for Instruction {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(value:PartialInstruction) -> std::result::Result<Instruction, Error> { //todo
+    fn try_from(value:PartialInstruction) -> std::result::Result<Instruction, anyhow::Error> { //todo
 
-        let opcode = match RawInst::get_inst_from_id(value.opcode_id){
-            None => {return Err(Error::OpcodeNotFound { opcode: value.opcode_id as u32 })}
-            Some(i) => i
-        };
+        let opcode =RawInst::get_inst_from_id(value.opcode_id)?;
         let  comment_display = Display::decode(&*value.comment);
 
         Ok(Instruction{

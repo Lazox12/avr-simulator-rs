@@ -1,4 +1,5 @@
 use std::fmt;
+use anyhow::anyhow;
 use serde::Serialize;
 use serde::Deserialize;
 
@@ -37,25 +38,43 @@ pub enum CustomOpcodes{
     EMPTY=1000
 
 }
+impl TryFrom<usize> for CustomOpcodes{
+    type Error = anyhow::Error;
+
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
+        match value{
+            999 => Ok(CustomOpcodes::WORD),
+            998 => Ok(CustomOpcodes::REMINDER),
+            1000 => Ok(CustomOpcodes::EMPTY),
+            _ => Err(anyhow!("Opcode {} not found", value))
+        }
+    }
+}
 impl RawInst{
     pub fn get_inst_id_from_opcode(opcode:u16) ->Option<usize>{
         Opcode_list.iter().position(|i| {
             opcode & i.bin_mask == i.bin_opcode
         })
     }
-    pub fn get_inst_from_id(id:usize)->Option<&'static RawInst>{
-        Opcode_list.get(id).or({
-            let mut i = CUSTOM_INST.clone();
-            i.name = Opcode::CUSTOM_INST(id as u32);
-            match id {
-                999=>{
-                    i.opcode= ".word";
-                }
-                _=>{}
+    pub fn get_inst_from_id(id:usize)->Result<&'static RawInst,anyhow::Error>{
+        let opcode = Opcode_list.get(id);
+        if opcode.is_some(){
+            return Ok(opcode.unwrap())
+        }
+        let mut i = CUSTOM_INST.clone();
+        i.name = Opcode::CUSTOM_INST(id as u32);
+        match CustomOpcodes::try_from(id)? {
+            CustomOpcodes::WORD=>{
+                i.opcode = ".word"
             }
-            Some(Box::leak(Box::new(i)))
-        })
-
+            CustomOpcodes::REMINDER=>{
+                i.opcode = ".reminder"
+            }
+            CustomOpcodes::EMPTY=>{
+                i.opcode = ".empty"
+            }
+        }
+        Ok(Box::leak(Box::new(i)))
     }
 }
 

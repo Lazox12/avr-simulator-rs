@@ -81,12 +81,9 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instruction>>{
 }
 
 pub(crate) fn parse_vec(inst :Vec<PartialInstruction>)->Result<Vec<Instruction>>{
-    let a :std::result::Result<Vec<Instruction>,Error> = inst.into_iter()
-        .map(|x| Instruction::try_from(x)).collect();
-    match a{
-        Ok(a) => Ok(a),
-        Err(e)=>Err(anyhow!(Error::from(e)))
-    }
+    inst.into_iter()
+        .map(|x| Instruction::try_from(x)).collect()
+    
 }
 fn calculate_checksum(line:&str) -> Result<bool>{
     let checksum = u32::from_str_radix(&line[line.len()-2 ..],16)?;

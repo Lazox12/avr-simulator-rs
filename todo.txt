@@ -1,2 +1,2 @@
-sim,
+sim, regs: SREG,EIND,RAMPZ,RAMPX,RAMPY,RAMPD,PC,SP,MCUCR size (CALL,EICALL), next instruction size (CPSE),has EIND reg (EIJMP,EICALL),fuse lock byte (ELPM),archtecture(lds),WDR
 powerup delay,
