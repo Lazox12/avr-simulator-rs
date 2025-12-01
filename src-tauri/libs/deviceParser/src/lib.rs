@@ -7,7 +7,6 @@ use std::fs::DirEntry;
 use std::io::ErrorKind;
 use std::path::Path;
 use xmltree::{Element, XMLNode};
-use r#struct::avr_device_file::AvrDeviceFile;
 use crate::r#struct::module::Register;
 use build_print::*;
 static mut TREE_MAP:Option<HashMap<String,AvrDeviceFile>> = None;
@@ -123,3 +122,4 @@ mod tests{
 } 
 
 pub type Error = xmltree::Error;
+pub type AvrDeviceFile= crate::r#struct::avr_device_file::AvrDeviceFile;

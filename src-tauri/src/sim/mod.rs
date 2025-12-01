@@ -4,3 +4,4 @@ pub mod operand;
 pub mod constraint;
 mod gen_comment;
 mod display;
+mod memory;

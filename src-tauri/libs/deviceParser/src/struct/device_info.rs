@@ -6,7 +6,7 @@ use super::device_interrupt::Interrupt;
 use super::device_peripherals::Module;
 use super::device_property_group::PropertyGroup;
 
-#[derive(Debug)]
+#[derive(Debug,Default)]
 pub struct Device{
     pub name: String,
     pub architecture: String, //todo should be enum

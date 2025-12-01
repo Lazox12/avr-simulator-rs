@@ -43,6 +43,7 @@ impl FromStr for Endianess{
 pub struct MemorySegment{
     pub start:u64,
     pub size:u64,
+    pub name:String,
     pub data_type:String, //todo should be enum
     pub access:Option<Access>,
     pub page_size:Option<u64>,
@@ -59,6 +60,7 @@ impl From<&Element> for MemorySegment {
             page_size: x.attributes.get("pagesize").map(|t| {u64::from_str_radix(t.to_string().strip_prefix("0x").unwrap(), 16).unwrap()}),
             exec: x.attributes.get("exec").map(|t| {match t.as_str() {"1"=>{true},"0"=>{false} _ => {panic!("err1")} }}),
             external: x.attributes.get("external").map(|t| {match t.as_str() {"true"=>{true},"false"=>{false} _ => {panic!("err")} }}),
+            name:x.attributes["name"].to_string(),
         }
     }
 }
