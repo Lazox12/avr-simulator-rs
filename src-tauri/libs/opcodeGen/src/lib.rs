@@ -31,6 +31,12 @@ pub const CUSTOM_INST:RawInst=RawInst{
     action: "nothing",
     description: "custom instruction (not executable)",
 };
+pub enum CustomOpcodes{
+    WORD=999,
+    REMINDER=998,
+    EMPTY=1000
+
+}
 impl RawInst{
     pub fn get_inst_id_from_opcode(opcode:u16) ->Option<usize>{
         Opcode_list.iter().position(|i| {

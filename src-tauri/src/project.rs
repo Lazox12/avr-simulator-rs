@@ -22,7 +22,8 @@ pub fn get_project()->Result<MutexGuard<'static, Project>> {
 #[derive(Debug, EnumIter,Clone)]
 pub enum Tables {
     instruction,
-    project
+    project,
+    eeprom
 }
 impl Display for Tables {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -83,7 +84,12 @@ impl Project {
             Ok(())
         }).collect::<Result<()>>()?;
         self.state = Some(*self.get_project()?);
-        get_app_handle()?.emit("asm-update", self.get_instruction_list()?.into_iter().map(|x| PartialInstruction::from(x)).collect::<Vec<PartialInstruction>>())?;
+        get_app_handle()?
+            .emit("asm-update", 
+          self.get_instruction_list()?
+                .into_iter()
+                .map(|x| PartialInstruction::from(x))
+                .collect::<Vec<PartialInstruction>>())?;
 
         get_app_handle()?.emit("project-update",self.get_project()?)?;
         Ok(())
@@ -208,6 +214,34 @@ impl Project {
         self.table_exists(Tables::project)?;
         let mut stmt = self.connection.as_ref().unwrap().prepare("UPDATE project SET text =?")?;
         stmt.execute([serde_json::to_string(&self.state.clone())?])?;
+        Ok(())
+    }
+    pub fn get_eeprom_data(&mut self) -> Result<Vec<u8>> {
+        self.table_exists(Tables::eeprom)?;
+        let mut stmt = self.connection.as_ref().unwrap().prepare("SELECT * FROM eeprom")?;
+        match stmt.query_one([],|row| {
+            let data:String=row.get(0)?;
+            Ok(data.into_bytes())
+        }){
+            Ok(data) => Ok(data),
+            Err(SqlError::QueryReturnedNoRows) =>{
+                let mut insert_stmt = self.connection.as_ref().unwrap().prepare("INSERT INTO eeprom SET data = '' ")?;
+                let r = insert_stmt.execute([])?;
+                if(r !=1) {
+                    return Err(anyhow!(Error::ProjectError("querry returned more than 1 rows")))
+                }
+                drop(stmt);
+                drop(insert_stmt);
+                self.get_eeprom_data()
+            }
+            Err(e) => {Err(anyhow!(e))}
+        }
+
+    }
+    pub fn set_eeprom_data(&mut self, data:Vec<u8>) -> Result<()> {
+        self.table_exists(Tables::eeprom)?;
+        let mut stmt = self.connection.as_ref().unwrap().prepare("UPDATE eeprom SET data =?")?;
+        stmt.execute([String::from_utf8(data)?])?;
         Ok(())
     }
 }

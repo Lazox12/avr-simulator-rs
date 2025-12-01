@@ -2,9 +2,10 @@ use std::sync::Mutex;
 use anyhow::anyhow;
 use crate::error::Result;
 use deviceParser::AvrDeviceFile;
+use crate::sim::instruction::Instruction;
 
 pub struct Memory {
-    flash:Vec<u8>,
+    flash:Vec<Instruction>,
     data:DataMemory,
     eeprom: Vec<u8>,
 }
@@ -12,16 +13,12 @@ impl Memory {
     pub fn new() -> Memory {
         Memory {flash: Vec::new(),data:DataMemory::new(),eeprom:Vec::new()}
     }
-    pub fn init(&mut self, atdf:&'static AvrDeviceFile, flash_data:Option<Vec<u8>>, eeprom_data:Option<Vec<u8>>) ->Result<()> {
-        if(flash_data.is_some()) {
-            self.flash = flash_data.unwrap();
-        }
-        if (eeprom_data.is_some()) {
-            self.eeprom = eeprom_data.unwrap();
-        }
+    pub fn init(&mut self, atdf:&'static AvrDeviceFile, flash_data:Vec<Instruction>, eeprom_data:Vec<u8>) ->Result<()> {
+        self.flash = flash_data;
+        self.eeprom = eeprom_data;
         let address_space = atdf.devices.address_spaces.iter().find(|x| {x.id=="prog"}).unwrap();
         let eeprom_space = atdf.devices.address_spaces.iter().find(|x| {x.id=="eeprom"}).unwrap();
-        self.flash.resize(address_space.size as usize, 0u8);
+        self.flash.resize((address_space.size/2) as usize, Instruction::new("empty space",998));
         self.eeprom.resize(eeprom_space.size as usize, 0xffu8);
         self.data.init(&atdf)?;
         Ok(())
