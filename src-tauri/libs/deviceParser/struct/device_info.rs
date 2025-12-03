@@ -1,5 +1,7 @@
+use quote::{quote, ToTokens};
+use quote::__private::TokenStream;
 use xmltree::Element;
-use crate::utils::{find_child, find_childs};
+use crate::utils::{find_child, find_childs, to_ident};
 use super::device_address_space::AddressSpace;
 use super::device_interface::Interface;
 use super::device_interrupt::Interrupt;
@@ -55,5 +57,60 @@ impl From<&Element> for Variant{
             vcc_min: element.attributes["vccmin"].to_string().parse().unwrap(),
             vcc_max: element.attributes["vccmax"].to_string().parse().unwrap(),
         }
+    }
+}
+impl ToTokens for Device {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let name = &self.name;
+        let architecture = &self.architecture;
+        let family = &self.family;
+        let address_spaces = &self.address_spaces;
+        let peripherals = &self.peripherals;
+        let interrupts = &self.interrupts;
+        let interfaces = &self.interfaces;
+        let propery_groups = &self.propery_groups;
+
+        tokens.extend(quote! {
+            crate::r#struct::device_info::Device {
+                name: #name.to_string(),
+                architecture: #architecture.to_string(),
+                family: #family.to_string(),
+                address_spaces: vec![#( #address_spaces ),*],
+                peripherals: vec![#( #peripherals ),*],
+                interrupts: vec![#( #interrupts ),*],
+                interfaces: vec![#( #interfaces ),*],
+                propery_groups: vec![#( #propery_groups ),*],
+            }
+        });
+    }
+}
+
+impl ToTokens for Variant {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let order_code = &self.order_code;
+        let temp_min = self.temp_min;
+        let temp_max = self.temp_max;
+        let max_speed = self.max_speed;
+        let package = &self.package;
+        let vcc_min = self.vcc_min;
+        let vcc_max = self.vcc_max;
+
+        let pinout = match &self.pinout {
+            Some(p) => quote! { Some(#p.to_string()) },
+            None => quote! { None },
+        };
+
+        tokens.extend(quote! {
+            crate::r#struct::device_info::Variant {
+                order_code: #order_code.to_string(),
+                temp_min: #temp_min,
+                temp_max: #temp_max,
+                max_speed: #max_speed,
+                pinout: #pinout,
+                package: #package.to_string(),
+                vcc_min: #vcc_min,
+                vcc_max: #vcc_max,
+            }
+        });
     }
 }

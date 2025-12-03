@@ -1,7 +1,9 @@
 use std::str::FromStr;
+use proc_macro2::{ Span, TokenStream};
+use quote::{quote, ToTokens};
 use xmltree::Element;
 use crate::utils::{find_child, find_childs};
-
+use syn::Ident;
 #[derive(Debug)]
 pub struct AddressSpace{
     pub memory_segments:Vec<MemorySegment>,
@@ -75,6 +77,83 @@ impl Access{
             "R" => Some(Access::R),
             "RW" => Some(Access::RW),
             _ => None,
+        }
+    }
+}
+impl ToTokens for AddressSpace {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let memory_segments = &self.memory_segments;
+        let endianess = &self.endianess;
+        let name = &self.name;
+        let id = &self.id;
+        let start = self.start;
+        let size = self.size;
+
+        tokens.extend(quote! {
+            crate::r#struct::device_address_space::AddressSpace {
+                memory_segments: vec![#( #memory_segments ),*],
+                endianess: #endianess,
+                name: #name.to_string(),
+                id: #id.to_string(),
+                start: #start,
+                size: #size,
+            }
+        });
+    }
+}
+
+impl ToTokens for Endianess {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            Endianess::Big => tokens.extend(quote! { crate::r#struct::device_address_space::Endianess::Big }),
+            Endianess::Little => tokens.extend(quote! { crate::r#struct::device_address_space::Endianess::Little }),
+        }
+    }
+}
+
+impl ToTokens for MemorySegment {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let start = self.start;
+        let size = self.size;
+        let name = &self.name;
+        let data_type = &self.data_type;
+        let access = match &self.access {
+            Some(a) => quote! { Some(#a) },
+            None => quote! { None },
+        };
+        let page_size = match self.page_size {
+            Some(p) => quote! { Some(#p) },
+            None => quote! { None },
+        };
+        let exec = match self.exec {
+            Some(e) => quote! { Some(#e) },
+            None => quote! { None },
+        };
+        let external = match self.external {
+            Some(e) => quote! { Some(#e) },
+            None => quote! { None },
+        };
+
+        tokens.extend(quote! {
+            crate::r#struct::device_address_space::MemorySegment {
+                start: #start,
+                size: #size,
+                name: #name.to_string(),
+                data_type: #data_type.to_string(),
+                access: #access,
+                page_size: #page_size,
+                exec: #exec,
+                external: #external,
+            }
+        });
+    }
+}
+
+impl ToTokens for Access {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            Access::R => tokens.extend(quote! { crate::r#struct::device_address_space::Access::R }),
+            Access::RW => tokens.extend(quote! { crate::r#struct::device_address_space::Access::RW }),
         }
     }
 }

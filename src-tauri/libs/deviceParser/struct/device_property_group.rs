@@ -1,7 +1,9 @@
 use std::str::FromStr;
+use proc_macro2::{ Span, TokenStream};
+use quote::{quote, ToTokens};
 use xmltree::Element;
 use crate::utils::find_childs;
-
+use syn::Ident;
 #[derive(Debug)]
 pub struct PropertyGroup{
     pub name: String,
@@ -46,6 +48,43 @@ impl From<&String> for PropertyValue{
                 Ok(v) => PropertyValue::Number(v),
                 Err(_)=> PropertyValue::String(x.to_string())
             },
+        }
+    }
+}
+impl ToTokens for PropertyGroup {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let name = &self.name;
+        let properties = &self.properties;
+
+        tokens.extend(quote! {
+            crate::r#struct::device_property_group::PropertyGroup {
+                name: #name.to_string(),
+                properties: vec![#( #properties ),*],
+            }
+        });
+    }
+}
+
+impl ToTokens for Property {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let name = &self.name;
+        let value = &self.value;
+
+        tokens.extend(quote! {
+            crate::r#struct::device_property_group::Property {
+                name: #name.to_string(),
+                value: #value,
+            }
+        });
+    }
+}
+
+impl ToTokens for PropertyValue {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        match self {
+            PropertyValue::Number(n) => tokens.extend(quote! { crate::r#struct::device_property_group::PropertyValue::Number(#n) }),
+            PropertyValue::Vec(v) => tokens.extend(quote! { crate::r#struct::device_property_group::PropertyValue::Vec(vec![#( #v ),*]) }),
+            PropertyValue::String(s) => tokens.extend(quote! { crate::r#struct::device_property_group::PropertyValue::String(#s.to_string()) }),
         }
     }
 }
