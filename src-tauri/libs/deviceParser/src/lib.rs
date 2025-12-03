@@ -7,7 +7,7 @@ use std::fs::DirEntry;
 use std::io::ErrorKind;
 use std::path::Path;
 use xmltree::{Element, XMLNode};
-use crate::r#struct::module::Register;
+pub use crate::r#struct::module::Register;
 use build_print::*;
 static mut TREE_MAP:Option<HashMap<String,AvrDeviceFile>> = None;
 #[allow(static_mut_refs)]
@@ -22,14 +22,7 @@ pub fn get_tree_map() ->Result<&'static HashMap<String,AvrDeviceFile>,xmltree::E
         unsafe { TREE_MAP = Some(map);}
     }
     
-    unsafe{match TREE_MAP.as_ref() {
-        Some(map) => {
-            Ok(&map)
-        }
-        None => {
-            Err(xmltree::Error::from(io::Error::new(ErrorKind::Other, "failed to get tree map")))
-        }
-    }
+    unsafe{TREE_MAP.as_ref().ok_or(xmltree::Error::from(io::Error::new(ErrorKind::Other, "failed to get tree map")))
     }
 }
 

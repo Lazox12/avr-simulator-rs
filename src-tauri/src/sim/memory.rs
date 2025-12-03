@@ -10,6 +10,11 @@ pub struct Memory {
     pub data:DataMemory,
     pub eeprom: Vec<u8>,
 }
+impl Default for Memory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Memory {
     pub fn new() -> Memory {
         Memory {flash: Vec::new(),data:DataMemory::new(),eeprom:Vec::new()}

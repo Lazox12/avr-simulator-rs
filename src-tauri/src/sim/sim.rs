@@ -1,20 +1,30 @@
 use anyhow::anyhow;
-use deviceParser::{get_tree_map, AvrDeviceFile};
+use rusqlite::fallible_iterator::Iterator;
+use deviceParser::{get_tree_map, AvrDeviceFile, Register};
 use opcodeGen::{CustomOpcodes, Opcode, RawInst};
 use crate::sim::memory::Memory;
 use crate::error::Result;
 use crate::project::PROJECT;
 use crate::sim::instruction::Instruction;
-use crate::sim::operand::Operand;
+use crate::sim::register::{CommonRegisters};
+use crate::sim::sim::RamSize::Size16;
 
-struct Sim{
+enum RamSize {
+    Size16,
+    Size24,
+}
+impl Default for RamSize {
+    fn default() -> Self {
+        Size16
+    }
+}
+#[derive(Default)]
+pub struct Sim{
     pub memory: Memory,
-
+    registers: CommonRegisters,
+    ram_size: RamSize,
 }
 impl Sim {
-    pub fn new() -> Sim {
-        Sim{memory: Memory::new()}
-    }
     pub fn init(&mut self) ->Result<()>{
         let atdf = get_tree_map()?.get(&PROJECT.lock().unwrap().get_project()?.mcu);
         if(atdf.is_none()){
@@ -34,7 +44,7 @@ impl Sim {
             Ok(())
         }).collect::<Result<()>>()?;
         self.memory.init(atdf,inst_vec,PROJECT.lock().unwrap().get_eeprom_data()?)?;
-
+        self.registers.init(atdf,&mut self.memory.data.io)?;
         Ok(())
     }
     pub fn execute_inst(&mut self,instruction: &Instruction) -> Result<()>{

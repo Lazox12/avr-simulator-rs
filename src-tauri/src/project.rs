@@ -54,12 +54,7 @@ impl Project {
         
     }
     pub fn get_state(&mut self) -> Result<&mut ProjectState> {
-        match self.state {
-            Some(ref mut state) => Ok(state),
-            None => {
-                Err(anyhow!(Error::ProjectNotOpened))
-            }
-        }
+        self.state.as_mut().ok_or(anyhow!(Error::ProjectNotOpened))
     }
     pub fn open(&mut self,path:&str) -> Result<()>{
         match self.open_db(path){

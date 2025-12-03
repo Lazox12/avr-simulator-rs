@@ -44,14 +44,7 @@ impl Instruction{
     }
 
     fn match_raw_instruction_from_opcode(opcode: u16) -> Result<usize>{
-        match RawInst::get_inst_id_from_opcode(opcode){
-            None => {
-                Err(anyhow!(Error::OpcodeNotFound{opcode: opcode as u32 }))
-            }
-            Some(i) => {
-                Ok(i)
-            }
-        }
+        RawInst::get_inst_id_from_opcode(opcode).ok_or(anyhow!(Error::OpcodeNotFound{opcode: opcode as u32 }))
     }
     pub(crate) fn mach_registers(&mut self) ->Result<()>{
 

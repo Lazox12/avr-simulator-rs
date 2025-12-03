@@ -35,7 +35,7 @@ impl From<&Element> for ModuleRegisterGroup{
         }
     }
 }
-#[derive(Debug)]
+#[derive(Debug,Default,Serialize,Clone)]
 pub struct Register{
     pub caption:Option<String>,
     pub name: String,
@@ -56,7 +56,7 @@ impl From<&Element> for Register{
         }
     }
 }
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug,Serialize,Clone,Default)]
 #[serde(rename_all = "camelCase")]
 pub struct BitField{
     pub caption: Option<String>,
