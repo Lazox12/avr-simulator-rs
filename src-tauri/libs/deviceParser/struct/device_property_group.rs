@@ -2,30 +2,30 @@ use std::str::FromStr;
 use proc_macro2::{ Span, TokenStream};
 use quote::{quote, ToTokens};
 use xmltree::Element;
-use crate::utils::find_childs;
+use super::utils::find_childs;
 use syn::Ident;
 #[derive(Debug)]
 pub struct PropertyGroup{
-    pub name: String,
+    pub name: &'static str,
     pub properties: Vec<Property>,
 }
-impl From<&Element> for PropertyGroup{
-    fn from(element: &Element) -> PropertyGroup{
+impl From<&'static Element> for PropertyGroup{
+    fn from(element: &'static Element) -> PropertyGroup{
         PropertyGroup{
-            name: element.attributes["name"].to_string(),
+            name: &element.attributes["name"],
             properties: find_childs(element,"property".to_string()).into_iter().map(|x| {Property::from(x)}).collect(),
         }
     }
 }
 #[derive(Debug)]
 pub struct Property {
-    name: String,
+    name: &'static str,
     value: PropertyValue,
 }
-impl From<&Element> for Property{
-    fn from(x: &Element) -> Self{
+impl From<&'static Element> for Property{
+    fn from(x: &'static Element) -> Self{
         Property{
-            name: x.attributes["name"].to_string(),
+            name: &x.attributes["name"],
             value: PropertyValue::from(&x.attributes["value"]),
         }
     }
@@ -35,10 +35,10 @@ impl From<&Element> for Property{
 pub enum PropertyValue {
     Number(u64),
     Vec(Vec<u64>),
-    String(String),
+    String(&'static str),
 }
-impl From<&String> for PropertyValue{
-    fn from(x: &String) -> Self{
+impl From<&'static String> for PropertyValue{
+    fn from(x: &'static String) -> Self{
         match x.strip_prefix("0x") { 
             Some(v) => {match u64::from_str_radix(v,16) {
                 Ok(v) => PropertyValue::Number(v),
@@ -46,7 +46,7 @@ impl From<&String> for PropertyValue{
             }},
             None => match u64::from_str(x){
                 Ok(v) => PropertyValue::Number(v),
-                Err(_)=> PropertyValue::String(x.to_string())
+                Err(_)=> PropertyValue::String(x.as_str())
             },
         }
     }

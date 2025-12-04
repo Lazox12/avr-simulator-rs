@@ -1,34 +1,34 @@
 use quote::__private::TokenStream;
 use quote::{quote, ToTokens};
 use xmltree::Element;
-use crate::utils::find_childs;
+use super::utils::find_childs;
 
 #[derive(Debug)]
 pub struct Pinout {
-    name: String,
-    caption: Option<String>,
+    name: &'static str,
+    caption: Option<&'static str>,
     pins: Vec<Pin>,
 }
-impl From<&Element> for Pinout {
-    fn from(x: &Element) -> Self {
+impl From<&'static Element> for Pinout {
+    fn from(x: &'static Element) -> Self {
         Pinout{
-            name: x.attributes["name"].to_string(),
-            caption: x.attributes.get("caption").map(|x| x.to_string()),
-            pins: find_childs(x,"pin".to_string()).into_iter().map(|x1| {Pin::from(x1)}).collect(),
+            name: &x.attributes["name"],
+            caption: x.attributes.get("caption").map(|x| x.as_str()),
+            pins: find_childs(x,"pin".to_string()).into_iter().map(|x1| +Pin::from(x1)).collect(),
         }
     }
 }
 
 #[derive(Debug)]
 pub struct Pin {
-    position:String,
-    pad:String,
+    position:&'static str,
+    pad:&'static str,
 }
-impl From<&Element> for Pin {
-    fn from(x: &Element) -> Self {
+impl From<&'static Element> for Pin {
+    fn from(x: &'static Element) -> Self {
         Pin{ 
-            position: x.attributes["position"].to_string(),
-            pad:  x.attributes["pad"].to_string()
+            position: &x.attributes["position"],
+            pad:  &x.attributes["pad"]
         }
     }
 }

@@ -1,3 +1,5 @@
+#[path= "../utils.rs"]
+pub mod utils;
 pub mod device_info;
 pub mod device_package;
 pub mod device_address_space;

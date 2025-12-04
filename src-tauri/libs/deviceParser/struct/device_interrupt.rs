@@ -2,20 +2,20 @@ use proc_macro2::{ Span, TokenStream};
 use quote::{quote, ToTokens};
 use xmltree::Element;
 use syn::Ident;
-use crate::utils::to_ident;
+use super::utils::to_ident;
 
 #[derive(Debug)]
 pub struct Interrupt{
     pub index:i64,
-    pub name:String,
-    pub caption:Option<String>,
+    pub name:&'static str,
+    pub caption:Option<&'static str>,
 }
-impl From<&Element> for Interrupt{
-    fn from(x:&Element) -> Interrupt{
+impl From<&'static Element> for Interrupt{
+    fn from(x:&'static Element) -> Interrupt{
         Interrupt{
             index: x.attributes["index"].to_string().parse().unwrap(),
-            name: x.attributes["name"].to_string(),
-            caption: x.attributes.get("caption").map(|x| x.to_string()),
+            name: &x.attributes["name"],
+            caption: x.attributes.get("caption").map(|x| x.as_str()),
         }
     }
 }

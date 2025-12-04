@@ -53,7 +53,8 @@ pub fn get_tree_map() ->Result<&'static HashMap<String,AvrDeviceFile>,xmltree::E
 pub fn get_tree(file:&DirEntry) -> Result<AvrDeviceFile,xmltree::Error>{
     let data = &*fs::read_to_string(file.path()).unwrap();
     let elem = Element::parse(data.as_bytes()).unwrap();
-    let a = AvrDeviceFile::from(&elem);
+    let b :&'static Element=Box::leak(Box::from(elem));
+    let a = AvrDeviceFile::from(b);
     Ok(a)
 }
 
@@ -72,7 +73,7 @@ pub fn get_register_map(device_name:&String)->Result<HashMap<u64,&'static Regist
                                 if(x2.size ==2){
                                     let leaked1: &'static Register = Box::leak(Box::new(Register {
                                         caption: x2.caption.clone(),
-                                        name: x2.name.clone() + "(H)",
+                                        name: &*(Box::leak(Box::new(x2.name.clone().to_owned() + "(H)"))),
                                         offset: x2.offset,
                                         size: 1,
                                         initval: x2.initval,
@@ -80,7 +81,7 @@ pub fn get_register_map(device_name:&String)->Result<HashMap<u64,&'static Regist
                                     }));
                                     let leaked2: &'static Register = Box::leak(Box::new(Register {
                                         caption:x2.caption.clone(),
-                                        name: x2.name.clone() + "(L)",
+                                        name: &*(Box::leak(Box::new(x2.name.clone().to_owned() + "(L)"))),
                                         offset: x2.offset,
                                         size: 1,
                                         initval: x2.initval,

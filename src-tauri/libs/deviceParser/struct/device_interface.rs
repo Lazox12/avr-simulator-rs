@@ -4,14 +4,14 @@ use xmltree::Element;
 use syn::Ident;
 #[derive(Debug)]
 pub struct Interface {
-    pub name: String,
-    pub data_type: String, //todo should be enum
+    pub name: &'static str,
+    pub data_type: &'static str, //todo should be enum
 }
-impl From<&Element> for Interface {
-    fn from(x: &Element) -> Self {
+impl From<&'static Element> for Interface {
+    fn from(x: &'static Element) -> Self {
         Interface{
-            name: x.attributes["name"].to_string(),
-            data_type: x.attributes["type"].to_string(),
+            name: &x.attributes["name"],
+            data_type: &x.attributes["type"],
         }
     }
 }

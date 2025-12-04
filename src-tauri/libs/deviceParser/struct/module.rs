@@ -4,20 +4,20 @@ use quote::{quote, ToTokens};
 use xmltree::Element;
 use serde::Serialize;
 use crate::r#struct::device_property_group::PropertyValue;
-use crate::utils::{find_childs, to_ident};
+use super::utils::{find_childs, to_ident};
 
 #[derive(Debug)]
 pub struct Module{
-    pub caption:Option<String>,
-    pub name: String,
+    pub caption:Option<&'static str>,
+    pub name: &'static str,
     pub register_group: Vec<ModuleRegisterGroup>,
     pub value_grop: Vec<ValueGroup>
 }
-impl From<&Element> for Module{
-    fn from(x:&Element) -> Self{
+impl From<&'static Element> for Module{
+    fn from(x:&'static Element) -> Self{
         Module{
-            caption: x.attributes.get("caption").map(|t| t.to_string()),
-            name: x.attributes["name"].to_string(),
+            caption: x.attributes.get("caption").map(|t| t.as_str()),
+            name: &x.attributes["name"],
             register_group: find_childs(x,"register-group".to_string()).into_iter().map(|x1| {ModuleRegisterGroup::from(x1)}).collect(),
             value_grop: find_childs(x,"value-group".to_string()).into_iter().map(|x1| {ValueGroup::from(x1)}).collect(),
         }
@@ -25,33 +25,33 @@ impl From<&Element> for Module{
 }
 #[derive(Debug)]
 pub struct ModuleRegisterGroup{
-    pub caption:Option<String>,
-    pub name: String,
+    pub caption:Option<&'static str>,
+    pub name: &'static str,
     pub register: Vec<Register>
 }
-impl From<&Element> for ModuleRegisterGroup{
-    fn from(x:&Element) -> Self{
+impl From<&'static Element> for ModuleRegisterGroup{
+    fn from(x:&'static Element) -> Self{
         ModuleRegisterGroup{
-            caption: x.attributes.get("caption").map(|x1| x1.to_string()),
-            name: x.attributes["name"].to_string(),
+            caption: x.attributes.get("caption").map(|x1| x1.as_str()),
+            name: &x.attributes["name"],
             register: find_childs(x,"register".to_string()).into_iter().map(|x1| {Register::from(x1)}).collect(),
         }
     }
 }
 #[derive(Debug,Default,Serialize,Clone)]
 pub struct Register{
-    pub caption:Option<String>,
-    pub name: String,
+    pub caption:Option<&'static str>,
+    pub name: &'static str,
     pub offset: u64,
     pub size: u64,
     pub initval:u64,
     pub bitfields:Option<Vec<BitField>>,
 }
-impl From<&Element> for Register{
-    fn from(x:&Element) -> Self{
+impl From<&'static Element> for Register{
+    fn from(x:&'static Element) -> Self{
         Register{
-            caption:x.attributes.get("caption").map(|x1| x1.to_string()),
-            name: x.attributes["name"].to_string(),
+            caption:x.attributes.get("caption").map(|x1| x1.as_str()),
+            name: &x.attributes["name"],
             offset: u64::from_str_radix(x.attributes["offset"].to_string().strip_prefix("0x").unwrap(), 16).unwrap(),
             size: x.attributes["size"].to_string().parse().unwrap(),
             initval: u64::from_str_radix(x.attributes["offset"].to_string().strip_prefix("0x").unwrap(), 16).unwrap(),
@@ -62,45 +62,45 @@ impl From<&Element> for Register{
 #[derive(Debug,Serialize,Clone,Default)]
 #[serde(rename_all = "camelCase")]
 pub struct BitField{
-    pub caption: Option<String>,
+    pub caption: Option<&'static str>,
     pub mask: u64,
-    pub name: String,
-    pub values:Option<String>,
+    pub name: &'static str,
+    pub values:Option<&'static str>,
 }
-impl From<&Element> for BitField{
-    fn from(x:&Element) -> Self{
+impl From<&'static Element> for BitField{
+    fn from(x:&'static Element) -> Self{
         BitField{
-            caption: x.attributes.get("caption").map(|x1| x1.to_string()),
+            caption: x.attributes.get("caption").map(|x1| x1.as_str()),
             mask: u64::from_str_radix(x.attributes["mask"].to_string().strip_prefix("0x").unwrap(), 16).unwrap(),
-            name: x.attributes["name"].to_string(),
-            values: x.attributes.get("name").map(|x1| x1.to_string()),
+            name: &x.attributes["name"],
+            values: x.attributes.get("name").map(|x1| x1.as_str()),
         }
     }
 }
 #[derive(Debug)]
 pub struct ValueGroup{
-    pub name: String,
+    pub name: &'static str,
     pub values: Vec<Value>
 }
-impl From<&Element> for ValueGroup{
-    fn from(x:&Element) -> Self{
+impl From<&'static Element> for ValueGroup{
+    fn from(x:&'static Element) -> Self{
         ValueGroup{ 
-            name: x.attributes["name"].to_string(),
+            name: &x.attributes["name"],
             values: find_childs(x,"value".to_string()).into_iter().map(|x1| {Value::from(x1)}).collect()
         }
     }
 }
 #[derive(Debug)]
 pub struct Value{
-    caption: String,
-    name: String,
+    caption: &'static str,
+    name: &'static str,
     value: PropertyValue,
 }
-impl From<&Element> for Value{
-    fn from(x:&Element) -> Self{
+impl From<&'static Element> for Value{
+    fn from(x:&'static Element) -> Self{
         Value{
-            caption: x.attributes["caption"].to_string(),
-            name: x.attributes["name"].to_string(),
+            caption: &x.attributes["caption"],
+            name: &x.attributes["name"],
             value: PropertyValue::from(&x.attributes["value"]),
         }
     }

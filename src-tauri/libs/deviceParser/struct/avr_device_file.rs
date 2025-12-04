@@ -3,7 +3,7 @@ use syn::Ident;
 use quote::__private::TokenStream;
 use quote::{quote, ToTokens};
 use xmltree::Element;
-use crate::utils::{find_child, find_childs};
+use super::utils::{find_child, find_childs};
 use super::device_info::{Device, Variant};
 use super::device_package::Pinout;
 use super::module::Module;
@@ -15,8 +15,8 @@ pub struct AvrDeviceFile {
     pub modules:Vec<Module>,
     pub pinouts:Option<Vec<Pinout>>,
 }
-impl From<&Element> for AvrDeviceFile {
-    fn from(element:&Element) -> Self {
+impl From<&'static Element> for AvrDeviceFile {
+    fn from(element:&'static Element) -> Self {
         AvrDeviceFile{
             variants: find_childs(find_child(element,"variants".to_string()).unwrap(),"variant".to_string()).into_iter().map(|x| {Variant::from(x)}).collect(),
             devices: find_child(find_child(element,"devices".to_string()).unwrap(),"device".to_string()).map(|f| Device::from(f)).unwrap(),
