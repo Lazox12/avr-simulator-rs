@@ -7,14 +7,14 @@ use super::utils::find_childs;
 pub struct Pinout {
     name: &'static str,
     caption: Option<&'static str>,
-    pins: Vec<Pin>,
+    pins: &'static [Pin],
 }
 impl From<&'static Element> for Pinout {
     fn from(x: &'static Element) -> Self {
         Pinout{
             name: &x.attributes["name"],
             caption: x.attributes.get("caption").map(|x| x.as_str()),
-            pins: find_childs(x,"pin".to_string()).into_iter().map(|x1| +Pin::from(x1)).collect(),
+            pins: find_childs(x,"pin").into_iter().map(|x1| Pin::from(x1)).collect(),
         }
     }
 }
@@ -37,13 +37,13 @@ impl ToTokens for Pinout {
         let name = &self.name;
         let pins = &self.pins;
         let caption = match &self.caption {
-            Some(c) => quote! { Some(#c.to_string()) },
+            Some(c) => quote! { Some(#c) },
             None => quote! { None },
         };
 
         tokens.extend(quote! {
             crate::r#struct::device_package::Pinout {
-                name: #name.to_string(),
+                name: #name,
                 caption: #caption,
                 pins: vec![#( #pins ),*],
             }
@@ -58,8 +58,8 @@ impl ToTokens for Pin {
 
         tokens.extend(quote! {
             crate::r#struct::device_package::Pin {
-                position: #position.to_string(),
-                pad: #pad.to_string(),
+                position: #position,
+                pad: #pad,
             }
         });
     }

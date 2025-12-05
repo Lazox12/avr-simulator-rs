@@ -3,14 +3,14 @@ use super::utils::{find_child, find_childs, to_ident};
 #[derive(Debug)]
 pub struct Module{
     pub name: &'static str,
-    pub instances:Vec<Instance>
+    pub instances:&'static [Instance]
     
 }
 impl From<&'static Element> for Module {
     fn from(x:&'static Element) -> Self {
         Module{ 
             name: &x.attributes["name"],
-            instances: find_childs(x,"memory-segment".to_string()).into_iter().map(|x| {Instance::from(x)}).collect(), 
+            instances: find_childs(x,"memory-segment").into_iter().map(|x| {Instance::from(x)}).collect(),
         }
     }
 }
@@ -20,17 +20,17 @@ pub struct Instance{
     pub name: &'static str,
     pub caption: &'static str,
     pub register_group: RegisterGroup,
-    pub signals:Option<Vec<Signal>>,
-    pub parameters:Option<Vec<Param>>
+    pub signals:Option<&'static [Signal]>,
+    pub parameters:Option<&'static [Param]>
 }
 impl From<&'static Element> for Instance {
     fn from(x:&'static Element) -> Self {
         Instance{
             name: &x.attributes["name"],
             caption: &x.attributes["caption"],
-            register_group: RegisterGroup::from(find_child(x, "register-group".to_string()).unwrap()),
-            signals: Some(find_childs(x,"memory-segment".to_string()).into_iter().map(|x| {Signal::from(x)}).collect()),
-            parameters: Some(find_childs(x,"memory-segment".to_string()).into_iter().map(|x| {Param::from(x)}).collect()),
+            register_group: RegisterGroup::from(find_child(x, "register-group").unwrap()),
+            signals: Some(find_childs(x,"memory-segment").into_iter().map(|x| {Signal::from(x)}).collect()),
+            parameters: Some(find_childs(x,"memory-segment").into_iter().map(|x| {Param::from(x)}).collect()),
         }
     }
 }
@@ -47,7 +47,7 @@ impl From<&'static Element> for RegisterGroup {
         RegisterGroup{
             name: &x.attributes["name"],
             name_in_module: &x.attributes["name-in-module"],
-            offset: u64::from_str_radix(x.attributes["offset"].to_string().strip_prefix("0x").unwrap(), 16).unwrap(),
+            offset: u64::from_str_radix(x.attributes["offset"].strip_prefix("0x").unwrap(), 16).unwrap(),
             address_space: &x.attributes["address-space"],
             caption: &x.attributes["caption"],
         }
@@ -67,7 +67,7 @@ impl From<&'static Element> for Signal {
             group: &x.attributes["group"],
             function: &x.attributes["function"],
             pad: &x.attributes["pad"],
-            index: Some(x.attributes["index"].to_string().parse().unwrap()),
+            index: Some(x.attributes["index"].parse().unwrap()),
         }
     }
 }
@@ -96,8 +96,8 @@ impl ToTokens for Module {
         // fully qualified path: crate::r#struct::device_peripherals::Module
         tokens.extend(quote! {
             crate::r#struct::device_peripherals::Module {
-                name: #name.to_string(),
-                instances: vec![#( #instances ),*],
+                name: #name,
+                instances: [#( #instances ),*],
             }
         });
     }
@@ -110,18 +110,18 @@ impl ToTokens for Instance {
         let register_group = &self.register_group;
 
         let signals = match &self.signals {
-            Some(s) => quote! { Some(vec![#( #s ),*]) },
+            Some(s) => quote! { Some([#( #s ),*]) },
             None => quote! { None },
         };
         let parameters = match &self.parameters {
-            Some(p) => quote! { Some(vec![#( #p ),*]) },
+            Some(p) => quote! { Some([#( #p ),*]) },
             None => quote! { None },
         };
 
         tokens.extend(quote! {
             crate::r#struct::device_peripherals::Instance {
-                name: #name.to_string(),
-                caption: #caption.to_string(),
+                name: #name,
+                caption: #caption,
                 register_group: #register_group,
                 signals: #signals,
                 parameters: #parameters,
@@ -140,11 +140,11 @@ impl ToTokens for RegisterGroup {
 
         tokens.extend(quote! {
             crate::r#struct::device_peripherals::RegisterGroup {
-                name: #name.to_string(),
-                name_in_module: #name_in_module.to_string(),
+                name: #name,
+                name_in_module: #name_in_module,
                 offset: #offset,
-                address_space: #address_space.to_string(),
-                caption: #caption.to_string(),
+                address_space: #address_space,
+                caption: #caption,
             }
         });
     }
@@ -162,9 +162,9 @@ impl ToTokens for Signal {
 
         tokens.extend(quote!{
              crate::r#struct::device_peripherals::Signal {
-                 group: #group.to_string(),
-                 function: #function.to_string(),
-                 pad: #pad.to_string(),
+                 group: #group,
+                 function: #function,
+                 pad: #pad,
                  index: #index,
              }
          });
@@ -177,8 +177,8 @@ impl ToTokens for Param {
         let value = &self.value;
         tokens.extend(quote!{
             crate::r#struct::device_peripherals::Param {
-                name: #name.to_string(),
-                value: #value.to_string(),
+                name: #name,
+                value: #value,
             }
         });
     }

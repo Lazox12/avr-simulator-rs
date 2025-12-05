@@ -6,7 +6,7 @@ use super::utils::{find_child, find_childs};
 use syn::Ident;
 #[derive(Debug)]
 pub struct AddressSpace{
-    pub memory_segments:Vec<MemorySegment>,
+    pub memory_segments:&'static [MemorySegment],
     pub endianess: Endianess,
     pub name:&'static str,
     pub id:&'static str, //todo should be enum
@@ -16,12 +16,12 @@ pub struct AddressSpace{
 impl From<&'static Element> for AddressSpace {
     fn from(x:&'static Element) -> Self {
         AddressSpace{
-            memory_segments: find_childs(x,"memory-segment".to_string()).into_iter().map(|x| {MemorySegment::from(x)}).collect(),
-            endianess: Endianess::from_str(&*x.attributes["endianness"].to_string()).expect(&*x.attributes["endianness"]),
+            memory_segments: find_childs(x,"memory-segment").into_iter().map(|x| {MemorySegment::from(x)}).collect(),
+            endianess: Endianess::from_str(&*x.attributes["endianness"]).expect(&*x.attributes["endianness"]),
             name: &x.attributes["name"],
             id: &x.attributes["id"],
-            start: match x.attributes["start"].to_string().starts_with("0x"){true=>{u64::from_str_radix(x.attributes["start"].to_string().strip_prefix("0x").unwrap(),16).unwrap()},false=>{x.attributes["start"].parse::<u64>().unwrap()},},
-            size: match x.attributes["size"].to_string().starts_with("0x"){true=>{u64::from_str_radix(x.attributes["size"].to_string().strip_prefix("0x").unwrap(),16).unwrap()},false=>{x.attributes["size"].parse::<u64>().unwrap()},},
+            start: match x.attributes["start"].starts_with("0x"){true=>{u64::from_str_radix(x.attributes["start"].strip_prefix("0x").unwrap(),16).unwrap()},false=>{x.attributes["start"].parse::<u64>().unwrap()},},
+            size: match x.attributes["size"].starts_with("0x"){true=>{u64::from_str_radix(x.attributes["size"].strip_prefix("0x").unwrap(),16).unwrap()},false=>{x.attributes["size"].parse::<u64>().unwrap()},},
         }
     }
 }
@@ -55,11 +55,11 @@ pub struct MemorySegment{
 impl From<&'static Element> for MemorySegment {
     fn from(x:&'static Element) -> Self {
         MemorySegment{
-            start: match x.attributes["start"].to_string().starts_with("0x"){true=>{u64::from_str_radix(x.attributes["start"].to_string().strip_prefix("0x").unwrap(),16).unwrap()},false=>{x.attributes["start"].parse::<u64>().unwrap()},},
-            size: match x.attributes["size"].to_string().starts_with("0x"){true=>{u64::from_str_radix(x.attributes["size"].to_string().strip_prefix("0x").unwrap(),16).unwrap()},false=>{x.attributes["size"].parse::<u64>().unwrap()},},
+            start: match x.attributes["start"].starts_with("0x"){true=>{u64::from_str_radix(x.attributes["start"].strip_prefix("0x").unwrap(),16).unwrap()},false=>{x.attributes["start"].parse::<u64>().unwrap()},},
+            size: match x.attributes["size"].starts_with("0x"){true=>{u64::from_str_radix(x.attributes["size"].strip_prefix("0x").unwrap(),16).unwrap()},false=>{x.attributes["size"].parse::<u64>().unwrap()},},
             data_type: &x.attributes["type"],
             access: Access::option_from(x.attributes.get("rw").unwrap_or(&"err".to_string())),
-            page_size: x.attributes.get("pagesize").map(|t| {u64::from_str_radix(t.to_string().strip_prefix("0x").unwrap(), 16).unwrap()}),
+            page_size: x.attributes.get("pagesize").map(|t| {u64::from_str_radix(t.strip_prefix("0x").unwrap(), 16).unwrap()}),
             exec: x.attributes.get("exec").map(|t| {match t.as_str() {"1"=>{true},"0"=>{false} _ => {panic!("err1")} }}),
             external: x.attributes.get("external").map(|t| {match t.as_str() {"true"=>{true},"false"=>{false} _ => {panic!("err")} }}),
             name:&x.attributes["name"],
@@ -91,10 +91,10 @@ impl ToTokens for AddressSpace {
 
         tokens.extend(quote! {
             crate::r#struct::device_address_space::AddressSpace {
-                memory_segments: vec![#( #memory_segments ),*],
+                memory_segments: &[#( #memory_segments ),*],
                 endianess: #endianess,
-                name: #name.to_string(),
-                id: #id.to_string(),
+                name: #name,
+                id: #id,
                 start: #start,
                 size: #size,
             }
@@ -138,8 +138,8 @@ impl ToTokens for MemorySegment {
             crate::r#struct::device_address_space::MemorySegment {
                 start: #start,
                 size: #size,
-                name: #name.to_string(),
-                data_type: #data_type.to_string(),
+                name: #name,
+                data_type: #data_type,
                 access: #access,
                 page_size: #page_size,
                 exec: #exec,

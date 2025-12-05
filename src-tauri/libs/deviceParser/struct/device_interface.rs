@@ -22,8 +22,8 @@ impl ToTokens for Interface {
 
         tokens.extend(quote! {
             crate::r#struct::device_interface::Interface {
-                name: #name.to_string(),
-                data_type: #data_type.to_string(),
+                name: #name,
+                data_type: #data_type,
             }
         });
     }

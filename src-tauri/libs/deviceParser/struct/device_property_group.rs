@@ -13,7 +13,7 @@ impl From<&'static Element> for PropertyGroup{
     fn from(element: &'static Element) -> PropertyGroup{
         PropertyGroup{
             name: &element.attributes["name"],
-            properties: find_childs(element,"property".to_string()).into_iter().map(|x| {Property::from(x)}).collect(),
+            properties: find_childs(element,"property").into_iter().map(|x| {Property::from(x)}).collect(),
         }
     }
 }
@@ -58,7 +58,7 @@ impl ToTokens for PropertyGroup {
 
         tokens.extend(quote! {
             crate::r#struct::device_property_group::PropertyGroup {
-                name: #name.to_string(),
+                name: #name,
                 properties: vec![#( #properties ),*],
             }
         });
@@ -72,7 +72,7 @@ impl ToTokens for Property {
 
         tokens.extend(quote! {
             crate::r#struct::device_property_group::Property {
-                name: #name.to_string(),
+                name: #name,
                 value: #value,
             }
         });
@@ -84,7 +84,7 @@ impl ToTokens for PropertyValue {
         match self {
             PropertyValue::Number(n) => tokens.extend(quote! { crate::r#struct::device_property_group::PropertyValue::Number(#n) }),
             PropertyValue::Vec(v) => tokens.extend(quote! { crate::r#struct::device_property_group::PropertyValue::Vec(vec![#( #v ),*]) }),
-            PropertyValue::String(s) => tokens.extend(quote! { crate::r#struct::device_property_group::PropertyValue::String(#s.to_string()) }),
+            PropertyValue::String(s) => tokens.extend(quote! { crate::r#struct::device_property_group::PropertyValue::String(#s) }),
         }
     }
 }

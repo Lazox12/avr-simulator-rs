@@ -3,13 +3,13 @@ use proc_macro2::{Span};
 use xmltree::{Element, XMLNode};
 use syn::Ident;
 
-pub fn find_child(e:&Element, name:String) ->Option<&Element>{
+pub fn find_child(e:&'static Element, name:&str) ->Option<&'static Element>{
     e.children.iter().find_map(|x| {match x {
         XMLNode::Element(e) =>if e.name == name { Some(e) } else { None },
         _ => None
     }})
 }
-pub fn find_childs(e:&Element,name:String)->Vec<&Element>{
+pub fn find_childs(e:&'static Element,name:&str)->Vec<&'static Element>{
     e.children.iter().filter_map(|x| {match x {
         XMLNode::Element(e) =>if e.name == name { Some(e) } else { None },
         _ => None

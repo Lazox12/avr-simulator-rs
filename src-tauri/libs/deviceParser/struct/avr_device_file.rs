@@ -10,18 +10,18 @@ use super::module::Module;
 
 #[derive(Debug,Default)]
 pub struct AvrDeviceFile {
-    pub variants:Vec<Variant>,
+    pub variants:&'static [Variant],
     pub devices:Device,
-    pub modules:Vec<Module>,
-    pub pinouts:Option<Vec<Pinout>>,
+    pub modules:&'static [Module],
+    pub pinouts:Option<&'static [Pinout]>,
 }
 impl From<&'static Element> for AvrDeviceFile {
     fn from(element:&'static Element) -> Self {
         AvrDeviceFile{
-            variants: find_childs(find_child(element,"variants".to_string()).unwrap(),"variant".to_string()).into_iter().map(|x| {Variant::from(x)}).collect(),
-            devices: find_child(find_child(element,"devices".to_string()).unwrap(),"device".to_string()).map(|f| Device::from(f)).unwrap(),
-            modules: find_childs(find_child(element,"modules".to_string()).unwrap(),"module".to_string()).into_iter().map(|x| {Module::from(x)}).collect(),
-            pinouts: find_child(element,"pinouts".to_string()).map(|x| find_childs(x,"pinout".to_string()).into_iter().map(|x| {Pinout::from(x)}).collect()),
+            variants: find_childs(find_child(element,"variants").unwrap(),"variant").into_iter().map(|x| {Variant::from(x)}).collect(),
+            devices: find_child(find_child(element,"devices").unwrap(),"device").map(|f| Device::from(f)).unwrap(),
+            modules: find_childs(find_child(element,"modules").unwrap(),"module").into_iter().map(|x| {Module::from(x)}).collect(),
+            pinouts: find_child(element,"pinouts").map(|x| find_childs(x,"pinout").into_iter().map(|x| {Pinout::from(x)}).collect()),
         }
     }
 }
@@ -32,7 +32,7 @@ impl ToTokens for AvrDeviceFile {
         let modules = &self.modules;
 
         let pinouts = match &self.pinouts {
-            Some(p) => quote! { Some(vec![#( #p ),*]) },
+            Some(p) => quote! { Some(&[#( #p ),*]) },
             None => quote! { None },
         };
 
@@ -42,9 +42,9 @@ impl ToTokens for AvrDeviceFile {
 
         let output = quote! {
             pub const #name_ident: crate::r#struct::avr_device_file::AvrDeviceFile = crate::r#struct::avr_device_file::AvrDeviceFile {
-                variants: vec![#( #variants ),*],
+                variants: &[#( #variants ),*],
                 devices: #devices,
-                modules: vec![#( #modules ),*],
+                modules: &[#( #modules ),*],
                 pinouts: #pinouts,
             };
         };

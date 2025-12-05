@@ -13,11 +13,11 @@ pub struct Device{
     pub name: &'static str,
     pub architecture: &'static str, //todo should be enum
     pub family: &'static str, //todo should be enum
-    pub address_spaces: Vec<AddressSpace>,
-    pub peripherals:Vec<Module>,
-    pub interrupts:Vec<Interrupt>,
-    pub interfaces:Vec<Interface>,
-    pub propery_groups:Vec<PropertyGroup>
+    pub address_spaces: &'static [AddressSpace],
+    pub peripherals:&'static [Module],
+    pub interrupts:&'static [Interrupt],
+    pub interfaces:&'static [Interface],
+    pub propery_groups:&'static [PropertyGroup]
 }
 impl From<&'static Element> for Device{
     fn from(x:&'static Element) -> Self{
@@ -25,11 +25,11 @@ impl From<&'static Element> for Device{
             name: &x.attributes["name"],
             architecture: &x.attributes["architecture"],
             family: &x.attributes["family"],
-            address_spaces: find_childs(find_child(x,"address-spaces".to_string()).unwrap(),"address-space".to_string()).into_iter().map(|x| {AddressSpace::from(x)}).collect(),
-            peripherals: find_childs(find_child(x,"peripherals".to_string()).unwrap(),"module".to_string()).into_iter().map(|x| {Module::from(x)}).collect(),
-            interrupts: find_childs(find_child(x,"interrupts".to_string()).unwrap(),"interrupt".to_string()).into_iter().map(|x| {Interrupt::from(x)}).collect(),
-            interfaces: find_childs(find_child(x,"interfaces".to_string()).unwrap(),"interface".to_string()).into_iter().map(|x| {Interface::from(x)}).collect(),
-            propery_groups: find_childs(find_child(x,"property-groups".to_string()).unwrap(),"property-group".to_string()).into_iter().map(|x| {PropertyGroup::from(x)}).collect(),
+            address_spaces: Box::leak(find_childs(find_child(x,"address-spaces").unwrap(),"address-space").into_iter().map(|x| {AddressSpace::from(x)}).collect::<Vec<AddressSpace>>().into_boxed_slice()),
+            peripherals: Box::leak(find_childs(find_child(x,"peripherals").unwrap(),"module").into_iter().map(|x| {Module::from(x)}).collect::<Vec<Module>>().into_boxed_slice()),
+            interrupts: Box::leak(find_childs(find_child(x,"interrupts").unwrap(),"interrupt").into_iter().map(|x| {Interrupt::from(x)}).collect::<Vec<Interrupt>>().into_boxed_slice()),
+            interfaces: find_childs(find_child(x,"interfaces").unwrap(),"interface").into_iter().map(|x| {Interface::from(x)}).collect(),
+            propery_groups: find_childs(find_child(x,"property-groups").unwrap(),"property-group").into_iter().map(|x| {PropertyGroup::from(x)}).collect(),
         }
     }
 }
@@ -49,13 +49,13 @@ impl From<&'static Element> for Variant{
     fn from(element:&'static Element) -> Self{
         Variant{
             order_code: &element.attributes["ordercode"],
-            temp_min: element.attributes["tempmin"].to_string().parse().unwrap(),
-            temp_max: element.attributes["tempmax"].to_string().parse().unwrap(),
-            max_speed: element.attributes["speedmax"].to_string().parse().unwrap(),
+            temp_min: element.attributes["tempmin"].parse().unwrap(),
+            temp_max: element.attributes["tempmax"].parse().unwrap(),
+            max_speed: element.attributes["speedmax"].parse().unwrap(),
             pinout: element.attributes.get("pinout").map(|x| x.as_str()),
             package: &element.attributes["package"],
-            vcc_min: element.attributes["vccmin"].to_string().parse().unwrap(),
-            vcc_max: element.attributes["vccmax"].to_string().parse().unwrap(),
+            vcc_min: element.attributes["vccmin"].parse().unwrap(),
+            vcc_max: element.attributes["vccmax"].parse().unwrap(),
         }
     }
 }
@@ -72,14 +72,14 @@ impl ToTokens for Device {
 
         tokens.extend(quote! {
             crate::r#struct::device_info::Device {
-                name: #name.to_string(),
-                architecture: #architecture.to_string(),
-                family: #family.to_string(),
-                address_spaces: vec![#( #address_spaces ),*],
-                peripherals: vec![#( #peripherals ),*],
-                interrupts: vec![#( #interrupts ),*],
-                interfaces: vec![#( #interfaces ),*],
-                propery_groups: vec![#( #propery_groups ),*],
+                name: #name,
+                architecture: #architecture,
+                family: #family,
+                address_spaces: [#( #address_spaces ),*],
+                peripherals: [#( #peripherals ),*],
+                interrupts: [#( #interrupts ),*],
+                interfaces: [#( #interfaces ),*],
+                propery_groups: [#( #propery_groups ),*],
             }
         });
     }
@@ -96,18 +96,18 @@ impl ToTokens for Variant {
         let vcc_max = self.vcc_max;
 
         let pinout = match &self.pinout {
-            Some(p) => quote! { Some(#p.to_string()) },
+            Some(p) => quote! { Some(#p) },
             None => quote! { None },
         };
 
         tokens.extend(quote! {
             crate::r#struct::device_info::Variant {
-                order_code: #order_code.to_string(),
+                order_code: #order_code,
                 temp_min: #temp_min,
                 temp_max: #temp_max,
                 max_speed: #max_speed,
                 pinout: #pinout,
-                package: #package.to_string(),
+                package: #package,
                 vcc_min: #vcc_min,
                 vcc_max: #vcc_max,
             }
