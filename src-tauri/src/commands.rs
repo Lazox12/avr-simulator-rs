@@ -25,8 +25,8 @@ wrap_anyhow!(get_instruction_list() -> Vec<RawInst> {
 });
 
 
-wrap_anyhow!(get_mcu_list() -> Vec<&'static String> {
-    Ok(deviceParser::get_mcu_list()?)
+wrap_anyhow!(get_mcu_list() -> &'static [&'static str] {
+    Ok(deviceParser::get_mcu_list())
 });
 
 

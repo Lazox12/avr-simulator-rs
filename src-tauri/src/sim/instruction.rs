@@ -163,7 +163,7 @@ impl TryFrom<PartialInstruction> for Instruction {
     }
 }
 
-#[derive(Debug,Deserialize,Serialize,Clone)]
+#[derive(Debug,Serialize,Deserialize,Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PartialInstruction{
     pub(crate) comment: String,

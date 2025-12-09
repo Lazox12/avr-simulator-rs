@@ -4,7 +4,7 @@ use std::ops::Index;
 use std::slice::SliceIndex;
 use std::str::FromStr;
 use anyhow::anyhow;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use crate::error::{Error, Result};
 use super::constraint::Constraint;
 
@@ -389,6 +389,7 @@ mod tests {
 }
 
 #[derive(Debug, Default, Clone, PartialEq,Serialize,Deserialize)]
+
 #[serde(rename_all = "camelCase")]
 pub struct OperandInfo {
     pub register_name:String,

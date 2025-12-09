@@ -16,7 +16,7 @@ pub struct AddressSpace{
 impl From<&'static Element> for AddressSpace {
     fn from(x:&'static Element) -> Self {
         AddressSpace{
-            memory_segments: find_childs(x,"memory-segment").into_iter().map(|x| {MemorySegment::from(x)}).collect(),
+            memory_segments: Box::leak(find_childs(x,"memory-segment").into_iter().map(|x| {MemorySegment::from(x)}).collect::<Vec<MemorySegment>>().into_boxed_slice()),
             endianess: Endianess::from_str(&*x.attributes["endianness"]).expect(&*x.attributes["endianness"]),
             name: &x.attributes["name"],
             id: &x.attributes["id"],

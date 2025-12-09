@@ -72,8 +72,8 @@ pub enum Error{
     #[error("Tauri error: {0}")]
     TauriError(#[from] tauri::Error),
     
-    #[error("xml tree error: {0}")]
-    XmlTreeError(#[from] deviceParser::Error),
+    #[error("device error: {0}")]
+    DeviceParserError(deviceParser::Error),
     
     #[error("Project Handler Error: {0}")]
     ProjectError(&'static str)

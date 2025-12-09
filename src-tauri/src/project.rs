@@ -144,6 +144,7 @@ impl Project {
         tx.commit()?;
         Ok(())
     }
+
     pub fn get_instruction_list(&mut self) -> Result<Vec<Instruction>>{
         self.table_exists(Tables::instruction)?;
         let mut stmt = self.connection.as_ref().unwrap().prepare("SELECT * FROM instruction")?;
@@ -250,7 +251,7 @@ pub struct ProjectState{
 //commands
 impl ProjectState{
     pub fn set_mcu(&mut self, mcu:String) -> Result<()>{
-        let device = deviceParser::get_mcu_list()?.into_iter().find(|x| {
+        let device = deviceParser::get_mcu_list().into_iter().find(|x| {
             **x==mcu
         });
         if(device.is_some()){

@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use opcodeGen::RawInst;
 
 use crate::sim::instruction::Instruction;
@@ -33,16 +34,16 @@ pub fn gen_operand_details(i: &mut Instruction,state:&ProjectState)->Result<()>{
                 match x.constraint {
                     Constraint::p|Constraint::P=>{
 
-                        let tree = get_register_map(&state.mcu)?;
+                        let tree = get_register_map(&state.mcu).ok_or(anyhow!("invalid mcu"))?;
                         let reg_opt = tree.get(&(x.value as u64 +0x20));
                         if reg_opt.is_none() {
                             continue
                         }
                         let reg= reg_opt.unwrap();
                         let info = OperandInfo{
-                            register_name: reg.name.clone(),
+                            register_name: reg.name.clone().parse()?,
                             register_mask:serde_json::to_string(&reg.bitfields)?,
-                            description: reg.caption.clone().unwrap_or(reg.name.clone()),
+                            description: reg.caption.clone().unwrap_or(reg.name.clone()).parse()?,
                         };
                         x.operand_info = Some(info);
                         

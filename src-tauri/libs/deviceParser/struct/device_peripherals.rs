@@ -10,7 +10,7 @@ impl From<&'static Element> for Module {
     fn from(x:&'static Element) -> Self {
         Module{ 
             name: &x.attributes["name"],
-            instances: find_childs(x,"memory-segment").into_iter().map(|x| {Instance::from(x)}).collect(),
+            instances: Box::leak(find_childs(x,"memory-segment").into_iter().map(|x| {Instance::from(x)}).collect::<Vec<Instance>>().into_boxed_slice()),
         }
     }
 }
@@ -29,8 +29,8 @@ impl From<&'static Element> for Instance {
             name: &x.attributes["name"],
             caption: &x.attributes["caption"],
             register_group: RegisterGroup::from(find_child(x, "register-group").unwrap()),
-            signals: Some(find_childs(x,"memory-segment").into_iter().map(|x| {Signal::from(x)}).collect()),
-            parameters: Some(find_childs(x,"memory-segment").into_iter().map(|x| {Param::from(x)}).collect()),
+            signals: Some(Box::leak(find_childs(find_child(x,"signals").unwrap(),"signal").into_iter().map(|x| {Signal::from(x)}).collect::<Vec<Signal>>().into_boxed_slice())),
+            parameters: Some(Box::leak(find_childs(find_child(x,"parameters").unwrap(),"parameter").into_iter().map(|x| {Param::from(x)}).collect::<Vec<Param>>().into_boxed_slice())),
         }
     }
 }
@@ -97,7 +97,7 @@ impl ToTokens for Module {
         tokens.extend(quote! {
             crate::r#struct::device_peripherals::Module {
                 name: #name,
-                instances: [#( #instances ),*],
+                instances: &[#( #instances ),*],
             }
         });
     }
@@ -110,11 +110,11 @@ impl ToTokens for Instance {
         let register_group = &self.register_group;
 
         let signals = match &self.signals {
-            Some(s) => quote! { Some([#( #s ),*]) },
+            Some(s) => quote! { Some(&[#( #s ),*]) },
             None => quote! { None },
         };
         let parameters = match &self.parameters {
-            Some(p) => quote! { Some([#( #p ),*]) },
+            Some(p) => quote! { Some(&[#( #p ),*]) },
             None => quote! { None },
         };
 

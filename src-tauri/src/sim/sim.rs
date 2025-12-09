@@ -26,11 +26,7 @@ pub struct Sim{
 }
 impl Sim {
     pub fn init(&mut self) ->Result<()>{
-        let atdf = get_tree_map()?.get(&PROJECT.lock().unwrap().get_project()?.mcu);
-        if(atdf.is_none()){
-            return Err(anyhow!("AtDF is not initialized"))
-        }
-        let atdf = atdf.unwrap();
+        let atdf = get_tree_map().get(&PROJECT.lock().unwrap().get_project()?.mcu).ok_or(anyhow!("invalid mcu"))?;
         let inst = PROJECT.lock().unwrap().get_instruction_list()?;
         let mut inst_vec: Vec<Instruction>=Vec::new();
         inst_vec.resize((atdf.devices.address_spaces.iter().find(|x| {x.id=="prog"}).unwrap().size/2) as usize,Instruction::decode_from_opcode(CustomOpcodes::EMPTY as u16)?);

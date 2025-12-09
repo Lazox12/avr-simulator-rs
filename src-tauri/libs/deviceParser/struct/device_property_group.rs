@@ -7,20 +7,20 @@ use syn::Ident;
 #[derive(Debug)]
 pub struct PropertyGroup{
     pub name: &'static str,
-    pub properties: Vec<Property>,
+    pub properties: &'static [Property],
 }
 impl From<&'static Element> for PropertyGroup{
     fn from(element: &'static Element) -> PropertyGroup{
         PropertyGroup{
             name: &element.attributes["name"],
-            properties: find_childs(element,"property").into_iter().map(|x| {Property::from(x)}).collect(),
+            properties: Box::leak(find_childs(element,"property").into_iter().map(|x| {Property::from(x)}).collect::<Vec<Property>>().into_boxed_slice()),
         }
     }
 }
 #[derive(Debug)]
 pub struct Property {
-    name: &'static str,
-    value: PropertyValue,
+    pub name: &'static str,
+    pub value: PropertyValue,
 }
 impl From<&'static Element> for Property{
     fn from(x: &'static Element) -> Self{
@@ -34,7 +34,7 @@ impl From<&'static Element> for Property{
 #[derive(Debug)]
 pub enum PropertyValue {
     Number(u64),
-    Vec(Vec<u64>),
+    Vec(&'static[u64]),
     String(&'static str),
 }
 impl From<&'static String> for PropertyValue{
@@ -42,7 +42,7 @@ impl From<&'static String> for PropertyValue{
         match x.strip_prefix("0x") { 
             Some(v) => {match u64::from_str_radix(v,16) {
                 Ok(v) => PropertyValue::Number(v),
-                Err(_)=> PropertyValue::Vec(x.split(" ").into_iter().map(|x| u64::from_str_radix(x.strip_prefix("0x").unwrap(),16).unwrap()).collect())
+                Err(_)=> PropertyValue::Vec(Box::leak(x.split(" ").into_iter().map(|x| u64::from_str_radix(x.strip_prefix("0x").unwrap(),16).unwrap()).collect::<Vec<_>>().into_boxed_slice()))
             }},
             None => match u64::from_str(x){
                 Ok(v) => PropertyValue::Number(v),
@@ -59,7 +59,7 @@ impl ToTokens for PropertyGroup {
         tokens.extend(quote! {
             crate::r#struct::device_property_group::PropertyGroup {
                 name: #name,
-                properties: vec![#( #properties ),*],
+                properties: &[#( #properties ),*],
             }
         });
     }
@@ -83,7 +83,7 @@ impl ToTokens for PropertyValue {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
             PropertyValue::Number(n) => tokens.extend(quote! { crate::r#struct::device_property_group::PropertyValue::Number(#n) }),
-            PropertyValue::Vec(v) => tokens.extend(quote! { crate::r#struct::device_property_group::PropertyValue::Vec(vec![#( #v ),*]) }),
+            PropertyValue::Vec(v) => tokens.extend(quote! { crate::r#struct::device_property_group::PropertyValue::Vec(&[#( #v ),*]) }),
             PropertyValue::String(s) => tokens.extend(quote! { crate::r#struct::device_property_group::PropertyValue::String(#s) }),
         }
     }

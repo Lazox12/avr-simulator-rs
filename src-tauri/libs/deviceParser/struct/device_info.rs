@@ -1,12 +1,12 @@
-use quote::{quote, ToTokens};
-use quote::__private::TokenStream;
-use xmltree::Element;
-use super::utils::{find_child, find_childs, to_ident};
 use super::device_address_space::AddressSpace;
 use super::device_interface::Interface;
 use super::device_interrupt::Interrupt;
 use super::device_peripherals::Module;
 use super::device_property_group::PropertyGroup;
+use super::utils::{find_child, find_childs};
+use quote::__private::TokenStream;
+use quote::{quote, ToTokens};
+use xmltree::Element;
 
 #[derive(Debug,Default)]
 pub struct Device{
@@ -28,8 +28,8 @@ impl From<&'static Element> for Device{
             address_spaces: Box::leak(find_childs(find_child(x,"address-spaces").unwrap(),"address-space").into_iter().map(|x| {AddressSpace::from(x)}).collect::<Vec<AddressSpace>>().into_boxed_slice()),
             peripherals: Box::leak(find_childs(find_child(x,"peripherals").unwrap(),"module").into_iter().map(|x| {Module::from(x)}).collect::<Vec<Module>>().into_boxed_slice()),
             interrupts: Box::leak(find_childs(find_child(x,"interrupts").unwrap(),"interrupt").into_iter().map(|x| {Interrupt::from(x)}).collect::<Vec<Interrupt>>().into_boxed_slice()),
-            interfaces: find_childs(find_child(x,"interfaces").unwrap(),"interface").into_iter().map(|x| {Interface::from(x)}).collect(),
-            propery_groups: find_childs(find_child(x,"property-groups").unwrap(),"property-group").into_iter().map(|x| {PropertyGroup::from(x)}).collect(),
+            interfaces: Box::leak(find_childs(find_child(x,"interfaces").unwrap(),"interface").into_iter().map(|x| {Interface::from(x)}).collect::<Vec<Interface>>().into_boxed_slice()),
+            propery_groups: Box::leak(find_childs(find_child(x,"property-groups").unwrap(),"property-group").into_iter().map(|x| {PropertyGroup::from(x)}).collect::<Vec<PropertyGroup>>().into_boxed_slice()),
         }
     }
 }
@@ -75,11 +75,11 @@ impl ToTokens for Device {
                 name: #name,
                 architecture: #architecture,
                 family: #family,
-                address_spaces: [#( #address_spaces ),*],
-                peripherals: [#( #peripherals ),*],
-                interrupts: [#( #interrupts ),*],
-                interfaces: [#( #interfaces ),*],
-                propery_groups: [#( #propery_groups ),*],
+                address_spaces: &[#( #address_spaces ),*],
+                peripherals: &[#( #peripherals ),*],
+                interrupts: &[#( #interrupts ),*],
+                interfaces: &[#( #interfaces ),*],
+                propery_groups: &[#( #propery_groups ),*],
             }
         });
     }

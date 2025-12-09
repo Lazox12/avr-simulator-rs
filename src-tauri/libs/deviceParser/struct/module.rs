@@ -10,16 +10,16 @@ use super::utils::{find_childs, to_ident};
 pub struct Module{
     pub caption:Option<&'static str>,
     pub name: &'static str,
-    pub register_group: Vec<ModuleRegisterGroup>,
-    pub value_grop: Vec<ValueGroup>
+    pub register_group: &'static[ModuleRegisterGroup],
+    pub value_grop: &'static[ValueGroup]
 }
 impl From<&'static Element> for Module{
     fn from(x:&'static Element) -> Self{
         Module{
             caption: x.attributes.get("caption").map(|t| t.as_str()),
             name: &x.attributes["name"],
-            register_group: find_childs(x,"register-group").into_iter().map(|x1| {ModuleRegisterGroup::from(x1)}).collect(),
-            value_grop: find_childs(x,"value-group").into_iter().map(|x1| {ValueGroup::from(x1)}).collect(),
+            register_group: Box::leak(find_childs(x,"register-group").into_iter().map(|x1| {ModuleRegisterGroup::from(x1)}).collect::<Vec<ModuleRegisterGroup>>().into_boxed_slice()),
+            value_grop: Box::leak(find_childs(x,"value-group").into_iter().map(|x1| {ValueGroup::from(x1)}).collect::<Vec<ValueGroup>>().into_boxed_slice()),
         }
     }
 }
@@ -27,14 +27,14 @@ impl From<&'static Element> for Module{
 pub struct ModuleRegisterGroup{
     pub caption:Option<&'static str>,
     pub name: &'static str,
-    pub register: Vec<Register>
+    pub register: &'static[Register]
 }
 impl From<&'static Element> for ModuleRegisterGroup{
     fn from(x:&'static Element) -> Self{
         ModuleRegisterGroup{
             caption: x.attributes.get("caption").map(|x1| x1.as_str()),
             name: &x.attributes["name"],
-            register: find_childs(x,"register").into_iter().map(|x1| {Register::from(x1)}).collect(),
+            register: Box::leak(find_childs(x,"register").into_iter().map(|x1| {Register::from(x1)}).collect::<Vec<Register>>().into_boxed_slice()),
         }
     }
 }
@@ -45,7 +45,7 @@ pub struct Register{
     pub offset: u64,
     pub size: u64,
     pub initval:u64,
-    pub bitfields:Option<Vec<BitField>>,
+    pub bitfields:Option<&'static[BitField]>,
 }
 impl From<&'static Element> for Register{
     fn from(x:&'static Element) -> Self{
@@ -55,7 +55,7 @@ impl From<&'static Element> for Register{
             offset: u64::from_str_radix(x.attributes["offset"].strip_prefix("0x").unwrap(), 16).unwrap(),
             size: x.attributes["size"].parse().unwrap(),
             initval: u64::from_str_radix(x.attributes["offset"].strip_prefix("0x").unwrap(), 16).unwrap(),
-            bitfields: Some(find_childs(x,"bitfield").into_iter().map(|x1| {BitField::from(x1)}).collect()),
+            bitfields: Some(Box::leak(find_childs(x,"bitfield").into_iter().map(|x1| {BitField::from(x1)}).collect::<Vec<BitField>>().into_boxed_slice())),
         }
     }
 }
@@ -80,21 +80,21 @@ impl From<&'static Element> for BitField{
 #[derive(Debug)]
 pub struct ValueGroup{
     pub name: &'static str,
-    pub values: Vec<Value>
+    pub values: &'static[Value]
 }
 impl From<&'static Element> for ValueGroup{
     fn from(x:&'static Element) -> Self{
         ValueGroup{ 
             name: &x.attributes["name"],
-            values: find_childs(x,"value").into_iter().map(|x1| {Value::from(x1)}).collect()
+            values: Box::leak(find_childs(x,"value").into_iter().map(|x1| {Value::from(x1)}).collect::<Vec<Value>>().into_boxed_slice())
         }
     }
 }
 #[derive(Debug)]
 pub struct Value{
-    caption: &'static str,
-    name: &'static str,
-    value: PropertyValue,
+    pub caption: &'static str,
+    pub name: &'static str,
+    pub value: PropertyValue,
 }
 impl From<&'static Element> for Value{
     fn from(x:&'static Element) -> Self{
@@ -121,8 +121,8 @@ impl ToTokens for Module {
             crate::r#struct::module::Module {
                 caption: #caption,
                 name: #name,
-                register_group: vec![#( #register_group ),*],
-                value_grop: vec![#( #value_group ),*],
+                register_group: &[#( #register_group ),*],
+                value_grop: &[#( #value_group ),*],
             }
         });
     }
@@ -141,7 +141,7 @@ impl ToTokens for ModuleRegisterGroup {
             crate::r#struct::module::ModuleRegisterGroup {
                 caption: #caption,
                 name: #name,
-                register: vec![#( #register ),*],
+                register: &[#( #register ),*],
             }
         });
     }
@@ -159,7 +159,7 @@ impl ToTokens for Register {
             None => quote! { None },
         };
         let bitfields = match &self.bitfields {
-            Some(b) => quote! { Some(vec![#( #b ),*]) },
+            Some(b) => quote! { Some(&[#( #b ),*]) },
             None => quote! { None },
         };
 
@@ -207,7 +207,7 @@ impl ToTokens for ValueGroup {
         tokens.extend(quote!{
             crate::r#struct::module::ValueGroup {
                 name: #name,
-                values: vec![#( #values ),*]
+                values: &[#( #values ),*]
             }
         });
     }

@@ -18,10 +18,13 @@ pub struct AvrDeviceFile {
 impl From<&'static Element> for AvrDeviceFile {
     fn from(element:&'static Element) -> Self {
         AvrDeviceFile{
-            variants: find_childs(find_child(element,"variants").unwrap(),"variant").into_iter().map(|x| {Variant::from(x)}).collect(),
+            variants: Box::leak(find_childs(find_child(element,"variants").unwrap(),"variant").into_iter().map(|x| {Variant::from(x)}).collect::<Vec<Variant>>().into_boxed_slice()),
             devices: find_child(find_child(element,"devices").unwrap(),"device").map(|f| Device::from(f)).unwrap(),
-            modules: find_childs(find_child(element,"modules").unwrap(),"module").into_iter().map(|x| {Module::from(x)}).collect(),
-            pinouts: find_child(element,"pinouts").map(|x| find_childs(x,"pinout").into_iter().map(|x| {Pinout::from(x)}).collect()),
+            modules: Box::leak(find_childs(find_child(element,"modules").unwrap(),"module").into_iter().map(|x| {Module::from(x)}).collect::<Vec<Module>>().into_boxed_slice()),
+            pinouts: match find_child(element,"pinouts").map(|x| find_childs(x,"pinout").into_iter().map(|x| {Pinout::from(x)}).collect::<Vec<Pinout>>().into_boxed_slice()) {
+                None => {None}
+                Some(x) => {Some(Box::leak(x))}
+            },
         }
     }
 }
@@ -37,7 +40,7 @@ impl ToTokens for AvrDeviceFile {
         };
 
         // Convert name to Ident to remove quotes
-        let name_str = self.devices.name.replace("-", "_");
+        let name_str = self.devices.name.replace("-", "_").to_uppercase();
         let name_ident = Ident::new(&name_str, Span::call_site());
 
         let output = quote! {

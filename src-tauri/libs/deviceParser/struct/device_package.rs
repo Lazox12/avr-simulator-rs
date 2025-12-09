@@ -5,24 +5,24 @@ use super::utils::find_childs;
 
 #[derive(Debug)]
 pub struct Pinout {
-    name: &'static str,
-    caption: Option<&'static str>,
-    pins: &'static [Pin],
+    pub name: &'static str,
+    pub caption: Option<&'static str>,
+    pub pins: &'static [Pin],
 }
 impl From<&'static Element> for Pinout {
     fn from(x: &'static Element) -> Self {
         Pinout{
             name: &x.attributes["name"],
             caption: x.attributes.get("caption").map(|x| x.as_str()),
-            pins: find_childs(x,"pin").into_iter().map(|x1| Pin::from(x1)).collect(),
+            pins: Box::leak(find_childs(x,"pin").into_iter().map(|x1| Pin::from(x1)).collect::<Vec<Pin>>().into_boxed_slice()),
         }
     }
 }
 
 #[derive(Debug)]
 pub struct Pin {
-    position:&'static str,
-    pad:&'static str,
+    pub position:&'static str,
+    pub pad:&'static str,
 }
 impl From<&'static Element> for Pin {
     fn from(x: &'static Element) -> Self {
@@ -45,7 +45,7 @@ impl ToTokens for Pinout {
             crate::r#struct::device_package::Pinout {
                 name: #name,
                 caption: #caption,
-                pins: vec![#( #pins ),*],
+                pins: &[#( #pins ),*],
             }
         });
     }

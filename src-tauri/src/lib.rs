@@ -22,7 +22,6 @@ pub fn run() {
 
     #[cfg(debug_assertions)] // only enable instrumentation in development builds
     let devtools = tauri_plugin_devtools::init();
-    deviceParser::get_tree_map().unwrap();
 
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())

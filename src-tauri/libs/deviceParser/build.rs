@@ -10,6 +10,7 @@ use quote::quote;
 pub mod r#struct;
 pub mod utils;
 
+
 fn main() {
     println!("cargo:rerun-if-changed=atdf");
     println!("cargo:rerun-if-changed=build.rs");
@@ -19,17 +20,27 @@ fn main() {
     }
     let mut mods:Vec<String> = vec!();
     get_tree_map().unwrap().iter().for_each(|(name,data)| {
+    //get_tree_map().unwrap().iter().next().into_iter().for_each(|(name,data)|{
         let dest_path = Path::new(&out_dir).join(format!("avr/{}.rs",name));
-        let generated = quote!{
+        let mut generated = quote!{
             #data
-        };
-        fs::write(&dest_path, generated.to_string()).unwrap();
+        }.to_string();
+        let reg_map = get_register_map(&name).unwrap();
+        generated+=format!("\npub const REGISTERMAP:phf::Map<u64,&'static super::Register> = super::phf_map!{{{}}};",reg_map.iter().map(|(u1,x1)| {format!("{}=>&{}",u1,(quote! {#x1}.to_string()))}).collect::<Vec<String>>().join(",")).as_str();
+        fs::write(&dest_path, generated).unwrap();
         mods.push(name.clone());
     });
     info!("{:?}",out_dir);
-    fs::write(Path::new(&out_dir).join("avr/mod.rs"), mods.iter().map(|x| {
-        return format!("mod {};",x).to_string();
-    }).collect::<Vec<String>>().join("\n")).unwrap();
+    let mut toMod:String = "".to_string();
+    toMod="pub use phf::phf_map;\n".to_string();
+    toMod+=  mods.iter().map(|x| {
+        return format!("pub mod {};",x).to_string();
+    }).collect::<Vec<String>>().join("\n").as_str();
+    toMod+="\n";
+    toMod+=format!("pub const McuList:&'static[&'static str] =&[{}];",mods.iter().map(|f|{format!("\"{}\"",f)}).collect::<Vec<String>>().join(",")).as_str();
+    toMod+=format!("\npub const McuStruct: phf::Map<&'static str,&'static AvrDeviceFile>= phf_map!{{{}}};",mods.iter().map(|f| format!("\"{0}\"=>&{0}::{1}",f,f.to_uppercase())).collect::<Vec<String>>().join(",")).as_str();
+    toMod+=format!("\npub const McuRegisterStruct: phf::Map<&'static str,&'static phf::Map<u64,&'static Register>>= phf_map!{{{}}};",mods.iter().map(|f| format!("\"{0}\"=>&{0}::REGISTERMAP",f)).collect::<Vec<String>>().join(",")).as_str();
+    fs::write(Path::new(&out_dir).join("avr/mod.rs"), toMod);
 }
 
 
