@@ -9,3 +9,4 @@ pub mod device_interface;
 pub mod device_property_group;
 pub mod avr_device_file;
 pub mod module;
+pub mod common_registers;

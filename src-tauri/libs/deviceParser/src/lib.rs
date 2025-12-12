@@ -22,8 +22,12 @@ pub fn get_register_map(device_name:&String)->Option<&'static phf::Map<u64,&'sta
 pub const fn get_mcu_list()->&'static[&'static str]{
     McuList
 }
-
+pub fn get_common_registers(mcu:&str)->Option<&'static CommonRegisters>{match McuCommonRegisterStruct.get(mcu){
+    None=>None,
+    Some(t)=>Some(*t)
+}}
 
 pub type AvrDeviceFile= crate::r#struct::avr_device_file::AvrDeviceFile;
 pub type Register= crate::r#struct::module::Register;
+pub type CommonRegisters = crate::r#struct::common_registers::CommonRegisters;
 pub type Error = String;

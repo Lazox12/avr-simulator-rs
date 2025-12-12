@@ -47,6 +47,7 @@ pub struct Register{
     pub initval:u64,
     pub bitfields:Option<&'static[BitField]>,
 }
+
 impl From<&'static Element> for Register{
     fn from(x:&'static Element) -> Self{
         Register{

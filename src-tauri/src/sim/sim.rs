@@ -1,12 +1,12 @@
+use std::ops::Deref;
 use anyhow::anyhow;
 use rusqlite::fallible_iterator::Iterator;
-use deviceParser::{get_tree_map, AvrDeviceFile, Register};
+use deviceParser::{get_common_registers, get_tree_map, AvrDeviceFile, CommonRegisters, Register};
 use opcodeGen::{CustomOpcodes, Opcode, RawInst};
 use crate::sim::memory::Memory;
 use crate::error::Result;
 use crate::project::PROJECT;
 use crate::sim::instruction::Instruction;
-use crate::sim::register::{CommonRegisters};
 use crate::sim::sim::RamSize::Size16;
 
 enum RamSize {
@@ -18,6 +18,8 @@ impl Default for RamSize {
         Size16
     }
 }
+
+
 #[derive(Default)]
 pub struct Sim{
     pub memory: Memory,
@@ -26,7 +28,8 @@ pub struct Sim{
 }
 impl Sim {
     pub fn init(&mut self) ->Result<()>{
-        let atdf = get_tree_map().get(&PROJECT.lock().unwrap().get_project()?.mcu).ok_or(anyhow!("invalid mcu"))?;
+        let mcu = &PROJECT.lock().unwrap().get_project()?.mcu;
+        let atdf = get_tree_map().get(mcu).ok_or(anyhow!("invalid mcu"))?;
         let inst = PROJECT.lock().unwrap().get_instruction_list()?;
         let mut inst_vec: Vec<Instruction>=Vec::new();
         inst_vec.resize((atdf.devices.address_spaces.iter().find(|x| {x.id=="prog"}).unwrap().size/2) as usize,Instruction::decode_from_opcode(CustomOpcodes::EMPTY as u16)?);
@@ -40,26 +43,28 @@ impl Sim {
             Ok(())
         }).collect::<Result<()>>()?;
         self.memory.init(atdf,inst_vec,PROJECT.lock().unwrap().get_eeprom_data()?)?;
-        self.registers.init(atdf,&mut self.memory.data.io)?;
+        self.registers = *(get_common_registers(mcu).ok_or(anyhow!("mcu not supported"))?);
+        self.registers.init_regs(atdf,&mut self.memory.data.io)?;
         Ok(())
     }
     pub fn execute_inst(&mut self,instruction: &Instruction) -> Result<()>{
-        let op1 = match instruction.operands{
-            Some(o) => match o.get(0){Some(v)=>v.value,None=>0},
+        let op1 = match &instruction.operands{
+            Some(o) => match o.get(0){Some(v)=>v.value.clone(),None=>0},
             None=>0
         };
-        let op2 = match instruction.operands{
-            Some(o) => match o.get(1){Some(v)=>v.value,None=>0},
+        let op2 = match &instruction.operands{
+            Some(o) => match o.get(1){Some(v)=>v.value.clone(),None=>0},
             None=>0
         };
-        let op3 = match instruction.operands{
-            Some(o) => match o.get(2){Some(v)=>v.value,None=>0},
+        let op3 = match &instruction.operands{
+            Some(o) => match o.get(2){Some(v)=>v.value.clone(),None=>0},
             None=>0
         };
         let ind1 = op1 as usize;
         let ind2 = op2 as usize;
         let ind3 = op3 as usize;
-        unsafe {
+
+        /*unsafe {
             match instruction.get_raw_inst()?.name {
                 Opcode::ADC => {
                     self.memory.data.registers[ind1] = self.memory.data.registers[ind1]+self.memory.data.registers[ind2];
@@ -185,6 +190,7 @@ impl Sim {
                 Opcode::WDR => {}
                 Opcode::XCH => {}
             }
-        }
+        }*/
+        Ok(())
     }
 }
