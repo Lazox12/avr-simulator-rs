@@ -4,7 +4,7 @@ use strum::{EnumIter,EnumString};
 use crate::error::Result;
 use crate::error::Error;
 #[derive(Debug, EnumIter, EnumString, Clone, Copy,Serialize,Deserialize)]
-
+#[allow(non_camel_case_types)]
 pub enum Constraint {
     r, //- any register
     d, //- `ldi' register (r16-r31)
