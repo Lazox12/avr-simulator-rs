@@ -220,6 +220,7 @@ fn main(){
     let mut s:String = String::from("");
 
     s+="#[derive(Debug,Serialize,Clone)]\n";
+    s+="#[allow(non_camel_case_types)]\n";
     s+="pub enum Opcode{\n";
     instList.into_iter().for_each(|i| {
         s+= &*(i + ",\n");
