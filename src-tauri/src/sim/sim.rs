@@ -1,8 +1,6 @@
-use std::ops::Deref;
 use anyhow::anyhow;
-use rusqlite::fallible_iterator::Iterator;
-use deviceParser::{get_common_registers, get_tree_map, AvrDeviceFile, CommonRegisters, Register};
-use opcodeGen::{CustomOpcodes, Opcode, RawInst};
+use deviceParser::{get_common_registers, get_tree_map, CommonRegisters};
+use opcodeGen::{CustomOpcodes, RawInst};
 use crate::sim::memory::Memory;
 use crate::error::Result;
 use crate::project::PROJECT;
@@ -37,7 +35,7 @@ impl Sim {
             let raw_inst = RawInst::get_inst_from_id(x.opcode_id)?;
             let address = x.address.clone();
             inst_vec.insert(x.address as usize, x);
-            if(raw_inst.len==2){
+            if raw_inst.len==2 {
                 inst_vec.insert((address as usize)+1,Instruction::decode_from_opcode(CustomOpcodes::REMINDER as u16)?);
             }
             Ok(())

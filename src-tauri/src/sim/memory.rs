@@ -1,5 +1,3 @@
-use std::sync::Mutex;
-use anyhow::anyhow;
 use crate::error::Result;
 use deviceParser::AvrDeviceFile;
 use opcodeGen::CustomOpcodes;

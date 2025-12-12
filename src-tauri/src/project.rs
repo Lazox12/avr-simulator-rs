@@ -1,18 +1,16 @@
-use std::fmt;
 use std::fmt::Display;
 use std::ops::Deref;
 use std::sync::{Mutex, MutexGuard};
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
 use crate::error::{Error, Result};
 use rusqlite::{Connection};
 use rusqlite::Error as SqlError;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ValueRef};
 use serde::{Deserialize, Serialize};
 use strum::{EnumIter, IntoEnumIterator};
-use tauri::AppHandle;
 use crate::{get_app_handle};
 use crate::sim::instruction::{Instruction, PartialInstruction};
-use tauri::{App,Emitter};
+use tauri::Emitter;
 
 pub static PROJECT: Mutex<Project> = Mutex::new(Project::new());
 pub fn get_project()->Result<MutexGuard<'static, Project>> {
@@ -43,7 +41,7 @@ impl Project {
         Project {connection: None, state: None }
     }
     pub fn create(&mut self,path:&str) -> Result<()>{
-        if(std::fs::exists(path)?){
+        if std::fs::exists(path)? {
             return Err(anyhow!(Error::FileExists(path.to_string())));
         }
         self.open_conn(path)?;
@@ -68,12 +66,12 @@ impl Project {
         }
     }
     fn open_db(&mut self, path:&str) -> Result<()>{
-        if(self.connection.is_some()){
+        if self.connection.is_some() {
             return Err(anyhow!(Error::ProjectAlreadyOpened));
         }
         self.open_conn(path)?;
         Tables::iter().map(|t|{
-            if(self.table_exists(t.clone()).is_err()){
+            if self.table_exists(t.clone()).is_err() {
                 self.create_table(t)?;
             }
             Ok(())
@@ -107,7 +105,7 @@ impl Project {
         Ok(())
     }
     pub fn is_open(&self) -> Result<()>{
-        if(self.connection.is_some()){
+        if self.connection.is_some() {
             return Ok(());
         }
         Err(anyhow!(Error::ProjectNotOpened))
@@ -157,7 +155,7 @@ impl Project {
             let comment_display = serde_json::from_str(&comment_json)
                 .map_err(|e| SqlError::UserFunctionError(Box::new(e)))?;
 
-            let mut i =Instruction {
+            let i =Instruction {
                 address: row.get(0)?,
                 opcode_id: row.get(1)?,
                 raw_opcode: row.get(2)?,
@@ -170,7 +168,7 @@ impl Project {
         })?.collect::<std::result::Result<Vec<_>, _>>()?;
         match self.state {
             Some(ref state) => {
-                if(state.mcu.is_empty()){
+                if state.mcu.is_empty() {
                     return Ok(instructions);
                 }
                 instructions.into_iter().map(|mut x| {
@@ -195,7 +193,7 @@ impl Project {
                 let mut instert_stmt = self.connection.as_ref().unwrap().prepare("INSERT INTO project (text) VALUES (?)")?;
                 let proj = ProjectState::default();
                 let r = instert_stmt.execute([serde_json::to_string(&proj)?])?;
-                if(r !=1) {
+                if r !=1  {
                     return Err(anyhow!(Error::ProjectError("querry returned more than 1 row")))
                 }
                 Ok(proj)
@@ -223,7 +221,7 @@ impl Project {
             Err(SqlError::QueryReturnedNoRows) =>{
                 let mut insert_stmt = self.connection.as_ref().unwrap().prepare("INSERT INTO eeprom SET data = '' ")?;
                 let r = insert_stmt.execute([])?;
-                if(r !=1) {
+                if r !=1  {
                     return Err(anyhow!(Error::ProjectError("querry returned more than 1 rows")))
                 }
                 drop(stmt);
@@ -254,7 +252,7 @@ impl ProjectState{
         let device = deviceParser::get_mcu_list().into_iter().find(|x| {
             **x==mcu
         });
-        if(device.is_some()){
+        if device.is_some() {
             self.mcu= device.unwrap().deref().parse().unwrap();
             return Ok(())
         }

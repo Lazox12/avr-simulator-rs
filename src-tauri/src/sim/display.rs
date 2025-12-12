@@ -13,17 +13,17 @@ pub enum Display {
 }
 impl Display {
     pub fn decode(s:&str)->Display{
-        if (s.is_empty()) { Display::None }
-        else if (s.starts_with("0b") || s.starts_with("0B")) {
+        if s.is_empty()  { Display::None }
+        else if s.starts_with("0b") || s.starts_with("0B")  {
             Display::Bin
         }
-        else if (u32::from_str(&*s).is_ok()) {
+        else if u32::from_str(&*s).is_ok()  {
             Display::Dec
         }
-        else if (s.starts_with("0c") || s.starts_with("0C")) {
+        else if s.starts_with("0c") || s.starts_with("0C")  {
             Display::Oct
         }
-        else if (s.starts_with("0x") || s.starts_with("0X")) {
+        else if s.starts_with("0x") || s.starts_with("0X")  {
             Display::Hex
         }else{
             Display::String

@@ -5,10 +5,10 @@ use crate::sim::instruction::Instruction;
 use opcodeGen::Opcode;
 use crate::sim::constraint::Constraint;
 use crate::sim::display::Display;
-use crate::sim::operand::{Operand, OperandInfo};
-use deviceParser::{get_register_map, get_tree_map};
-use crate::project::{Project, ProjectState, PROJECT};
-use crate::error::{Error, Result};
+use crate::sim::operand::OperandInfo;
+use deviceParser::get_register_map;
+use crate::project::ProjectState;
+use crate::error::Result;
 
 pub fn gen_comment(i: &mut Instruction)->Result<()> {
     match RawInst::get_inst_from_id(i.opcode_id).unwrap().name {
@@ -41,9 +41,9 @@ pub fn gen_operand_details(i: &mut Instruction,state:&ProjectState)->Result<()>{
                         }
                         let reg= reg_opt.unwrap();
                         let info = OperandInfo{
-                            register_name: reg.name.clone().parse()?,
+                            register_name: reg.name.parse()?,
                             register_mask:serde_json::to_string(&reg.bitfields)?,
-                            description: reg.caption.clone().unwrap_or(reg.name.clone()).parse()?,
+                            description: reg.caption.clone().unwrap_or(reg.name).parse()?,
                         };
                         x.operand_info = Some(info);
                         

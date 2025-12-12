@@ -1,8 +1,6 @@
-use tauri::Error;
 use tauri::ipc::Invoke;
 use opcodeGen::RawInst;
-use crate::project::{get_project, Project, ProjectState, PROJECT};
-use crate::error::{Result};
+use crate::project::{get_project, ProjectState};
 use crate::sim::parser::parse_hex;
 use crate::wrap_anyhow;
 

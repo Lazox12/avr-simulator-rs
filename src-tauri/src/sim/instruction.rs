@@ -29,7 +29,7 @@ impl Instruction{
         RawInst::get_inst_from_id(self.opcode_id)
     }
     pub fn decode_from_opcode(opcode: u16) -> Result<Instruction>{
-        let inst = Self::match_raw_instruction_from_opcode(opcode).unwrap_or_else(|x|{
+        let inst = Self::match_raw_instruction_from_opcode(opcode).unwrap_or_else(|_x|{
             999
         });
         
@@ -68,7 +68,7 @@ impl Instruction{
                         let rresult = Operand::map_value(Instruction::map_register_number(Instruction::decode_val(x.map, self.raw_opcode), constraint), constraint);
                         let result: OperandValue;
                         let mut name:String = "".to_string();
-                        if( rresult.is_err()){
+                        if rresult.is_err() {
                             result = 1;
                             name = "opcode:".to_string();
                             name+= self.raw_opcode.to_string().as_str();
@@ -149,7 +149,7 @@ impl TryFrom<PartialInstruction> for Instruction {
 
     fn try_from(value:PartialInstruction) -> std::result::Result<Instruction, anyhow::Error> { //todo
 
-        let opcode =RawInst::get_inst_from_id(value.opcode_id)?;
+        let _opcode =RawInst::get_inst_from_id(value.opcode_id)?;
         let  comment_display = Display::decode(&*value.comment);
 
         Ok(Instruction{

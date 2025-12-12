@@ -1,10 +1,8 @@
 use std::fmt;
-use std::fmt::{write, Display, Formatter, LowerHex};
-use std::ops::Index;
-use std::slice::SliceIndex;
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use anyhow::anyhow;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use crate::error::{Error, Result};
 use super::constraint::Constraint;
 
@@ -20,7 +18,7 @@ impl Operand{
     pub(crate) fn map_value(mut value:u32, constraint: Constraint) ->Result<OperandValue>{ // todo std does not work
         match constraint {
             Constraint::r => {
-                if(value<32){
+                if value<32 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -29,7 +27,7 @@ impl Operand{
             }
             Constraint::d => {
 
-                if(value >15 && value<32){
+                if value >15 && value<32 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -37,7 +35,7 @@ impl Operand{
                 }
             }
             Constraint::v => {
-                if(value<32){
+                if value<32 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -45,7 +43,7 @@ impl Operand{
                 }
             }
             Constraint::a => {
-                if(value >15 && value<24){
+                if value >15 && value<24 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -53,7 +51,7 @@ impl Operand{
                 }
             }
             Constraint::w => {
-                if(value>23 && value<31){
+                if value>23 && value<31 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -61,7 +59,7 @@ impl Operand{
                 }
             }
             Constraint::e=>{
-                if(value<4){
+                if value<4 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -69,7 +67,7 @@ impl Operand{
                 }
             }
             Constraint::b => {
-                if(value<2){
+                if value<2 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -77,7 +75,7 @@ impl Operand{
                 }
             }
             Constraint::z =>{
-                if(value<2){
+                if value<2 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -85,7 +83,7 @@ impl Operand{
                 }
             }
             Constraint::M =>{
-                if(value<256){
+                if value<256 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -93,7 +91,7 @@ impl Operand{
                 }
             }
             Constraint::n =>{
-                if(value<256){
+                if value<256 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -101,7 +99,7 @@ impl Operand{
                 }
             }
             Constraint::s=>{
-                if(value<8){
+                if value<8 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -109,7 +107,7 @@ impl Operand{
                 }
             }
             Constraint::P=>{
-                if(value<64){
+                if value<64 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -117,7 +115,7 @@ impl Operand{
                 }
             }
             Constraint::p =>{
-                if(value<32){
+                if value<32 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -125,7 +123,7 @@ impl Operand{
                 }
             }
             Constraint::K=>{
-                if(value<64){
+                if value<64 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -133,7 +131,7 @@ impl Operand{
                 }
             }
             Constraint::i=>{
-                if(value>=0){
+                if value>=0 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -142,7 +140,7 @@ impl Operand{
             }
             Constraint::j=>{
                 value += 0x40;
-                if(value<0xbf){
+                if value<0xbf {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -152,7 +150,7 @@ impl Operand{
             Constraint::l =>{
                 let mut t = Operand::unsigned_to_signed(value, 7);
                 t*=2; // 16 bit wide addresses
-                if(t>=-64 && t<64){
+                if t>=-64 && t<64 {
                     Ok(t as OperandValue)
                 }
                 else{
@@ -162,7 +160,7 @@ impl Operand{
             Constraint::L =>{
                 let mut t = Operand::unsigned_to_signed(value, 12);
                 t*=2; // 16 bit wide addresses
-                if(t>=-2048 && t<2048){
+                if t>=-2048 && t<2048 {
                     Ok(t as OperandValue)
                 }
                 else{
@@ -170,7 +168,7 @@ impl Operand{
                 }
             }
             Constraint::h=>{
-                if(value>=0){
+                if value>=0 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -178,7 +176,7 @@ impl Operand{
                 }
             }
             Constraint::S=>{
-                if(value<8){
+                if value<8 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -186,7 +184,7 @@ impl Operand{
                 }
             }
             Constraint::E=>{
-                if(value<16){
+                if value<16 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -194,7 +192,7 @@ impl Operand{
                 }
             }
             Constraint::o=>{
-                if(value<64){
+                if value<64 {
                     Ok(value as OperandValue)
                 }
                 else{
@@ -281,7 +279,7 @@ impl Operand{
 impl Display for Operand{
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         //write!(f,"name:{},constraint:{:?},val:{:#x}",self.name,self.constraint,self.value);
-        if(self.name.len()>0){
+        if self.name.len()>0 {
             write!(f,"{}",self.name)?;
         }
         match self.constraint {
@@ -336,7 +334,7 @@ fn constraint_z_into_pointer(val:OperandValue) ->Result<String>{
 }
 
 fn pointer_into_constraint_e(val:&str) ->Result<OperandValue>{
-    if(val.len()==0){
+    if val.len()==0 {
         return Err(anyhow!(Error::InvalidValue))
     }
 
@@ -348,7 +346,7 @@ fn pointer_into_constraint_e(val:&str) ->Result<OperandValue>{
     }
 }
 fn pointer_into_constraint_b(val:&str) ->Result<OperandValue>{
-    if(val.len()==0){
+    if val.len()==0 {
         return Err(anyhow!(Error::InvalidValue))
     }
 
@@ -359,7 +357,7 @@ fn pointer_into_constraint_b(val:&str) ->Result<OperandValue>{
     }
 }
 fn pointer_into_constraint_z(val:&str) ->Result<OperandValue>{
-    if(val.len()==0){
+    if val.len()==0 {
         return Err(anyhow!(Error::InvalidValue))
     }
 

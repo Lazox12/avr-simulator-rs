@@ -1,8 +1,6 @@
-use std::cell::OnceCell;
 use std::sync::{Mutex, MutexGuard, OnceLock};
 use anyhow::anyhow;
 use tauri::{AppHandle, Manager};
-use crate::project::PROJECT;
 use error::Result;
 
 mod error;

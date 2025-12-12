@@ -1,5 +1,5 @@
 use super::instruction::{Instruction, PartialInstruction};
-use crate::error::{Result,Error};
+use crate::error::Result;
 use std::fs;
 use std::io;
 use std::io::ErrorKind;
