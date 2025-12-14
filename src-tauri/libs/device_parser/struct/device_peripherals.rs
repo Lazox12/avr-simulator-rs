@@ -1,5 +1,5 @@
 use xmltree::Element;
-use super::utils::{find_child, find_childs, to_ident};
+use super::utils::{find_child, find_childs};
 #[derive(Debug)]
 pub struct Module{
     pub name: &'static str,
@@ -86,7 +86,7 @@ impl From<&'static Element> for Param {
     }
 }
 use quote::{quote, ToTokens};
-use quote::__private::{Span, TokenStream};
+use quote::__private::TokenStream;
 
 impl ToTokens for Module {
     fn to_tokens(&self, tokens: &mut TokenStream) {

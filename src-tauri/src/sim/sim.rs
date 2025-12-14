@@ -1,6 +1,6 @@
 use anyhow::anyhow;
-use deviceParser::{get_common_registers, get_tree_map, CommonRegisters};
-use opcodeGen::{CustomOpcodes, RawInst};
+use device_parser::{get_common_registers, get_tree_map, CommonRegisters};
+use opcode_gen::{CustomOpcodes, RawInst};
 use crate::sim::memory::Memory;
 use crate::error::Result;
 use crate::project::PROJECT;

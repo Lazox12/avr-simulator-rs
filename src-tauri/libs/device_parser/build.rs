@@ -53,10 +53,10 @@ fn main() {
         return format!("pub mod {};",x).to_string();
     }).collect::<Vec<String>>().join("\n").as_str();
     toMod+="\n";
-    toMod+=format!("pub const McuList:&'static[&'static str] =&[{}];",mods.iter().map(|f|{format!("\"{}\"",f)}).collect::<Vec<String>>().join(",")).as_str();
-    toMod+=format!("\npub const McuStruct: phf::Map<&'static str,&'static AvrDeviceFile>= phf_map!{{{}}};",mods.iter().map(|f| format!("\"{0}\"=>&{0}::{1}",f,f.to_uppercase())).collect::<Vec<String>>().join(",")).as_str();
-    toMod+=format!("\npub const McuRegisterStruct: phf::Map<&'static str,&'static phf::Map<u64,&'static Register>>= phf_map!{{{}}};",mods.iter().map(|f| format!("\"{0}\"=>&{0}::REGISTERMAP",f)).collect::<Vec<String>>().join(",")).as_str();
-    toMod+=format!("\npub const McuCommonRegisterStruct: phf::Map<&'static str,&'static CommonRegisters>= phf_map!{{{}}};",success.iter().map(|f| format!("\"{0}\"=>&{0}::COMMONREGISTERS",f)).collect::<Vec<String>>().join(",")).as_str();
+    toMod+=format!("pub const MCU_LIST:&'static[&'static str] =&[{}];",mods.iter().map(|f|{format!("\"{}\"",f)}).collect::<Vec<String>>().join(",")).as_str();
+    toMod+=format!("\npub const MCU_STRUCT: phf::Map<&'static str,&'static AvrDeviceFile>= phf_map!{{{}}};",mods.iter().map(|f| format!("\"{0}\"=>&{0}::{1}",f,f.to_uppercase())).collect::<Vec<String>>().join(",")).as_str();
+    toMod+=format!("\npub const MCU_REGISTER_STRUCT: phf::Map<&'static str,&'static phf::Map<u64,&'static Register>>= phf_map!{{{}}};",mods.iter().map(|f| format!("\"{0}\"=>&{0}::REGISTERMAP",f)).collect::<Vec<String>>().join(",")).as_str();
+    toMod+=format!("\npub const MCU_COMMON_REGISTER_STRUCT: phf::Map<&'static str,&'static CommonRegisters>= phf_map!{{{}}};",success.iter().map(|f| format!("\"{0}\"=>&{0}::COMMONREGISTERS",f)).collect::<Vec<String>>().join(",")).as_str();
     fs::write(Path::new(&out_dir).join("avr/mod.rs"), toMod);
     info!("sucess:{} from:{}",c2,c1);
 }

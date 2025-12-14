@@ -1,10 +1,9 @@
-use proc_macro2::Ident;
-use quote::__private::{Span, TokenStream};
+use quote::__private::TokenStream;
 use quote::{quote, ToTokens};
 use xmltree::Element;
 use serde::Serialize;
 use crate::r#struct::device_property_group::PropertyValue;
-use super::utils::{find_childs, to_ident};
+use super::utils::find_childs;
 
 #[derive(Debug)]
 pub struct Module{

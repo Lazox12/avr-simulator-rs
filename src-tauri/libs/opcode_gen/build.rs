@@ -1,8 +1,6 @@
 use std::collections::HashSet;
 use std::env;
-use std::fmt::Display;
 use std::fs;
-use std::iter::Map;
 use std::path::Path;
 
 #[derive(Debug)]
@@ -102,8 +100,8 @@ fn main(){
     let out_dir = env::var_os("OUT_DIR").unwrap();
     let dest_path = Path::new(&out_dir).join("opcode.rs");
     let mut r:Vec<Inst> = vec![];
-    let mut instList:HashSet<String> = HashSet::new();
-    instList.insert("CUSTOM_INST(u32)".to_string());
+    let mut inst_list:HashSet<String> = HashSet::new();
+    inst_list.insert("CUSTOM_INST(u32)".to_string());
     for line in fs::read_to_string("src/opcode.def").unwrap().lines(){
         if line.starts_with("//") {
             continue;
@@ -120,14 +118,14 @@ fn main(){
         chars.remove(&'0');
         chars.remove(&'1');
         let mut constraints:Vec<&str> = vec![];
-        if(v.len()==6){
+        if v.len()==6 {
             constraints = v[3].split(",").filter(|s| s.len() > 0).collect();
         }
         let mut c:Vec<ConstraintMap> = vec![];
         println!("{:?}", constraints);
          constraints.iter().for_each(|s| {
                 let ch = s.chars().next().unwrap();
-                if(chars.iter().find(|x| **x == ch).is_none()){
+                if chars.iter().find(|x| **x == ch).is_none() {
                     c.push(ConstraintMap{ map: 0,constraint:ch});
                     return;
                 }
@@ -140,11 +138,11 @@ fn main(){
                     }
                     
                 }
-             if(v[1].parse::<i8>().unwrap()==2){
+             if v[1].parse::<i8>().unwrap()==2 {
                  map = map<<16;
                  
              }
-                if(map>0){
+                if map>0 {
                     chars.remove(&ch);
                 }
                 c.push(ConstraintMap { constraint: ch, map });
@@ -153,14 +151,14 @@ fn main(){
         println!("{:?}", c);
 
 
-        instList.insert(v[2].to_string().to_uppercase());
+        inst_list.insert(v[2].to_string().to_uppercase());
         c.iter_mut().for_each(|map: &mut ConstraintMap| {
-            if(map.map >0){
+            if map.map >0 {
                 return;
             }
             let op_ch = chars.iter().next();
-            if(op_ch.is_none()){
-                if(v[1].parse::<i8>().unwrap()==2 && map.constraint =='i'){
+            if op_ch.is_none() {
+                if v[1].parse::<i8>().unwrap()==2 && map.constraint =='i' {
                     map.map =65535;
                 }
                 return;
@@ -174,13 +172,13 @@ fn main(){
                     count+=1;
                 }
             }
-            if(v[1].parse::<i8>().unwrap()==2){
+            if v[1].parse::<i8>().unwrap()==2 {
                 count = count<<16;
 
             }
             map.map = count;
         });
-        if(c.len()==1 && (c[0].map&65535) == 0){
+        if c.len()==1 && (c[0].map&65535) == 0 {
             c[0].map +=65535;
         }
         
@@ -222,12 +220,12 @@ fn main(){
     s+="#[derive(Debug,Serialize,Clone)]\n";
     s+="#[allow(non_camel_case_types)]\n";
     s+="pub enum Opcode{\n";
-    instList.into_iter().for_each(|i| {
+    inst_list.into_iter().for_each(|i| {
         s+= &*(i + ",\n");
     });
     s+="}\n\n";
 
-    s+="pub const Opcode_list:[RawInst;";
+    s+="pub const OPCODE_LIST:[RawInst;";
     s+= &*r.len().to_string();
     s+="]=[\n";
     for inst in r.iter() {

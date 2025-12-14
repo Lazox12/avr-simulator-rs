@@ -1,6 +1,6 @@
 use crate::error::Result;
-use deviceParser::AvrDeviceFile;
-use opcodeGen::CustomOpcodes;
+use device_parser::AvrDeviceFile;
+use opcode_gen::CustomOpcodes;
 use crate::sim::instruction::Instruction;
 
 pub struct Memory {

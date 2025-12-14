@@ -1,12 +1,12 @@
 use anyhow::anyhow;
-use opcodeGen::RawInst;
+use opcode_gen::RawInst;
 
 use crate::sim::instruction::Instruction;
-use opcodeGen::Opcode;
+use opcode_gen::Opcode;
 use crate::sim::constraint::Constraint;
 use crate::sim::display::Display;
 use crate::sim::operand::OperandInfo;
-use deviceParser::get_register_map;
+use device_parser::get_register_map;
 use crate::project::ProjectState;
 use crate::error::Result;
 

@@ -1,9 +1,8 @@
 use std::str::FromStr;
-use proc_macro2::{ Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use xmltree::Element;
-use super::utils::{find_child, find_childs};
-use syn::Ident;
+use super::utils::find_childs;
 #[derive(Debug)]
 pub struct AddressSpace{
     pub memory_segments:&'static [MemorySegment],

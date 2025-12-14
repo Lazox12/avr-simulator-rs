@@ -1,9 +1,8 @@
 use std::str::FromStr;
-use proc_macro2::{ Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use xmltree::Element;
 use super::utils::find_childs;
-use syn::Ident;
 #[derive(Debug)]
 pub struct PropertyGroup{
     pub name: &'static str,

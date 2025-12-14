@@ -1,7 +1,6 @@
-use proc_macro2::{ Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use xmltree::Element;
-use syn::Ident;
 #[derive(Debug)]
 pub struct Interface {
     pub name: &'static str,

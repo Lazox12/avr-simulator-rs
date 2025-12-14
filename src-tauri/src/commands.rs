@@ -1,5 +1,5 @@
 use tauri::ipc::Invoke;
-use opcodeGen::RawInst;
+use opcode_gen::RawInst;
 use crate::project::{get_project, ProjectState};
 use crate::sim::parser::parse_hex;
 use crate::wrap_anyhow;
@@ -19,12 +19,12 @@ pub(crate) const HANDLER: fn(Invoke) -> bool = tauri::generate_handler![
 
 
 wrap_anyhow!(get_instruction_list() -> Vec<RawInst> {
-    Ok(Vec::from(opcodeGen::Opcode_list))
+    Ok(Vec::from(opcode_gen::OPCODE_LIST))
 });
 
 
 wrap_anyhow!(get_mcu_list() -> &'static [&'static str] {
-    Ok(deviceParser::get_mcu_list())
+    Ok(device_parser::get_mcu_list())
 });
 
 

@@ -1,8 +1,6 @@
-use proc_macro2::{ Span, TokenStream};
+use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use xmltree::Element;
-use syn::Ident;
-use super::utils::to_ident;
 
 #[derive(Debug)]
 pub struct Interrupt{

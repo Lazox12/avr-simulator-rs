@@ -249,7 +249,7 @@ pub struct ProjectState{
 //commands
 impl ProjectState{
     pub fn set_mcu(&mut self, mcu:String) -> Result<()>{
-        let device = deviceParser::get_mcu_list().into_iter().find(|x| {
+        let device = device_parser::get_mcu_list().into_iter().find(|x| {
             **x==mcu
         });
         if device.is_some() {

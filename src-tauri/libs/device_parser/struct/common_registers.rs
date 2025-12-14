@@ -1,6 +1,4 @@
-use std::ptr::null;
 use anyhow::anyhow;
-use build_print::warn;
 use quote::{quote, ToTokens};
 use crate::AvrDeviceFile;
 use crate::r#struct::module::Register;
@@ -10,15 +8,16 @@ pub struct CommonReg {
     pub register: &'static Register,
     pub data:*mut u8
 }
-static mut zero : u8 = 0;
+static mut ZERO : u8 = 0;
 impl Default for CommonReg {
     fn default() -> Self {
-
+        let d ;
         unsafe {
-            CommonReg {
-                register: Box::leak(Box::new(Register::default())),
-                data: &raw mut zero
-            }
+            d= &raw mut ZERO;
+        }
+        CommonReg {
+            register: Box::leak(Box::new(Register::default())),
+            data: d
         }
     }
 }
@@ -54,9 +53,9 @@ impl CommonRegisters{
             .register
             .iter()
             .filter(|register|{ reg_list.iter().find(|x| {register.name==**x}).is_some()})
-            .map(|register| unsafe{
+            .map(|register| {
 
-                let (_, mut v) = s.iter_mut().find(|(key,_)| {key.to_uppercase()==register.name.to_uppercase()}).ok_or_else(|| anyhow!("invalid register:{0}", register.name))?;
+                let (_, v) = s.iter_mut().find(|(key,_)| {key.to_uppercase()==register.name.to_uppercase()}).ok_or_else(|| anyhow!("invalid register:{0}", register.name))?;
                 v.register = register;
                 Ok(())
             }).collect::<Result<(),anyhow::Error>>()?;

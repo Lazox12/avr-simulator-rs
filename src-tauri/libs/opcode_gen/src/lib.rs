@@ -51,12 +51,12 @@ impl TryFrom<usize> for CustomOpcodes{
 }
 impl RawInst{
     pub fn get_inst_id_from_opcode(opcode:u16) ->Option<usize>{
-        Opcode_list.iter().position(|i| {
+        OPCODE_LIST.iter().position(|i| {
             opcode & i.bin_mask == i.bin_opcode
         })
     }
     pub fn get_inst_from_id(id:usize)->Result<&'static RawInst,anyhow::Error>{
-        let opcode = Opcode_list.get(id);
+        let opcode = OPCODE_LIST.get(id);
         if opcode.is_some(){
             return Ok(opcode.unwrap())
         }
@@ -93,6 +93,6 @@ mod tests {
     #[test]
     fn it_works() {
         
-        assert_eq!(Opcode_list.len(), 124);
+        assert_eq!(OPCODE_LIST.len(), 124);
     }
 }

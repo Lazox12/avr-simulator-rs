@@ -71,7 +71,7 @@ pub enum Error{
     TauriError(#[from] tauri::Error),
     
     #[error("device error: {0}")]
-    DeviceParserError(deviceParser::Error),
+    DeviceParserError(device_parser::Error),
     
     #[error("Project Handler Error: {0}")]
     ProjectError(&'static str)

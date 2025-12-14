@@ -2,7 +2,7 @@ use super::operand::{Operand, OperandValue};
 use crate::error::{Error, Result};
 use crate::sim::constraint::Constraint;
 use crate::sim::display::Display;
-use opcodeGen::{Opcode, RawInst};
+use opcode_gen::{Opcode, RawInst};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use anyhow::anyhow;

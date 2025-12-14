@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-use std::fs::DirEntry;
 //pub use phf::phf_map;
 #[path = "../struct/mod.rs"]
 pub mod r#struct;
@@ -11,18 +9,18 @@ include!(concat!(env!("OUT_DIR"), "/avr/mod.rs"));
 
 
 pub fn get_tree_map() ->&'static phf::Map<&'static str,&'static AvrDeviceFile>{
-    &McuStruct
+    &MCU_STRUCT
 }
 pub fn get_register_map(device_name:&String)->Option<&'static phf::Map<u64,&'static Register>>{
-    match McuRegisterStruct.get(&device_name){
+    match MCU_REGISTER_STRUCT.get(&device_name){
         None=>None,
         Some(t)=>Some(*t)
     }
 }
 pub const fn get_mcu_list()->&'static[&'static str]{
-    McuList
+    MCU_LIST
 }
-pub fn get_common_registers(mcu:&str)->Option<&'static CommonRegisters>{match McuCommonRegisterStruct.get(mcu){
+pub fn get_common_registers(mcu:&str)->Option<&'static CommonRegisters>{match MCU_COMMON_REGISTER_STRUCT.get(mcu){
     None=>None,
     Some(t)=>Some(*t)
 }}

@@ -4,7 +4,7 @@ use std::fs;
 use std::io;
 use std::io::ErrorKind;
 use anyhow::anyhow;
-use opcodeGen::RawInst;
+use opcode_gen::RawInst;
 use crate::error::Error::{InvalidRecordType, NotImplemented};
 
 const MAX_BYTE_COUNT: usize =16;//todo replace by something meaningful
@@ -109,7 +109,7 @@ fn calculate_checksum(line:&str) -> Result<bool>{
 mod tests{
     use super::*;
     use std::process::Command;
-    use opcodeGen::RawInst;
+    use opcode_gen::RawInst;
 
     #[test]
     fn test_parse_hex(){ //todo
