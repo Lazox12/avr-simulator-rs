@@ -199,6 +199,14 @@ impl Operand{
                     Err(anyhow!(Error::InvalidConstraintValue {err:format!("o: Displacement value must be between 0 and 63, got {}", value),address:0}))
                 }
             }
+            Constraint::c=>{
+                if value<4{
+                    Ok(value as OperandValue)
+                }
+                else{
+                    Err(anyhow!(Error::InvalidConstraintValue {err:format!("c: increment mus be between 0 and 3, got {}", value),address:0}))
+                }
+            }
         }
     }
     pub(crate) fn map_value_from_string(value:&String,constraint: Constraint) -> Result<OperandValue> {
@@ -237,6 +245,16 @@ impl Operand{
                 value.remove(0);
                 Ok(OperandValue::from_str(&*value)?)
             }
+            Constraint::c => {
+                if value.contains("+"){ //post increment
+                    Ok(1 as OperandValue)
+                }else if value.contains("-"){ //pre decrement
+                    Ok(2 as OperandValue)
+                }
+                else {
+                    Ok(0 as OperandValue)
+                }
+            }
         }
     }
 
@@ -265,6 +283,12 @@ impl Operand{
             Constraint::S =>{Ok(format!("{:#x}",value))}
             Constraint::E =>{Ok(format!("{:#x}",value))}
             Constraint::o =>{Ok(format!("+{}",value))}
+            Constraint::c =>{match value {
+                0 =>{Ok("".to_string())}
+                1 =>{Ok("+".to_string())} //post increment
+                2 =>{Ok("-".to_string())} //pre decrement
+                _ =>{Err(anyhow!("invalid val"))}
+            }}
         }
     }
     fn unsigned_to_signed(val:u32,len:u32)->i32{ //signed len in bits
@@ -305,6 +329,11 @@ impl Display for Operand{
             Constraint::S =>{write!(f,"{:#x}",self.value)}
             Constraint::E =>{write!(f,"{:#x}",self.value)}
             Constraint::o =>{write!(f,"+{}",self.value)}
+            Constraint::c =>{match self.value {
+                1 =>{write!(f,"+")} //post increment
+                2 =>{write!(f,"-",)} //pre decrement
+                _ =>{write!(f, "")}
+            }}
         }
     }
 }

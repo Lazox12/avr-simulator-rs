@@ -27,4 +27,5 @@ pub enum Constraint {
     S, //- immediate Value from 0 to 7 (S = s << 4)
     E, //- immediate Value from 0 to 15, shifted left by 4 (des)
     o,  //- Displacement value from 0 to 63 (std,ldd)
+    c, // pointer increment/decrement (ld,st)
 }

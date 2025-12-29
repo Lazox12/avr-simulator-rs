@@ -37,6 +37,30 @@ pub struct DataMemory {
     pub io:Vec<u8>,
     pub ram:Vec<u8>,
 }
+impl std::ops::Index<usize> for DataMemory {
+    type Output = u8;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        if index < self.registers.len() {
+            &self.registers[index]
+        }else if index-self.registers.len() < self.io.len(){
+            &self.io[index - self.registers.len()]
+        }else{
+            &self.ram[index - self.registers.len() - self.io.len()]
+        }
+    }
+}
+impl std::ops::IndexMut<usize> for DataMemory {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        if index < self.registers.len() {
+            &mut self.registers[index]
+        } else if index - self.registers.len() < self.io.len() {
+            &mut self.io[index - self.registers.len()]
+        } else {
+            &mut self.ram[index - self.registers.len() - self.io.len()]
+        }
+    }
+}
 impl DataMemory {
     pub fn new()->Self{
         DataMemory{

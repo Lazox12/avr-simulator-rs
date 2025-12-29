@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use anyhow::anyhow;
+use build_print::warn;
 use quote::{quote, ToTokens};
 use crate::AvrDeviceFile;
 use crate::r#struct::module::Register;
@@ -59,6 +60,7 @@ impl CommonRegisters{
             .iter()
             .filter(|(_,value)|{ reg_list.iter().find(|x| {value.name.to_lowercase()==*x.to_lowercase()}).is_some()})
             .map(|(_,register)| { //todo does not work
+                //warn!("{}",register.name);
                 let (_, v) = s.iter_mut().find(|(key,_)| {key.to_lowercase()==register.name.to_lowercase()}).ok_or_else(|| anyhow!("invalid register:{0}", register.name))?;
                 v.register = register;
                 Ok(())
@@ -92,8 +94,8 @@ impl CommonRegisters{
     {
         let sreg = ("sreg", &mut self.sreg);
         let eind = ("eind", &mut self.eind);
-        let spl = ("sp", &mut self.spL);
-        let sph = ("sp", &mut self.spH);
+        let spl = ("spl", &mut self.spL);
+        let sph = ("sph", &mut self.spH);
         let rampx = ("rampx", &mut self.rampx);
         let rampy = ("rampy", &mut self.rampy);
         let rampz = ("rampz", &mut self.rampz);

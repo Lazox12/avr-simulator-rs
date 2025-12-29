@@ -165,9 +165,9 @@
 1001000rrrrr0000;2;lds;r,i;?;Load Direct from Data Space
 
 10o0oo0rrrrrbooo;1;ldd;r,b,o;Rd ← DS(Y|Z + q);Load Indirect with Displacement
-100!000rrrrree-+;1;ld;r,e;Rd ← DS(X|Y|Z);Load Indirect
+100!000rrrrreecc;1;ld;r,e,c;Rd ← DS(X|Y|Z);Load Indirect
 10o0oo1rrrrrbooo;1;std;b,o,r;DS(Y|Z + q) ← Rr;Store Indirect with Displacement
-100!001rrrrree-+;1;st;e,r;DS(X|Y|Z) ← Rr;Store Indirect
+100!001rrrrreecc;1;st;e,c,r;DS(X|Y|Z) ← Rr;Store Indirect
 
 1001010100011001;1;eicall;PC(15:0) ← Z,PC(21:16)←EIND;Extended Indirect Call to (Z)
 1001010000011001;1;eijmp;PC(15:0) ← Z,PC(21:16)←EIND;Extended Indirect Jump to (Z)

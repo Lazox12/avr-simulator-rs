@@ -114,7 +114,7 @@ mod tests{
     #[test]
     fn test_parse_hex(){ //todo
        let out = parse_hex("D:\\projects\\avr-simulator-rs\\tests\\disassembly\\main.hex".to_string());
-        let f = fs::read_to_string("D:\\projects\\avr-simulator-rs\\tests\\disassembly\\main.s").unwrap();
+        let f = fs::read_to_string("D:\\projects\\avr-simulator-rs\\tests\\disassembly\\all.s").unwrap();
         let input = f.split("\n").collect::<Vec<&str>>();
         let mut iter = 1;
         for i in &out.unwrap()[65..183]{

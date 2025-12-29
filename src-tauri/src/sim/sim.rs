@@ -173,7 +173,7 @@ impl Sim {
                     self.set_flag(Flags::Z, res == 0);
                     self.set_flag(Flags::C, ov | ov1);
                     reg[ind1] = res;
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::ADD => {
                     let ra = *ra?;
@@ -189,7 +189,7 @@ impl Sim {
                     self.set_flag(Flags::Z, res == 0);
                     self.set_flag(Flags::C, ov);
                     reg[ind1] = res;
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::ADIW => {
                     let data: u16 = ((reg[ind1+1] as u16) << 8) + (reg[ind1] as u16);
@@ -205,7 +205,7 @@ impl Sim {
 
                     reg[ind1] = (res & 0xff) as u8;
                     reg[ind1 + 1] = ((res >> 8) & 0xff) as u8;
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::AND => {
                     let res = execute![ra&rb]?;
@@ -217,7 +217,7 @@ impl Sim {
                     self.set_flag(Flags::V, false);
 
                     reg[ind1] = res;
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::ANDI => {
                     let data = op2 as u8;
@@ -230,7 +230,7 @@ impl Sim {
                     self.set_flag(Flags::V, false);
 
                     reg[ind1] = res;
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::ASR => {
                     let ra = *ra?;
@@ -246,20 +246,20 @@ impl Sim {
                     self.set_flag(Flags::V, v);
                     self.set_flag(Flags::S, v ^ n);
                     reg[ind1] = res;
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BCLR => {
                     let f = Flags::get_flag(op1 as u8)?;
                     self.set_flag(f, false);
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BLD => {
                     reg[ind1] =match self.get_flag(Flags::T){
                         true => {(*ra? | (1<<op2))}
                         false=>{{(*ra? & 0xff-(1<<op2))}}
                     };
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRBC => {
                     let f = self.get_flag(Flags::get_flag(op1 as u8)?);
@@ -267,7 +267,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRBS => {
                     let f = self.get_flag(Flags::get_flag(op1 as u8)?);
@@ -275,7 +275,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRCC => {
                     let f = self.get_flag(Flags::C);
@@ -283,7 +283,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRCS => {
                     let f = self.get_flag(Flags::C);
@@ -291,7 +291,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BREAK => {
                     Err(anyhow!("halt"))
@@ -302,7 +302,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRGE => {
                     let f = self.get_flag(Flags::S);
@@ -310,7 +310,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRHC => {
                     let f = self.get_flag(Flags::H);
@@ -318,7 +318,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRHS => {
                     let f = self.get_flag(Flags::H);
@@ -326,7 +326,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRID => {
                     let f = self.get_flag(Flags::I);
@@ -334,7 +334,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRIE => {
                     let f = self.get_flag(Flags::I);
@@ -342,7 +342,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRLO => {
                     let f = self.get_flag(Flags::C);
@@ -350,7 +350,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRLT => {
                     let f = self.get_flag(Flags::S);
@@ -358,7 +358,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRMI => {
                     let f = self.get_flag(Flags::N);
@@ -366,7 +366,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRNE => {
                     let f = self.get_flag(Flags::Z);
@@ -374,7 +374,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRPL => {
                     let f = self.get_flag(Flags::N);
@@ -382,7 +382,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRSH => {
                     let f = self.get_flag(Flags::C);
@@ -390,7 +390,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRTC => {
                     let f = self.get_flag(Flags::T);
@@ -398,7 +398,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRTS => {
                     let f = self.get_flag(Flags::T);
@@ -406,7 +406,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRVC => {
                     let f = self.get_flag(Flags::V);
@@ -414,7 +414,7 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BRVS => {
                     let f = self.get_flag(Flags::V);
@@ -422,25 +422,25 @@ impl Sim {
                         self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
                     }
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BSET => {
                     self.set_flag(Flags::get_flag(op1 as u8)?, true);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::BST => {
                     let bit = (*ra? >> op2) == 1;
                     self.set_flag(Flags::T, bit);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CALL => {
                     self.push(self.memory.program_couter + 2, self.ram_size.clone().into());
                     self.memory.program_couter = op1 as u32;
-                    Ok(())
+                    Ok(false)
                 }
                 Opcode::CBI => {
                     self.memory.data.io[op1 as usize] &= 0xff - (1<<(op2 as u8));
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CBR => {
                     let res = *ra? & (0xff - (op2 as u8));
@@ -451,23 +451,23 @@ impl Sim {
                     self.set_flag(Flags::Z, res == 0);
 
                     reg[op1 as usize] = res;
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CLC => {
                     self.set_flag(Flags::C, false);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CLH => {
                     self.set_flag(Flags::H, false);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CLI => {
                     self.set_flag(Flags::I, false);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CLN => {
                     self.set_flag(Flags::N, false);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CLR => {
                     reg[op1 as usize] = 0;
@@ -475,23 +475,23 @@ impl Sim {
                     self.set_flag(Flags::V, false);
                     self.set_flag(Flags::N, false);
                     self.set_flag(Flags::Z, true);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CLS => {
                     self.set_flag(Flags::S, false);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CLT => {
                     self.set_flag(Flags::T, false);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CLV => {
                     self.set_flag(Flags::V, false);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CLZ => {
                     self.set_flag(Flags::Z, false);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::COM => {
                     let ra = *ra?;
@@ -502,7 +502,9 @@ impl Sim {
                     self.set_flag(Flags::V, false);
                     self.set_flag(Flags::C, true);
                     self.set_flag(Flags::Z, res == 0);
-                    Ok(())
+
+                    reg[ind1] =res;
+                    Ok(true)
                 }
                 Opcode::CP => {
                     let ra = *ra?;
@@ -516,7 +518,7 @@ impl Sim {
                     self.set_flag(Flags::S, execute![n^v]?);
                     self.set_flag(Flags::Z, res == 0);
                     self.set_flag(Flags::C, ovr);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CPC => {
                     let ra = *ra?;
@@ -533,7 +535,7 @@ impl Sim {
                         self.set_flag(Flags::Z, false)
                     }
                     self.set_flag(Flags::C, ovr|ovr1);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CPI => {
                     let ra = *ra?;
@@ -547,7 +549,7 @@ impl Sim {
                     self.set_flag(Flags::S, execute![n^v]?);
                     self.set_flag(Flags::Z, res == 0);
                     self.set_flag(Flags::V, ovr);
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CPSE => {
                     if (ra? == rb?) {
@@ -557,7 +559,7 @@ impl Sim {
                             self.memory.program_couter += 1
                         }
                     }
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::CUSTOM_INST(_) => {
                     Err(anyhow!("this should not execute"))
@@ -571,7 +573,7 @@ impl Sim {
                     self.set_flag(Flags::S, v ^ n);
                     self.set_flag(Flags::Z, res == 0);
                     reg[op1 as usize] = res;
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::DES => {
                     Err(anyhow!("not implemented"))
@@ -587,7 +589,7 @@ impl Sim {
                             self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.eind.get_data() as u32) << 16)
                         }
                     }
-                    Ok(())
+                    Ok(false)
                 }
                 Opcode::EIJMP => {
                     match self.ram_size {
@@ -598,11 +600,11 @@ impl Sim {
                             self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.eind.get_data() as u32) << 16)
                         }
                     }
-                    Ok(())
+                    Ok(false)
                 }
                 Opcode::ELPM => { //todo might have issues
                     let mut ptr = (reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.rampz.get_data() as u32) << 16) >> 1;
-                    let data: u16 = (self.memory.flash[ptr as usize].raw_opcode & 0xffff) as u16;
+                    let data: u16 = self.memory.flash[(ptr>>1) as usize].raw_opcode as u16;
 
                     reg[op1 as usize] = (data >> (8 * (ptr & 1))) as u8;
                     if op2 != 0 {
@@ -611,7 +613,7 @@ impl Sim {
                         reg[31] = ((ptr >> 8) & 0xff) as u8;
                         self.registers.rampz.set_data(((ptr >> 16) & 0xff) as u8);
                     }
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::EOR => {
                     let res = execute![ra^rb]?;
@@ -623,7 +625,7 @@ impl Sim {
 
                     reg[op1 as usize] = res;
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::FMUL => {
                     let mut res = (*ra? as u16) * (*rb? as u16);
@@ -635,7 +637,7 @@ impl Sim {
                     self.set_flag(Flags::C, c);
                     self.set_flag(Flags::Z, res == 0);
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::FMULS => {
                     let mut res = (*ra? as i16) * (*rb? as i16);
@@ -647,7 +649,7 @@ impl Sim {
                     self.set_flag(Flags::C, c);
                     self.set_flag(Flags::Z, res == 0);
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::FMULSU => {
                     let mut res = (*ra? as i16) * (*rb? as i16); //todo
@@ -659,22 +661,22 @@ impl Sim {
                     self.set_flag(Flags::C, c);
                     self.set_flag(Flags::Z, res == 0);
 
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::ICALL => {
                     self.push(self.memory.program_couter + 1, self.ram_size.clone().into());
                     self.memory.program_couter = 0;
                     self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8);
-                    Ok(())
+                    Ok(false)
                 }
                 Opcode::IJMP => {
                     self.memory.program_couter = 0;
                     self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8);
-                    Ok(())
+                    Ok(false)
                 }
                 Opcode::IN => {
                     reg[ind1] = self.memory.data.io[ind2];
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::INC => {
                     let res = *ra? + 1;
@@ -684,109 +686,586 @@ impl Sim {
                     self.set_flag(Flags::N, n);
                     self.set_flag(Flags::S, v ^ n);
                     self.set_flag(Flags::Z, res == 0);
-                    Ok(())
+                    reg[ind1] = res;
+                    Ok(true)
                 }
                 Opcode::JMP => {
                     self.memory.program_couter = ind1 as u32;
-                    Ok(())
+                    Ok(false)
                 }
                 Opcode::LAC => {
                     let ptr = (reg[30] as u16) + ((reg[31] as u16) << 8);
                     let tmp = self.memory.data.ram[ptr as usize];
                     self.memory.data.ram[ptr as usize] &= 0xff - *ra?;
                     reg[ind1] = tmp;
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::LAS => {
                     let ptr = (reg[30] as u16) + ((reg[31] as u16) << 8);
                     let tmp = self.memory.data.ram[ptr as usize];
                     self.memory.data.ram[ptr as usize] |= *ra?;
                     reg[ind1] = tmp;
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::LAT => {
                     let ptr = (reg[30] as u16) + ((reg[31] as u16) << 8);
                     let tmp = self.memory.data.ram[ptr as usize];
                     self.memory.data.ram[ptr as usize] = !self.memory.data.ram[ptr as usize] & *ra?;
                     reg[ind1] = tmp;
-                    Ok(())
+                    Ok(true)
                 }
                 Opcode::LD => {
-                    let ptr = match op3 {
+                    let mut ptr = match op2 {
                         3 => { //x
 
-                            Ok((reg[26] as u32) + ((reg[27] as u32) << 8) + ((self.registers.rampx.get_data() as u32) << 16))
+                            Ok((reg[26] as u32) + ((reg[27] as u32) << 8)) //+ ((self.registers.rampx.get_data() as u32) << 16))
                         }
                         2 => { //y
-                            Ok((reg[28] as u32) + ((reg[29] as u32) << 8) + ((self.registers.rampy.get_data() as u32) << 16))
+                            Ok((reg[28] as u32) + ((reg[29] as u32) << 8)) //+ ((self.registers.rampy.get_data() as u32) << 16))
                         }
                         0 => { //z
-                            Ok((reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.rampz.get_data() as u32) << 16))
+                            Ok((reg[30] as u32) + ((reg[31] as u32) << 8)) //+ ((self.registers.rampz.get_data() as u32) << 16))
                         }
                         _ => {
                             Err(anyhow!("invalid opcode"))
                         }
                     }?;
+                    if op3 ==2{
+                        ptr -=1;
+                    }
 
-                    todo!();
-                    //reg[ind1] =self.memory.data[ptr as usize];
-                    Ok(())
+                    reg[ind1] =self.memory.data[ptr as usize];
+
+                    if op3 ==1{
+                        ptr +=1;
+                    }
+                    match op2 {
+                        3 => { //x
+                            reg[26] = (ptr &0xff) as u8;
+                            reg[27] = ((ptr &0xff)>>8) as u8;
+                            //self.registers.rampx.set_data(((ptr &0xff)>>16) as u8);
+                            Ok(())
+                        }
+                        2 => { //y
+                            reg[26] = (ptr &0xff) as u8;
+                            reg[27] = ((ptr &0xff)>>8) as u8;
+                            //self.registers.rampy.set_data(((ptr &0xff)>>16) as u8);
+                            Ok(())
+                        }
+                        0 => { //z
+                            reg[26] = (ptr &0xff) as u8;
+                            reg[27] = ((ptr &0xff)>>8) as u8;
+                            //self.registers.rampz.set_data(((ptr &0xff)>>16) as u8);
+                            Ok(())
+                        }
+                        _ => {
+                            Err(anyhow!("invalid opcode"))
+                        }
+                    }?;
+                    Ok(true)
                 }
-                Opcode::LDD => { todo!() }
-                Opcode::LDI => { todo!() }
-                Opcode::LDS => { todo!() }
-                Opcode::LPM => { todo!() }
-                Opcode::LSL => { todo!() }
-                Opcode::LSR => { todo!() }
-                Opcode::MOV => { todo!() }
-                Opcode::MOVW => { todo!() }
-                Opcode::MUL => { todo!() }
-                Opcode::MULS => { todo!() }
-                Opcode::MULSU => { todo!() }
-                Opcode::NEG => { todo!() }
-                Opcode::NOP => { Ok(())}
-                Opcode::OR => { todo!() }
-                Opcode::ORI => { todo!() }
-                Opcode::OUT => { todo!() }
-                Opcode::POP => { todo!() }
-                Opcode::PUSH => { todo!() }
-                Opcode::RCALL => { todo!() }
-                Opcode::RET => { todo!() }
-                Opcode::RETI => { todo!() }
-                Opcode::RJMP => { todo!() }
-                Opcode::ROL => { todo!() }
-                Opcode::ROR => { todo!() }
-                Opcode::SBC => { todo!() }
-                Opcode::SBCI => { todo!() }
-                Opcode::SBI => { todo!() }
-                Opcode::SBIC => { todo!() }
-                Opcode::SBIS => { todo!() }
-                Opcode::SBIW => { todo!() }
-                Opcode::SBR => { todo!() }
-                Opcode::SBRC => { todo!() }
-                Opcode::SBRS => { todo!() }
-                Opcode::SEC => { todo!() }
-                Opcode::SEH => { todo!() }
-                Opcode::SEI => { todo!() }
-                Opcode::SEN => { todo!() }
-                Opcode::SER => { todo!() }
-                Opcode::SES => { todo!() }
-                Opcode::SET => { todo!() }
-                Opcode::SEV => { todo!() }
-                Opcode::SEZ => { todo!() }
-                Opcode::SLEEP => { todo!() }
-                Opcode::SPM => { todo!() }
-                Opcode::ST => { todo!() }
-                Opcode::STD => { todo!() }
-                Opcode::STS => { todo!() }
-                Opcode::SUB => { todo!() }
-                Opcode::SUBI => { todo!() }
-                Opcode::SWAP => { todo!() }
-                Opcode::TST => { todo!() }
-                Opcode::WDR => { todo!() }
-                Opcode::XCH => { todo!() }
+                Opcode::LDD => {
+                    let ptr = match op2 {
+                        1 => { //y
+                            Ok((reg[28] as u32) + ((reg[29] as u32) << 8)) //+ ((self.registers.rampy.get_data() as u32) << 16)+op3 as u32)
+                        }
+                        0 => { //z
+                            Ok((reg[30] as u32) + ((reg[31] as u32) << 8)) //+ ((self.registers.rampz.get_data() as u32) << 16)+op3 as u32)
+                        }
+                        _ => {
+                            Err(anyhow!("invalid opcode"))
+                        }
+                    }?;
+                    reg[ind1] =self.memory.data[ptr as usize];
+                    Ok(true)
+                }
+                Opcode::LDI => {
+                    reg[ind1] = op2 as u8;
+                    Ok(true)
+                }
+                Opcode::LDS => {
+                    reg[ind1] = self.memory.data[ind2];
+                    Ok(true)
+                }
+                Opcode::LPM => { //todo might have issues
+                    let mut ptr = (reg[30] as u16) + ((reg[31] as u16) << 8);
+                    let data: u16 = self.memory.flash[(ptr>>1) as usize].raw_opcode as u16;
+
+                    reg[op1 as usize] = (data >> (8 * (ptr & 1))) as u8;
+                    if op2 != 0 {
+                        ptr += 1;
+                        reg[30] = (ptr & 0xff) as u8;
+                        reg[31] = ((ptr >> 8) & 0xff) as u8;
+                    }
+                    Ok(true)
+                }
+                Opcode::LSL => {
+                    let ra = *ra?;
+                    let res = ra<<1;
+
+                    self.set_flag(Flags::H,execute![ra3]?);
+                    let c = execute![ra7]?;
+                    self.set_flag(Flags::C,c);
+                    let n = execute![res7]?;
+                    self.set_flag(Flags::N,n);
+                    let v = n^c;
+                    self.set_flag(Flags::V,v);
+                    self.set_flag(Flags::S,n^v);
+                    self.set_flag(Flags::Z,res==0);
+
+                    reg[ind1] = res;
+                    Ok(true)
+                }
+                Opcode::LSR => {
+                    let ra = *ra?;
+                    let res = ra>>1;
+
+                    let c = execute![ra0]?;
+                    self.set_flag(Flags::C,c);
+                    self.set_flag(Flags::N,false);
+                    self.set_flag(Flags::V,c);
+                    self.set_flag(Flags::S,c);
+                    self.set_flag(Flags::Z,res==0);
+
+                    reg[ind1] = res;
+                    Ok(true)
+                }
+                Opcode::MOV => {
+                    reg[ind1] = *rb?;
+                    Ok(true)
+                }
+                Opcode::MOVW => {
+                    reg[ind1] = *rb?;
+                    reg[ind1+1] = reg[ind2+1];
+                    Ok(true)
+                }
+                Opcode::MUL => {
+                    let ra = *ra? as u16;
+                    let rb = *rb? as u16;
+                    let res = ra*rb;
+
+                    self.set_flag(Flags::C,(rb>>15) ==1);
+                    self.set_flag(Flags::Z,rb ==0);
+                    reg[0] = (res &0xff) as u8;
+                    reg[1] = ((res &0xff)>>8) as u8;
+                    Ok(true)
+                }
+                Opcode::MULS => {
+                    let ra = *ra? as i16;
+                    let rb = *rb? as i16;
+                    let res = ra*rb;
+
+                    self.set_flag(Flags::C,(rb>>15) ==1);
+                    self.set_flag(Flags::Z,rb ==0);
+                    reg[0] = (res &0xff) as u8;
+                    reg[1] = ((res &0xff)>>8) as u8;
+                    Ok(true)
+                }
+                Opcode::MULSU => {
+                    let ra = *ra? as i16;
+                    let rb = *rb? as i16;
+                    let res = ra*rb;
+
+                    self.set_flag(Flags::C,(rb>>15) ==1);
+                    self.set_flag(Flags::Z,rb ==0);
+                    reg[0] = (res &0xff) as u8;
+                    reg[1] = ((res &0xff)>>8) as u8;
+                    Ok(true)
+                }
+                Opcode::NEG => {
+                    let ra = *ra? as i8;
+                    let ra_u = ra as u8;
+                    let res = (0-ra) as u8;
+                    self.set_flag(Flags::C,ra!=0);
+                    self.set_flag(Flags::Z,ra==0);
+                    let n = execute![res7]?;
+                    self.set_flag(Flags::N,n);
+                    let v =res==0x80;
+                    self.set_flag(Flags::V,v);
+                    self.set_flag(Flags::S,v^n);
+                    self.set_flag(Flags::H,execute![ra_u3 | res3]?);
+                    reg[ind1] = res;
+                    Ok(true)
+                }
+                Opcode::NOP => {
+                    Ok(true)
+                }
+                Opcode::OR => {
+                    let res = *ra? |*rb?;
+                    self.set_flag(Flags::V,false);
+                    let n = execute![res7]?;
+                    self.set_flag(Flags::N,n);
+                    self.set_flag(Flags::S,n);
+                    self.set_flag(Flags::Z,res==0);
+                    reg[ind1] = res;
+                    Ok(true)
+                }
+                Opcode::ORI => {
+                    let res = *ra? |(op2 as u8);
+                    self.set_flag(Flags::V,false);
+                    let n = execute![res7]?;
+                    self.set_flag(Flags::N,n);
+                    self.set_flag(Flags::S,n);
+                    self.set_flag(Flags::Z,res==0);
+                    reg[ind1] = res;
+                    Ok(true)
+                }
+                Opcode::OUT => {
+                    self.memory.data.io[ind1] = *rb?;
+                    Ok(true)
+                }
+                Opcode::POP => {
+                    reg[ind1] = self.pop(1) as u8;
+                    Ok(true)
+                }
+                Opcode::PUSH => {
+                    self.push(*ra? as u32,1);
+                    Ok(true)
+                }
+                Opcode::RCALL => {
+                    self.push(self.memory.program_couter + 1, self.ram_size.clone().into());
+                    if op1 >=0{
+                        self.memory.program_couter += op1 as u32 +1;
+                    }else{
+                        self.memory.program_couter -= op1 as u32 +1;
+                    }
+                    Ok(false)
+                }
+                Opcode::RET => {
+                    self.memory.program_couter = self.pop(self.ram_size.clone().into());
+                    Ok(false)
+                }
+                Opcode::RETI => {
+                    self.memory.program_couter = self.pop(self.ram_size.clone().into());
+                    self.set_flag(Flags::I,true);
+                    Ok(false)
+                }
+                Opcode::RJMP => {
+                    if op1 >=0{
+                        self.memory.program_couter += op1 as u32 +1;
+                    }else{
+                        self.memory.program_couter -= op1 as u32 +1;
+                    }
+                    Ok(false)
+                }
+                Opcode::ROL => {
+                    let ra = *ra?;
+                    let mut res = ra<<1;
+                    if self.get_flag(Flags::C) {
+                        res+=1;
+                    }
+                    self.set_flag(Flags::Z,res==0);
+                    self.set_flag(Flags::H,execute![ra3]?);
+                    let c = execute![ra7]?;
+                    self.set_flag(Flags::C,c);
+                    let n = execute![res7]?;
+                    self.set_flag(Flags::N,n);
+                    let v =c^n;
+                    self.set_flag(Flags::V,v);
+                    self.set_flag(Flags::S,n^v);
+
+                    reg[ind1] = res;
+                    Ok(true)
+                }
+                Opcode::ROR => {
+                    let ra = *ra?;
+                    let mut res = ra>>1;
+                    if self.get_flag(Flags::C) {
+                        res+=(1<<7);
+                    }
+                    self.set_flag(Flags::Z,res==0);
+                    let c = execute![ra0]?;
+                    self.set_flag(Flags::C,c);
+                    let n = execute![res7]?;
+                    self.set_flag(Flags::N,n);
+                    let v =c^n;
+                    self.set_flag(Flags::V,v);
+                    self.set_flag(Flags::S,n^v);
+
+                    reg[ind1] = res;
+                    Ok(true)
+                }
+                Opcode::SBC => {
+                    let ra = *ra?;
+                    let rb = *rb?;
+                    let mut res;
+                    let ovr1;
+                    let ovr2;
+                    (res,ovr1) = ra.overflowing_sub(rb);
+                    (res,ovr2) = res.overflowing_sub(self.get_flag(Flags::C) as u8);
+
+                    if(res !=0){
+                        self.set_flag(Flags::Z,true);
+                    }
+                    self.set_flag(Flags::C,ovr1|ovr2);
+                    let n = execute![res7]?;
+                    self.set_flag(Flags::N,n);
+                    let v =execute![ra7&!rb7&!res7 | !ra7&rb7&res7]?;
+                    self.set_flag(Flags::V,v);
+                    self.set_flag(Flags::S,v^n);
+                    self.set_flag(Flags::H,execute![!ra3&rb3|rb3&res3|res3&!ra3]?);
+                    reg[ind1] = res;
+                    Ok(true)
+                }
+                Opcode::SBCI => {
+                    let ra = *ra?;
+                    let rb = op2 as u8;
+                    let mut res;
+                    let ovr1;
+                    let ovr2;
+                    (res,ovr1) = ra.overflowing_sub(rb);
+                    (res,ovr2) = res.overflowing_sub(self.get_flag(Flags::C) as u8);
+
+                    if(res !=0){
+                        self.set_flag(Flags::Z,true);
+                    }
+                    self.set_flag(Flags::C,ovr1|ovr2);
+                    let n = execute![res7]?;
+                    self.set_flag(Flags::N,n);
+                    let v =execute![ra7&!rb7&!res7 | !ra7&rb7&res7]?;
+                    self.set_flag(Flags::V,v);
+                    self.set_flag(Flags::S,v^n);
+                    self.set_flag(Flags::H,execute![!ra3&rb3|rb3&res3|res3&!ra3]?);
+                    reg[ind1] = res;
+                    Ok(true)
+                }
+                Opcode::SBI => {
+                    self.memory.data.io[ind1] |=1<<op2;
+
+                    Ok(true)
+                }
+                Opcode::SBIC => {
+                    if((self.memory.data.io[ind1]>>op2)&1 )==0{
+                        self.memory.program_couter+=self.memory.flash[(self.memory.program_couter+1) as usize].get_raw_inst()?.len as u32;
+
+                    }
+                    Ok(true)
+                }
+                Opcode::SBIS => {
+                    if((self.memory.data.io[ind1]>>op2)&1 )==1{
+                        self.memory.program_couter+=self.memory.flash[(self.memory.program_couter+1) as usize].get_raw_inst()?.len as u32;
+                    }
+                    Ok(true)
+                }
+                Opcode::SBIW => {
+                    let data = ((reg[ind1+1] as u16)<<8)+reg[ind1] as u16;
+                    let mut res;
+                    let ovr1;
+                    (res,ovr1) = data.overflowing_sub(op2 as u16);
+
+                    self.set_flag(Flags::Z,res ==0);
+                    self.set_flag(Flags::C,ovr1);
+                    let n = (res>>15)==1;
+                    self.set_flag(Flags::N,n);
+                    let v =!ovr1;
+                    self.set_flag(Flags::S,v^n);
+                    self.set_flag(Flags::V,v);
+                    reg[ind1+1] = (res>>8) as u8;
+                    reg[ind1] = (res&0xff) as u8;
+                    Ok(true)
+                }
+                Opcode::SBR => {
+                    let res = *ra? | op2 as u8;
+                    self.set_flag(Flags::Z,res ==0);
+                    let n = (res>>7)==1;
+                    self.set_flag(Flags::N,n);
+                    self.set_flag(Flags::S,n);
+                    self.set_flag(Flags::V,false);
+                    reg[ind1] = res;
+                    Ok(true)
+                }
+                Opcode::SBRC => {
+                    if((*ra?>>op2)&1 )==0{
+                        self.memory.program_couter+=self.memory.flash[(self.memory.program_couter+1) as usize].get_raw_inst()?.len as u32;
+                    }
+                    Ok(true)
+                }
+                Opcode::SBRS => {
+                    if((*ra?>>op2)&1 )==1{
+                        self.memory.program_couter+=self.memory.flash[(self.memory.program_couter+1) as usize].get_raw_inst()?.len as u32;
+                    }
+                    Ok(true)
+                }
+                Opcode::SEC => {
+                    self.set_flag(Flags::C,true);
+                    Ok(true)
+                }
+                Opcode::SEH => {
+                    self.set_flag(Flags::H,true);
+                    Ok(true)
+                }
+                Opcode::SEI => {
+                    self.set_flag(Flags::I,true);
+                    Ok(true)
+                }
+                Opcode::SEN => {
+                    self.set_flag(Flags::N,true);
+                    Ok(true)
+                }
+                Opcode::SER => {
+                    reg[ind1] = 0xff;
+                    Ok(true)
+                }
+                Opcode::SES => {
+                    self.set_flag(Flags::S,true);
+                    Ok(true)
+                }
+                Opcode::SET => {
+                    self.set_flag(Flags::T,true);
+                    Ok(true)
+                }
+                Opcode::SEV => {
+                    self.set_flag(Flags::V,true);
+                    Ok(true)
+                }
+                Opcode::SEZ => {
+                    self.set_flag(Flags::Z,true);
+                    Ok(true)
+                }
+                Opcode::SLEEP => {
+                    todo!();
+                    Ok(true)
+                }
+                Opcode::SPM => {
+                    let ptr = (reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.rampz.get_data() as u32) << 16);
+                    let data =reg[0] as u16 + (reg[1] as u16)<<8;
+                    self.memory.flash[ptr as usize] = Instruction::decode_from_opcode(data)?;
+                    Ok(true)
+                }
+                Opcode::ST => {
+                    let mut ptr = match op1 {
+                        3 => { //x
+
+                            Ok((reg[26] as u32) + ((reg[27] as u32) << 8) )//+ ((self.registers.rampx.get_data() as u32) << 16))
+                        }
+                        2 => { //y
+                            Ok((reg[28] as u32) + ((reg[29] as u32) << 8) )//+ ((self.registers.rampy.get_data() as u32) << 16))
+                        }
+                        0 => { //z
+                            Ok((reg[30] as u32) + ((reg[31] as u32) << 8) )//+ ((self.registers.rampz.get_data() as u32) << 16))
+                        }
+                        x => {
+                            Err(anyhow!("invalid opcode:{}",x))
+                        }
+                    }?;
+                    if op2 ==2{
+                        ptr -=1;
+                    }
+
+                    self.memory.data[ptr as usize] = reg[ind3];
+
+                    if op2 ==1{
+                        ptr +=1;
+                    }
+                    match op1 {
+                        3 => { //x
+                            reg[26] = (ptr &0xff) as u8;
+                            reg[27] = ((ptr &0xff)>>8) as u8;
+                            //self.registers.rampx.set_data(((ptr &0xff)>>16) as u8);
+                            Ok(())
+                        }
+                        2 => { //y
+                            reg[26] = (ptr &0xff) as u8;
+                            reg[27] = ((ptr &0xff)>>8) as u8;
+                            //self.registers.rampx.set_data(((ptr &0xff)>>16) as u8);
+                            Ok(())
+                        }
+                        0 => { //z
+                            reg[26] = (ptr &0xff) as u8;
+                            reg[27] = ((ptr &0xff)>>8) as u8;
+                            //self.registers.rampx.set_data(((ptr &0xff)>>16) as u8);
+                            Ok(())
+                        }
+                        _ => {
+                            Err(anyhow!("invalid opcode"))
+                        }
+                    }?;
+                    Ok(true)
+                }
+                Opcode::STD => {
+                    let ptr = match op1 {
+                        1 => { //y
+                            Ok((reg[28] as u32) + ((reg[29] as u32) << 8) + ((self.registers.rampy.get_data() as u32) << 16)+op2 as u32)
+                        }
+                        0 => { //z
+                            Ok((reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.rampz.get_data() as u32) << 16)+op2 as u32)
+                        }
+                        x => {
+                            Err(anyhow!("invalid opcode {}",x))
+                        }
+                    }?;
+                    self.memory.data[ptr as usize] = reg[ind3];
+                    Ok(true)
+                }
+                Opcode::STS => {
+                    self.memory.data[ind1]=*rb?;
+                    Ok(true)
+                }
+                Opcode::SUB => {
+                    let ra = *ra?;
+                    let rb = *rb?;
+                    let mut res;
+                    let ovr1;
+                    (res,ovr1) = ra.overflowing_sub(rb);
+
+                    self.set_flag(Flags::Z,res ==0);
+                    self.set_flag(Flags::C,ovr1);
+                    let n = execute![res7]?;
+                    self.set_flag(Flags::N,n);
+                    let v =execute![ra7&!rb7&!res7 | !ra7&rb7&res7]?;
+                    self.set_flag(Flags::V,v);
+                    self.set_flag(Flags::S,v^n);
+                    self.set_flag(Flags::H,execute![!ra3&rb3|rb3&res3|res3&!ra3]?);
+                    reg[ind1] = res;
+                    Ok(true)
+                }
+                Opcode::SUBI => {
+                    let ra = *ra?;
+                    let rb = op2 as u8;
+                    let mut res;
+                    let ovr1;
+                    (res,ovr1) = ra.overflowing_sub(rb);
+
+                    self.set_flag(Flags::Z,res ==0);
+                    self.set_flag(Flags::C,ovr1);
+                    let n = execute![res7]?;
+                    self.set_flag(Flags::N,n);
+                    let v =execute![ra7&!rb7&!res7 | !ra7&rb7&res7]?;
+                    self.set_flag(Flags::V,v);
+                    self.set_flag(Flags::S,v^n);
+                    self.set_flag(Flags::H,execute![!ra3&rb3|rb3&res3|res3&!ra3]?);
+                    reg[ind1] = res;
+                    Ok(true)
+                }
+                Opcode::SWAP => {
+                    let ra = *ra?;
+                    reg[ind1] = (ra & 0x0F)<<4 | (ra & 0xF0)>>4;
+                    Ok(true)
+                }
+                Opcode::TST => {
+                    let ra = *ra?;
+                    self.set_flag(Flags::Z,ra == 0);
+                    let n = execute![ra7]?;
+                    self.set_flag(Flags::N,n);
+                    self.set_flag(Flags::V,false);
+                    self.set_flag(Flags::S,n);
+                    Ok(true)
+                }
+                Opcode::WDR => {
+                    todo!();
+                    Ok(true)
+                }
+                Opcode::XCH => {
+                    let ptr = reg[30] as u16+(reg[31] as u16)<<8;
+                    let data = self.memory.data[ptr as usize];
+                    self.memory.data[ptr as usize] = *ra?;
+                    reg[ind1] = data;
+                    Ok(true)
+                }
             }?;
-            self.memory.program_couter += instruction.get_raw_inst()?.len as u32;
+            if res{
+                self.memory.program_couter += instruction.get_raw_inst()?.len as u32;
+            }
             self.memory.data.registers = reg;
             Ok(())
         }
@@ -1089,8 +1568,8 @@ mod opcode_tests {
         },
         ldd: LDD(16, 0, 0) { setup: |s| {}, check: |s| {} },
         lds: LDS(16, 0x0100) { setup: |s| {}, check: |s| {} },
-        st: ST(0, 16, 3) { setup: |s| {}, check: |s| {} },
-        std: STD(0, 16, 0) { setup: |s| {}, check: |s| {} },
+        st: ST(0, 1, 16) { setup: |s| {}, check: |s| {} },
+        std: STD(0, 0x80, 16) { setup: |s| {}, check: |s| {} },
         sts: STS(0x0100, 16) { setup: |s| {}, check: |s| {} },
         lpm: LPM(16, 0) { setup: |s| {}, check: |s| {} },
         elpm: ELPM(16, 0) { setup: |s| {}, check: |s| {} },
@@ -1218,8 +1697,12 @@ mod opcode_tests {
             check: |s| { unsafe { assert!(s.get_flag(Flags::Z)); } }
         },
         cpc: CPC(16, 17) {
-            setup: |s| { s.memory.data.registers[16] = 10; s.memory.data.registers[17] = 9; unsafe { s.set_flag(Flags::C, true); } },
+            setup: |s| { s.memory.data.registers[16] = 10; s.memory.data.registers[17] = 9; unsafe { s.set_flag(Flags::C, true);s.set_flag(Flags::Z, true) } },
             check: |s| { unsafe { assert!(s.get_flag(Flags::Z)); } }
+        },
+        cpc2: CPC(16, 17) {
+            setup: |s| { s.memory.data.registers[16] = 10; s.memory.data.registers[17] = 9; unsafe { s.set_flag(Flags::C, true);s.set_flag(Flags::Z, false) } },
+            check: |s| { unsafe { assert!(!s.get_flag(Flags::Z)); } }
         },
         cpi: CPI(16, 10) {
             setup: |s| { s.memory.data.registers[16] = 10; },
