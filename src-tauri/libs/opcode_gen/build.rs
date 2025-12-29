@@ -217,7 +217,7 @@ fn main(){
 ");*/
     let mut s:String = String::from("");
 
-    s+="#[derive(Debug,Serialize,Clone)]\n";
+    s+="#[derive(Debug,Serialize,Clone,PartialEq)]\n";
     s+="#[allow(non_camel_case_types)]\n";
     s+="pub enum Opcode{\n";
     inst_list.into_iter().for_each(|i| {

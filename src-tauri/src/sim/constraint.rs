@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 #[allow(non_camel_case_types)]
 use strum::{EnumIter,EnumString};
-#[derive(Debug, EnumIter, EnumString, Clone, Copy,Serialize,Deserialize)]
+#[derive(Debug, EnumIter, EnumString, Clone, Copy,Serialize,Deserialize,Default,PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum Constraint {
     r, //- any register
@@ -12,6 +12,7 @@ pub enum Constraint {
     e, //- pointer registers (X,Y,Z)
     b, //- pointer register (Y,Z)
     z, //- Z pointer register increment
+    #[default]
     M, //- immediate Value from 0 to 255
     n, //- immediate Value from 0 to 255 ( n = ~M ). Relocation impossible
     s, //- immediate Value from 0 to 7
@@ -26,13 +27,4 @@ pub enum Constraint {
     S, //- immediate Value from 0 to 7 (S = s << 4)
     E, //- immediate Value from 0 to 15, shifted left by 4 (des)
     o,  //- Displacement value from 0 to 63 (std,ldd)
-}
-
-impl PartialEq for Constraint {
-    fn eq(&self, other: &Self) -> bool {
-        if self ==other {
-            return true;
-        }
-        false
-    }
 }

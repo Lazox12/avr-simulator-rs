@@ -22,8 +22,8 @@ pub struct Instruction{
 
 
 impl Instruction{
-    pub fn new(comment: String, opcode_id: usize, operands: Vec<Operand>) -> Instruction{
-        Instruction{comment, comment_display: Display::None, opcode_id,operands: Some(operands),address:0,raw_opcode:0}
+    pub fn new(comment: String, opcode_id: usize, operands: Vec<Operand>,address:u32) -> Instruction{
+        Instruction{comment, comment_display: Display::None, opcode_id,operands: Some(operands),address,raw_opcode:0}
     }
     pub fn get_raw_inst(&self)->Result<&RawInst>{
         RawInst::get_inst_from_id(self.opcode_id)
@@ -44,7 +44,7 @@ impl Instruction{
     }
 
     fn match_raw_instruction_from_opcode(opcode: u16) -> Result<usize>{
-        RawInst::get_inst_id_from_opcode(opcode).ok_or(anyhow!(Error::OpcodeNotFound{opcode: opcode as u32 }))
+        RawInst::get_inst_id_from_opcode_num(opcode).ok_or(anyhow!(Error::OpcodeNotFound{opcode: opcode as u32 }))
     }
     pub(crate) fn mach_registers(&mut self) ->Result<()>{
 

@@ -13,7 +13,7 @@ pub struct ConstraintMap{
 #[serde(rename_all = "camelCase")]
 pub struct RawInst{
     pub opcode:&'static str,
-    pub len:i8,
+    pub len:u8,
     pub name:Opcode,
     pub constraints:Option<&'static [ConstraintMap]>,
     pub bin_mask:u16,
@@ -50,9 +50,14 @@ impl TryFrom<usize> for CustomOpcodes{
     }
 }
 impl RawInst{
-    pub fn get_inst_id_from_opcode(opcode:u16) ->Option<usize>{
+    pub fn get_inst_id_from_opcode_num(opcode:u16) ->Option<usize>{
         OPCODE_LIST.iter().position(|i| {
             opcode & i.bin_mask == i.bin_opcode
+        })
+    }
+    pub fn get_inst_id_from_opcode(opcode:Opcode) ->Option<usize>{
+        OPCODE_LIST.iter().position(|i| {
+            i.name ==opcode
         })
     }
     pub fn get_inst_from_id(id:usize)->Result<&'static RawInst,anyhow::Error>{

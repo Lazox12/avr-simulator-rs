@@ -8,7 +8,7 @@ pub mod utils;
 include!(concat!(env!("OUT_DIR"), "/avr/mod.rs"));
 
 
-pub fn get_tree_map() ->&'static phf::Map<&'static str,&'static AvrDeviceFile>{
+pub const fn get_tree_map() ->&'static phf::Map<&'static str,&'static AvrDeviceFile>{
     &MCU_STRUCT
 }
 pub fn get_register_map(device_name:&String)->Option<&'static phf::Map<u64,&'static Register>>{

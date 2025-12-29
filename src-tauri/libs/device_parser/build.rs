@@ -34,7 +34,7 @@ fn main() {
         }.to_string();
         let reg_map = get_register_map(&name);
         generated+=format!("\npub const REGISTERMAP:phf::Map<u64,&'static super::Register> = super::phf_map!{{{}}};",reg_map.iter().map(|(u1,x1)| {format!("{}=>&{}",u1,(quote! {#x1}.to_string()))}).collect::<Vec<String>>().join(",")).as_str();
-        match get_common_registers(&name){
+        match get_common_registers(&name,&reg_map){
             Some(regs) => {
                 c2 += 1;
                 generated+=format!("\n pub const COMMONREGISTERS:super::CommonRegisters = {};", quote! {#regs}.to_string()).as_str();
@@ -102,15 +102,15 @@ pub fn get_register_map(device_name:&String)->HashMap<u64,&'static Register>{
                                 if(x2.size ==2){
                                     let leaked1: &'static Register = Box::leak(Box::new(Register {
                                         caption: x2.caption.clone(),
-                                        name: &*(Box::leak(Box::new(x2.name.clone().to_owned() + "(H)"))),
-                                        offset: x2.offset,
+                                        name: &*(Box::leak(Box::new(x2.name.clone().to_owned() + "H"))),
+                                        offset: x2.offset+1,
                                         size: 1,
                                         initval: x2.initval,
                                         bitfields: x2.bitfields.clone(),
                                     }));
                                     let leaked2: &'static Register = Box::leak(Box::new(Register {
                                         caption:x2.caption.clone(),
-                                        name: &*(Box::leak(Box::new(x2.name.clone().to_owned() + "(L)"))),
+                                        name: &*(Box::leak(Box::new(x2.name.clone().to_owned() + "L"))),
                                         offset: x2.offset,
                                         size: 1,
                                         initval: x2.initval,
@@ -142,12 +142,12 @@ pub fn get_mcu_list()->Vec<&'static String>{
     tree.keys().collect::<Vec<&String>>()
 }
 
-pub fn get_common_registers(device_name:&String) ->Option<CommonRegisters>{
+pub fn get_common_registers(device_name:&String,reg_map:&HashMap<u64,&'static Register>) ->Option<CommonRegisters>{
     let tree = get_tree_map().unwrap().get(device_name.as_str()).unwrap();
     let mut a:Vec<u8> =Vec::new();
     a.resize((tree.devices.address_spaces.iter().find(|x| {x.id == "data" })?
         .memory_segments.iter().find(|x1| {  "MAPPED_IO".to_string().eq(x1.name) })?.size + 20) as usize,0);
-    match CommonRegisters::init(tree,&mut a){
+    match CommonRegisters::init(tree,reg_map,&mut a){
         Ok(t)=>{
             Some(t)
         }

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::error::{Error, Result};
 use super::constraint::Constraint;
 
-#[derive(Debug,Serialize,Deserialize,Clone)]
+#[derive(Debug,Serialize,Deserialize,Clone,Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Operand{
     pub(crate) name: String,
