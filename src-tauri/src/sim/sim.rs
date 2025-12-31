@@ -11,7 +11,7 @@ use crate::project::PROJECT;
 use crate::sim::instruction::Instruction;
 
 #[derive(Debug,Clone)]
-enum RamSize {
+pub enum RamSize {
     Size16,
     Size24,
 }
@@ -42,7 +42,7 @@ impl Default for RamSize {
 pub struct Sim{
     pub memory: Memory,
     registers: CommonRegisters,
-    ram_size: RamSize, //todo
+    pub ram_size: RamSize, //todo
 }
 impl Sim {
     pub fn init(&mut self) -> Result<()> {

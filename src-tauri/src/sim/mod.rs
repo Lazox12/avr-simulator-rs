@@ -6,3 +6,5 @@ mod gen_comment;
 mod display;
 mod memory;
 mod sim;
+mod timing;
+mod core;
