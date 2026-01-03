@@ -8,7 +8,7 @@ use rusqlite::Error as SqlError;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ValueRef};
 use serde::{Deserialize, Serialize};
 use strum::{EnumIter, IntoEnumIterator};
-use crate::{get_app_handle};
+use crate::{emit};
 use crate::sim::instruction::{Instruction, PartialInstruction};
 use tauri::Emitter;
 
@@ -77,14 +77,13 @@ impl Project {
             Ok(())
         }).collect::<Result<()>>()?;
         self.state = Some(*self.get_project()?);
-        get_app_handle()?
-            .emit("asm-update", 
-          self.get_instruction_list()?
+        emit!("asm-update",
+            self.get_instruction_list()?
                 .into_iter()
                 .map(|x| PartialInstruction::from(x))
-                .collect::<Vec<PartialInstruction>>())?;
+                .collect::<Vec<PartialInstruction>>());
 
-        get_app_handle()?.emit("project-update",self.get_project()?)?;
+        emit!("project-update",self.get_project()?);
         Ok(())
     }
     fn open_conn(&mut self,path:&str) -> Result<()> {
@@ -94,9 +93,9 @@ impl Project {
     pub fn close(&mut self) -> Result<()>{
         self.connection = None;
 
-        get_app_handle()?.emit("asm-update", ())?;
+        emit!("asm-update", ());
 
-        get_app_handle()?.emit("project-update", ProjectState::default())?;
+        emit!("project-update", ProjectState::default());
         Ok(())
     }
     pub fn save(&mut self) -> Result<()>{

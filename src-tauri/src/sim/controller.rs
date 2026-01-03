@@ -11,7 +11,7 @@ use opcode_gen::Opcode;
 use crate::project::{Project, PROJECT};
 use crate::sim::sim::Sim;
 use crate::error::Result;
-use crate::get_app_handle;
+use crate::{emit};
 use crate::sim::instruction::Instruction;
 use crate::sim::memory::Memory;
 
@@ -97,8 +97,8 @@ impl<'a> Worker<'a> {
                     self.breakpoints.remove(index);
                 }else{
                     self.breakpoints.push(address);
-                    self.action= self.action_prev;
                 }
+                self.action= self.action_prev;
                 if let Some(tx) = self.tx.as_ref() {
                     tx.send(Response::BreakPoints(self.breakpoints.clone())).ok();
                 }
@@ -220,7 +220,7 @@ impl Controller {
                 Ok(resp)=>{
                     match resp {
                         Response::BreakPoints(b) => {
-                            get_app_handle()?.emit("breakpoints-update",b)?;
+                            emit!("breakpoints-update",b);
                             Ok(())
                         }
                         Response::Res(r) => {
