@@ -8,3 +8,4 @@ mod memory;
 mod sim;
 mod timing;
 mod core;
+pub mod controller;

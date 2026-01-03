@@ -3,22 +3,15 @@ use device_parser::AvrDeviceFile;
 use opcode_gen::CustomOpcodes;
 use crate::sim::instruction::Instruction;
 
-#[derive(Debug)]
+#[derive(Default,Debug)]
 pub struct Memory {
     pub flash:Vec<Instruction>,
     pub data:DataMemory,
     pub eeprom: Vec<u8>,
     pub program_couter:u32
 }
-impl Default for Memory {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+
 impl Memory {
-    pub fn new() -> Memory {
-        Memory {flash: Vec::new(),data:DataMemory::new(),eeprom:Vec::new(),program_couter:0}
-    }
     pub fn init(&mut self, atdf:&'static AvrDeviceFile, flash_data:Vec<Instruction>, eeprom_data:Vec<u8>) ->Result<()> {
         self.flash = flash_data;
         self.eeprom = eeprom_data;
@@ -31,7 +24,7 @@ impl Memory {
     }
 }
 
-#[derive(Debug)]
+#[derive(Default,Debug)]
 pub struct DataMemory {
     pub registers:Vec<u8>,
     pub io:Vec<u8>,

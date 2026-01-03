@@ -1,7 +1,10 @@
 use std::sync::{Mutex, MutexGuard, OnceLock};
+use tokio::time::sleep;
+use std::time::Duration;
 use anyhow::anyhow;
 use tauri::{AppHandle, Manager};
 use error::Result;
+use crate::sim::controller::{Action, Controller};
 
 mod error;
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -28,6 +31,12 @@ pub fn run() {
             APP_HANDLE
                 .set(Mutex::new(app.app_handle().to_owned()))
                 .unwrap();
+            tauri::async_runtime::spawn(async move {
+                loop{
+                    Controller::update().unwrap();
+                    sleep(Duration::from_millis(100)).await;
+                }
+            });
             Ok(())
         });
 

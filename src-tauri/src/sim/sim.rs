@@ -1,13 +1,16 @@
 #![allow(unused_mut)]
 
+use std::ops::DerefMut;
+use std::sync::LazyLock;
 use anyhow::anyhow;
 use bin_expr_parser_macro::execute;
 use device_parser::{get_common_registers, get_tree_map, AvrDeviceFile, CommonRegisters};
 use device_parser::r#struct::common_registers::Flags;
 use opcode_gen::{CustomOpcodes, Opcode, RawInst};
+use opcode_gen::Opcode::MOV;
 use crate::sim::memory::Memory;
 use crate::error::Result;
-use crate::project::PROJECT;
+use crate::project::{Project, PROJECT};
 use crate::sim::instruction::Instruction;
 
 #[derive(Debug,Clone)]
@@ -37,19 +40,28 @@ impl Default for RamSize {
     }
 }
 
+static mut MEMORY: LazyLock<Memory> = LazyLock::new(Memory::default);
 
-#[derive(Default,Debug)]
-pub struct Sim{
-    pub memory: Memory,
+#[derive(Debug)]
+pub struct Sim<'a>{
+    pub memory: &'a mut Memory,
     registers: CommonRegisters,
     pub ram_size: RamSize, //todo
 }
-impl Sim {
-    pub fn init(&mut self) -> Result<()> {
-        let mcu = &PROJECT.lock().unwrap().get_project()?.mcu;
-        let atdf = get_tree_map().get(mcu).ok_or(anyhow!("invalid mcu"))?;
-        let inst = PROJECT.lock().unwrap().get_instruction_list()?;
-        let eeprom = PROJECT.lock().unwrap().get_eeprom_data()?;
+impl<'a> Default for Sim<'a> {
+    fn default() -> Sim<'a> {
+        let memory = unsafe{&mut *(MEMORY)};
+        Sim{memory,registers:CommonRegisters::default(),ram_size: RamSize::Size16}
+    }
+}
+impl<'a> Sim<'a> {
+
+    pub fn init(&mut self, project: &mut Project, atdf:&'static AvrDeviceFile,memory: &mut Memory) -> Result<()>
+    {
+        
+        let eeprom = project.get_eeprom_data()?;
+        let inst = project.get_instruction_list()?;
+        self.memory = unsafe { &mut *(memory as *mut Memory) };
         self.init_iner(atdf, inst, eeprom)?;
         Ok(())
     }
@@ -78,7 +90,7 @@ impl Sim {
     }
     pub fn exec_debug(&mut self) -> Result<()> {
         unsafe {
-            self.execute_inst(&self.memory.flash[0].clone())
+            self.execute_inst()
         }
     }
     pub unsafe fn debug_init_stack(&mut self)->Result<()>{
@@ -114,8 +126,9 @@ impl Sim {
         data
 
     }
-    pub unsafe fn execute_inst(&mut self, instruction: &Instruction) -> Result<()> {
+    pub unsafe fn execute_inst(&mut self) -> Result<()> {
         unsafe {
+            let instruction = self.memory.flash.get(self.memory.program_couter as usize).ok_or(anyhow!("cant access : {}",self.memory.program_couter))?.clone();
             let op1 = match &instruction.operands {
                 Some(o) => match o.get(0) {
                     Some(v) => v.value.clone(),
@@ -1270,6 +1283,8 @@ impl Sim {
             Ok(())
         }
     }
+
+
 }
 
 #[allow(unused_mut)]

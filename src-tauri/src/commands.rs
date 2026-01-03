@@ -3,6 +3,7 @@ use opcode_gen::RawInst;
 use crate::project::{get_project, ProjectState};
 use crate::sim::parser::parse_hex;
 use crate::wrap_anyhow;
+use crate::sim::controller::{Controller,Action};
 
 
 pub(crate) const HANDLER: fn(Invoke) -> bool = tauri::generate_handler![
@@ -14,7 +15,8 @@ pub(crate) const HANDLER: fn(Invoke) -> bool = tauri::generate_handler![
     menu_open,
     menu_import,
     menu_close,
-    menu_save
+    menu_save,
+    sim_action
 ];
 
 
@@ -73,4 +75,8 @@ wrap_anyhow!(menu_close()->(){
 
 wrap_anyhow!(menu_save()->(){
     get_project()?.save()
+});
+
+wrap_anyhow!(sim_action(action:Action)->(){
+   Controller::do_action(action) 
 });

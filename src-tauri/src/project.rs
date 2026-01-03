@@ -160,6 +160,7 @@ impl Project {
                 opcode_id: row.get(1)?,
                 raw_opcode: row.get(2)?,
                 operands,
+                break_point:false,
                 comment: row.get(4)?,
                 comment_display,
             };
@@ -182,7 +183,7 @@ impl Project {
         }
     }
 
-    pub fn get_project(&mut self) -> Result<Box<ProjectState>> { //                self.connection.as_ref().unwrap().prepare("INSERT INTO project (text) VALUES (?)")?
+    fn get_project(&mut self) -> Result<Box<ProjectState>> { //                self.connection.as_ref().unwrap().prepare("INSERT INTO project (text) VALUES (?)")?
         self.table_exists(Tables::project)?;
         let mut stmt = self.connection.as_ref().unwrap().prepare("SELECT * FROM project")?;
         let proj = match stmt.query_one([], |row| {
@@ -219,7 +220,7 @@ impl Project {
         }){
             Ok(data) => Ok(data),
             Err(SqlError::QueryReturnedNoRows) =>{
-                let mut insert_stmt = self.connection.as_ref().unwrap().prepare("INSERT INTO eeprom SET data = '' ")?;
+                let mut insert_stmt = self.connection.as_ref().unwrap().prepare("INSERT INTO eeprom (data) VALUES ('')")?;
                 let r = insert_stmt.execute([])?;
                 if r !=1  {
                     return Err(anyhow!(Error::ProjectError("querry returned more than 1 rows")))

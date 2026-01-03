@@ -8,7 +8,7 @@ use std::str::FromStr;
 use anyhow::anyhow;
 use crate::project::ProjectState;
 
-#[derive(Debug,Serialize,Clone)]
+#[derive(Debug,Serialize,Clone,Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Instruction{
     pub(crate) comment: String,
@@ -16,15 +16,14 @@ pub struct Instruction{
     pub(crate) opcode_id:usize,
     pub(crate) operands: Option<Vec<Operand>>,
     pub(crate) address: u32,
+    pub(crate) break_point:bool,
     pub(crate) raw_opcode: u32,
 }
 
 
 
 impl Instruction{
-    pub fn new(comment: String, opcode_id: usize, operands: Vec<Operand>,address:u32) -> Instruction{
-        Instruction{comment, comment_display: Display::None, opcode_id,operands: Some(operands),address,raw_opcode:0}
-    }
+
     pub fn get_raw_inst(&self)->Result<&RawInst>{
         RawInst::get_inst_from_id(self.opcode_id)
     }
@@ -39,6 +38,7 @@ impl Instruction{
             opcode_id: inst,
             operands: None,
             address:0,
+            break_point: false,
             raw_opcode:opcode as u32
         })
     }
@@ -157,6 +157,7 @@ impl TryFrom<PartialInstruction> for Instruction {
             comment_display,
             opcode_id:value.opcode_id,
             operands:value.operands,
+            break_point:value.break_point,
             address:value.address,
             raw_opcode:0
         })
@@ -169,6 +170,7 @@ pub struct PartialInstruction{
     pub(crate) comment: String,
     pub(crate) comment_display: Display,
     pub(crate) operands: Option<Vec<Operand>>,
+    pub(crate) break_point: bool,
     pub(crate) address: u32,
     pub(crate) opcode_id:usize,
 }
@@ -180,6 +182,7 @@ impl From<Instruction> for PartialInstruction {
             comment_display:value.comment_display,
             operands: value.operands,          
             address: value.address,
+            break_point:value.break_point,
             opcode_id: value.opcode_id,
         }
     }

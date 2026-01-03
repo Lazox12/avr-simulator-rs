@@ -2,8 +2,9 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 use strum::{EnumIter, EnumString};
 
-#[derive(Debug, EnumIter, EnumString, Clone, Copy,Serialize,Deserialize)]
+#[derive(Debug, EnumIter, EnumString, Clone, Copy,Serialize,Deserialize,Default)]
 pub enum Display {
+    #[default]
     None,
     Bin,
     Dec,

@@ -34,3 +34,4 @@ anyhow = { version = "1.0.100",features = ["backtrace"] }
 bin_expr_parser_macro={path = "libs/bin_expr_parser_macro" }
 paste = { version = "1.0.15" }
 log = "0.4.29"
+tokio = "1.48.0"

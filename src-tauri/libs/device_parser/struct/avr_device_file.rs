@@ -1,3 +1,4 @@
+use std::sync::OnceLock;
 use proc_macro2::{Span};
 use syn::Ident;
 use quote::__private::TokenStream;
@@ -26,6 +27,17 @@ impl From<&'static Element> for AvrDeviceFile {
                 Some(x) => {Some(Box::leak(x))}
             },
         }
+    }
+}
+impl Default for &'static AvrDeviceFile {
+    fn default() -> Self {
+        // 1. Create a static cell to hold the data
+        static CELL: OnceLock<AvrDeviceFile> = OnceLock::new();
+
+        // 2. Initialize it using T::default() ONLY if it's empty
+        let data_ref: &'static AvrDeviceFile = CELL.get_or_init(|| AvrDeviceFile::default());
+
+        data_ref
     }
 }
 impl ToTokens for AvrDeviceFile {

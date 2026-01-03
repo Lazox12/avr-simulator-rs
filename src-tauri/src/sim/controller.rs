@@ -1,0 +1,241 @@
+use std::any::Any;
+use std::ops::DerefMut;
+use std::sync::{mpsc,mpsc::{Sender,Receiver,TryRecvError}, Mutex, MutexGuard};
+use std::thread::sleep;
+use std::time::Duration;
+use anyhow::anyhow;
+use serde::{Deserialize, Serialize};
+use tauri::Emitter;
+use device_parser::AvrDeviceFile;
+use opcode_gen::Opcode;
+use crate::project::{Project, PROJECT};
+use crate::sim::sim::Sim;
+use crate::error::Result;
+use crate::get_app_handle;
+use crate::sim::instruction::Instruction;
+use crate::sim::memory::Memory;
+
+#[derive(Debug,Default,Serialize,Deserialize,PartialEq,Clone,Copy)]
+#[serde(rename_all = "camelCase")]
+pub enum Action{
+    Run,
+    #[default]
+    Pause,
+    Stop, //after setting stop use thread.join()
+    Break(u32),//breakpoint
+    Next, //next inst
+    Skip, //only on call runs until fn returns
+}
+enum Response{
+    BreakPoints(Vec<u32>),
+    Res(Result<()>)
+}
+
+
+#[derive(Default)]
+struct Worker<'a>{
+    project_lock:Option<MutexGuard<'a,Project>>,
+    atdf:&'static AvrDeviceFile,
+    memory:Memory,
+    sim:Sim<'a>,
+    action: Action,
+    action_prev:Action,
+    breakpoints:Vec<u32>,
+    rx:Option<Receiver<Action>>,
+    tx:Option<Sender<Response>>
+}
+impl<'a> Worker<'a> {
+
+    pub fn init(&mut self,rx:Receiver<Action>,tx:Sender<Response>)->Option<()>{
+        let f = ||->Result<()> {
+            let mut project_lock = PROJECT.lock().map_err(|e| anyhow!("Poison Error:{}",e))?;
+            let mcu = project_lock.state.clone().ok_or(anyhow!("invalid project state"))?.mcu;
+            self.atdf = device_parser::get_tree_map().get(&*mcu).ok_or(anyhow!("invalid mcu"))?;
+
+            self.rx = Some(rx);
+            self.tx = Some(tx);
+
+            self.sim.init(&mut *project_lock, self.atdf, &mut self.memory)?;
+            self.project_lock = Some(project_lock);
+            Ok(())
+        };
+        match f() {
+            Ok(())=>{Some(())}
+            Err(e)=>{
+                if let Some(tx) = self.tx.as_ref() {
+                    tx.send(Response::Res(Err(e))).ok()?;
+                }
+                None
+            }
+        }
+    }
+    fn check_brekpoint(&mut self)->bool{
+        self.breakpoints.iter().find(|x|{self.memory.program_couter==**x}).is_some()
+    }
+
+    unsafe fn iner(&mut self) ->Result<()>{
+        match self.action {
+            Action::Run => {
+                if self.check_brekpoint() {
+                    self.action = Action::Pause;
+                    Ok(())
+                }else{
+
+                    unsafe{self.sim.execute_inst()}
+                }
+
+            }
+            Action::Pause => {
+                sleep(Duration::from_millis(100)); //to not hold up the core
+                Ok(())
+            }
+            Action::Stop => {
+                Err(anyhow!("halt"))//caught in handler
+            }
+            Action::Break(address) => {
+                if let Some(index)=self.breakpoints.iter().position(|x| *x==address){
+                    self.breakpoints.remove(index);
+                }else{
+                    self.breakpoints.push(address);
+                    self.action= self.action_prev;
+                }
+                if let Some(tx) = self.tx.as_ref() {
+                    tx.send(Response::BreakPoints(self.breakpoints.clone())).ok();
+                }
+                Ok(())
+            }
+            Action::Next => {
+                unsafe{self.sim.execute_inst()}
+            }
+            Action::Skip => {
+                loop{
+                    let i:&Instruction = self.memory.flash.get(self.memory.program_couter as usize).ok_or(anyhow!("invalid address:{}",self.memory.program_couter))?;
+                    unsafe{self.sim.execute_inst()?};
+                    match i.get_raw_inst()?.name {
+                        Opcode::CALL|
+                        Opcode::ICALL|
+                        Opcode::EICALL|
+                        Opcode::RCALL=>{
+                            unsafe{ self.iner()?};
+                        }
+                        Opcode::RET=>{
+                            break
+                        }
+                        _=>{}
+                    }
+                }
+                Ok(())
+            }
+        }
+    }
+    fn thread_run(&mut self){
+        
+        loop{
+            if let Some(rx) = self.rx.as_ref() {
+                match rx.try_recv(){
+                    Ok(action)=>{
+                        self.action_prev = self.action;
+                        self.action = action;
+                    }
+                    Err(TryRecvError::Empty)=>{}
+                    Err(TryRecvError::Disconnected)=>{
+                        self.action = Action::Stop;
+                    }
+                };
+
+            }
+            if let Err(e) = unsafe{self.iner()}{
+                if let Some(tx) = self.tx.as_ref() {
+                    tx.send(Response::Res(Err(e))).ok();
+                }
+            };
+        }
+    }
+}
+
+static CONTROLLER: Mutex<Controller> = Mutex::new(Controller::new());
+
+#[derive(Debug,Default)]
+pub struct Controller {
+    tx: Option<Sender<Action>>,
+    rx: Option<Receiver<Response>>,
+    handle: Option<std::thread::JoinHandle<()>>
+}
+impl Controller {
+    pub const fn new()->Controller{
+        Controller{tx:None,rx:None,handle:None}
+    }
+    pub fn init(&mut self) -> Result<()> {
+        let (tx,rx) = mpsc::channel::<Action>();
+        self.tx=Some(tx);
+        let (tx2,rx2) = mpsc::channel::<Response>();
+        self.rx=Some(rx2);
+        self.handle = Some(std::thread::spawn(|| {
+            let tx = tx2;
+            let rx = rx;
+            let mut worker = Worker::default();
+            let res = worker.init(rx,tx);
+            if res.is_none(){
+                return
+            }
+            loop{
+                worker.thread_run();
+            }
+
+        }));
+        Ok(())
+    }
+    pub fn deinit(&mut self) -> Result<()> {
+        if let Some(tx) = self.tx.as_ref() {
+            tx.send(Action::Stop).map_err(|e| anyhow!("Send Error:{}",e))?;
+        }
+        self.handle.take().ok_or(anyhow!("no handle"))?.join().map_err(|e| anyhow!("JoinError:{:?}",e))?;
+        self.tx = None;
+        self.rx = None;
+        Ok(())
+    }
+    pub fn do_action(action: Action) -> Result<()>{
+        CONTROLLER.lock().map_err(|e| anyhow!("Poison Error:{}",e))?.do_action_iner(action)
+    }
+    fn do_action_iner(&mut self, action: Action) -> Result<()>{
+        if action==Action::Stop{
+            self.deinit()?;
+            return Ok(())
+        }
+
+        if let Some(tx) = self.tx.as_ref() {
+            tx.send(action).map_err(|e| anyhow!("Send Error:{}",e))?;
+        }else {
+            self.init()?;
+            self.do_action_iner(action)?;
+        }
+        Ok(())
+    }
+    pub fn update()-> Result<()>{
+        CONTROLLER.lock().map_err(|e| anyhow!("Poison Error:{}",e))?.update_iner()    
+    }
+    fn update_iner(&mut self)-> Result<()>{
+        if let Some(rx) = self.rx.as_mut() {
+            match rx.try_recv(){
+                Ok(resp)=>{
+                    match resp {
+                        Response::BreakPoints(b) => {
+                            get_app_handle()?.emit("breakpoints-update",b)?;
+                            Ok(())
+                        }
+                        Response::Res(r) => {
+                            r
+                        }
+                    }
+                }
+                Err(TryRecvError::Empty)=>{Ok(())}
+                Err(TryRecvError::Disconnected)=>{
+                    self.deinit()?;
+                    Ok(())
+                }
+            }
+        }else { 
+            Ok(())
+        }
+    }
+}
