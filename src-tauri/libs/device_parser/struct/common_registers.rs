@@ -10,7 +10,7 @@ static mut ZERO : u8 = 0;
 #[derive(Debug,Clone,Copy)]
 pub struct CommonReg {
     pub register: &'static Register,
-    data:*mut u8
+    data:Option<*mut u8>
 }
 
 
@@ -19,7 +19,7 @@ impl Default for CommonReg {
         unsafe {
             CommonReg {
                 register: Box::leak(Box::new(Register::default())),
-                data: ZERO as *mut u8
+                data: None
             }
         }
     }
@@ -27,14 +27,37 @@ impl Default for CommonReg {
 impl CommonReg {
     pub const fn new(reg :&'static Register)->Self{
         unsafe{
-            Self{ register: reg, data: std::ptr::null_mut() }
+            Self{ register: reg, data: None }
         }
     }
     pub unsafe fn get_data(&self) -> u8 {
-        self.data.read()
+        match self.data {
+            Some(data) => data.read(),
+            None => {panic!("read on uninitilized CommonReg")}
+        }
     }
     pub unsafe fn set_data(&mut self, val: u8) {
-        self.data.write(val);
+        match self.data {
+            Some(data) => {
+                data.write(val);
+            }
+            None => {panic!("write to uninitilized CommonReg")}
+        }
+    }
+    pub unsafe fn try_get(&self) -> Option<u8> {
+        match self.data {
+            Some(data) => Some(data.read()),
+            None => None
+        }
+    }
+    pub unsafe fn try_set(&self,value:u8) -> Option<()> {
+        match self.data {
+            Some(data) => {
+                data.write(value);
+                Some(())
+            }
+            None => {None}
+        }
     }
 }
 
@@ -84,7 +107,7 @@ impl CommonRegisters{
             let register_count = atdf.devices.address_spaces.iter().find(|x| { x.id == "data" }).unwrap()
                 .memory_segments.iter().find(|x1| { x1.name == "REGISTERS" }).unwrap().size;
             //warn!("a:{},B:{},c:{:?}",addr,register_count,value);
-            value.data = data.get_mut((addr - register_count) as usize).ok_or(anyhow!(format!("invalid reg addr:{}",addr)))?;
+            value.data = Some(data.get_mut((addr - register_count) as usize).ok_or(anyhow!(format!("invalid reg addr:{}",addr)))?);
 
         }
         Ok(())

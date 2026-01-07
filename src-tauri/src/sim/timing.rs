@@ -4,7 +4,6 @@ use crate::sim::core::Core;
 use crate::sim::instruction::Instruction;
 use crate::Result;
 use crate::sim::sim::Sim;
-use crate::sim::sim::RamSize;
 
 fn get_time(core: Core, inst: Instruction, sim: Sim) -> Result<u8> {
     let err = Err(anyhow!("not supperted on this core"));
@@ -69,8 +68,8 @@ fn get_time(core: Core, inst: Instruction, sim: Sim) -> Result<u8> {
         Opcode::JMP =>{Ok(3)}
         Opcode::RCALL|
         Opcode::ICALL=>{
-            match sim.ram_size {
-                RamSize::Size16 => {
+            match sim.pc_bytesize {
+                2 => {
                     match core {
                         Core::AVR|
                         Core::AVRe|
@@ -88,7 +87,7 @@ fn get_time(core: Core, inst: Instruction, sim: Sim) -> Result<u8> {
                         }
                     }
                 }
-                RamSize::Size24 => {
+                3 => {
                     match core {
                         Core::AVR|
                         Core::AVRe|
@@ -106,6 +105,7 @@ fn get_time(core: Core, inst: Instruction, sim: Sim) -> Result<u8> {
                         }
                     }
                 }
+                _ => err
             }
         }
         Opcode::EICALL=> match core {
@@ -117,8 +117,8 @@ fn get_time(core: Core, inst: Instruction, sim: Sim) -> Result<u8> {
             Core::AVRrc => {err}
         }
         Opcode::CALL =>{
-            match sim.ram_size {
-                RamSize::Size16 => {
+            match sim.pc_bytesize {
+                2 => {
                     match core {
                         Core::AVR|
                         Core::AVRe|
@@ -136,7 +136,7 @@ fn get_time(core: Core, inst: Instruction, sim: Sim) -> Result<u8> {
                         }
                     }
                 }
-                RamSize::Size24 => {
+                3 => {
                     match core {
                         Core::AVR|
                         Core::AVRe|
@@ -154,12 +154,13 @@ fn get_time(core: Core, inst: Instruction, sim: Sim) -> Result<u8> {
                         }
                     }
                 }
+                _ => err
             }
         }
         Opcode::RET|
         Opcode::RETI=>{
-            match sim.ram_size {
-                RamSize::Size16 => {
+            match sim.pc_bytesize {
+                2 => {
                     match core {
                         Core::AVR|
                         Core::AVRe|
@@ -177,7 +178,7 @@ fn get_time(core: Core, inst: Instruction, sim: Sim) -> Result<u8> {
                         }
                     }
                 }
-                RamSize::Size24 => {
+                3 => {
                     match core {
                         Core::AVR|
                         Core::AVRe|
@@ -195,6 +196,7 @@ fn get_time(core: Core, inst: Instruction, sim: Sim) -> Result<u8> {
                         }
                     }
                 }
+                _ => err
             }
         }
 

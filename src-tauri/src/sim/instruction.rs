@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use super::operand::{Operand, OperandValue};
 use crate::error::{Error, Result};
 use crate::sim::constraint::Constraint;
@@ -8,7 +9,7 @@ use std::str::FromStr;
 use anyhow::anyhow;
 use crate::project::ProjectState;
 
-#[derive(Debug,Serialize,Clone,Default)]
+#[derive(Serialize,Clone,Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Instruction{
     pub(crate) comment: String,
@@ -19,10 +20,26 @@ pub struct Instruction{
     pub(crate) break_point:bool,
     pub(crate) raw_opcode: u32,
 }
+impl Debug for Instruction{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Instruction")
+            .field("opcode",&self.get_raw_inst().map_err(|_| std::fmt::Error)?.name)
+            .field("adress",&self.address)
+            .field("operands",&self.operands)
+            .field("comment",&self.comment)
+            .field("comment_display",&self.comment_display)
+            .field("break_point",&self.break_point)
+            .field("raw_opcode",&self.raw_opcode)
 
+            .finish()
+    }
+}
 
 
 impl Instruction{
+    pub fn new(comment: String, opcode_id: usize, operands: Vec<Operand>,address:u32) -> Instruction{
+        Instruction{comment, comment_display: Display::None, opcode_id,operands: Some(operands),address,raw_opcode:0,break_point:false}
+    }
 
     pub fn get_raw_inst(&self)->Result<&RawInst>{
         RawInst::get_inst_from_id(self.opcode_id)

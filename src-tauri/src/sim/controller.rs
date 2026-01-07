@@ -105,7 +105,10 @@ impl<'a> Worker<'a> {
                 Ok(())
             }
             Action::Next => {
-                unsafe{self.sim.execute_inst()}
+                println!("at:{:x?}",self.memory.program_couter);
+                unsafe{self.sim.execute_inst()?}
+                self.action = Action::Pause;
+                Ok(())
             }
             Action::Skip => {
                 loop{

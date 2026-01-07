@@ -13,32 +13,6 @@ use crate::error::Result;
 use crate::project::{Project, PROJECT};
 use crate::sim::instruction::Instruction;
 
-#[derive(Debug,Clone)]
-pub enum RamSize {
-    Size16,
-    Size24,
-}
-impl Into<u8> for RamSize {
-    fn into(self) -> u8 {
-        match self {
-            RamSize::Size16 => 2,
-            RamSize::Size24 => 3,
-        }
-    }
-}
-impl Into<u16> for RamSize {
-    fn into(self) -> u16 {
-        match self {
-            RamSize::Size16 => 2,
-            RamSize::Size24 => 3,
-        }
-    }
-}
-impl Default for RamSize {
-    fn default() -> Self {
-        RamSize::Size16
-    }
-}
 
 static mut MEMORY: LazyLock<Memory> = LazyLock::new(Memory::default);
 
@@ -46,12 +20,13 @@ static mut MEMORY: LazyLock<Memory> = LazyLock::new(Memory::default);
 pub struct Sim<'a>{
     pub memory: &'a mut Memory,
     registers: CommonRegisters,
-    pub ram_size: RamSize, //todo
+    pub pc_len: u32,
+    pub pc_bytesize:u32, //used for calls
 }
 impl<'a> Default for Sim<'a> {
     fn default() -> Sim<'a> {
         let memory = unsafe{&mut *(MEMORY)};
-        Sim{memory,registers:CommonRegisters::default(),ram_size: RamSize::Size16}
+        Sim{memory,registers:CommonRegisters::default(),pc_len: 0,pc_bytesize:0}
     }
 }
 impl<'a> Sim<'a> {
@@ -80,6 +55,19 @@ impl<'a> Sim<'a> {
         self.memory.init(atdf, inst_vec, eeprom)?;
         self.registers = *(get_common_registers(&*atdf.devices.name.to_lowercase()).ok_or(anyhow!("mcu not supported"))?);
         self.registers.init_regs(atdf, &mut self.memory.data.io)?;
+        let pc_size =atdf.devices.address_spaces.iter().find(|x1| {x1.name=="prog"}).ok_or(anyhow!("invalid pc size"))?.size as u32;
+        if pc_size != 0 {
+            self.pc_len = pc_size.ilog2()-1;//divide by 2 because instructions are 16bit
+        }else {
+            Err(anyhow!("pc_size ==0"))?;
+        }
+        if self.pc_len>=8 && self.pc_len<=15{
+            self.pc_bytesize = 2;
+        }else if self.pc_len>=16 && self.pc_len<=17 {
+            self.pc_bytesize = 3;
+        }else{
+            Err(anyhow!("pc_size =={}", self.pc_len))?;
+        }
 
         Ok(())
     }
@@ -104,23 +92,25 @@ impl<'a> Sim<'a> {
     unsafe fn set_flag(&mut self,flags: Flags, value: bool){ self.registers.set_flag(flags, value) }
     unsafe fn get_flag(&mut self,flags: Flags)->bool { self.registers.get_flag(flags) }
 
-    unsafe fn push(&mut self, data:u32,len:u16){
-        let mut sp: u16 = ((self.registers.spL.get_data() as u16) << 8) + (self.registers.spH.get_data() as u16);
+    unsafe fn push(&mut self, data:u32,len:u32){
+        let mut sp: u16 = ((self.registers.spH.try_get().or(Some(0)).unwrap() as u16) << 8) + (self.registers.spL.get_data() as u16);
+        sp &= 2u16.pow(self.pc_len)-1;
         for i in 0..(len as u16) {
             self.memory.data.ram[(sp - i) as usize] = ((data >> (8 * i)) & 0xff) as u8;
         }
-        sp -= len;
+        sp -= len as u16;
         self.registers.spL.set_data((sp & 0xff) as u8);
-        self.registers.spH.set_data(((sp >> 8) & 0xff) as u8);
+        self.registers.spH.try_set(((sp >> 8) & 0xff) as u8);
     }
-    unsafe fn pop(&mut self,len:u16)->u32{
-        let mut sp: u16 = ((self.registers.spL.get_data() as u16) << 8) + (self.registers.spH.get_data() as u16);
+    unsafe fn pop(&mut self,len:u32)->u32{
+        let mut sp: u16 = ((self.registers.spH.try_get().or(Some(0)).unwrap() as u16) << 8) + (self.registers.spL.get_data() as u16);
+        sp &= 2u16.pow(self.pc_len)-1;
         let mut data: u32 = 0;
-        for i in 0..len {
+        for i in 0..(len as u16) {
             data = data << 8;
             data += self.memory.data.ram[(sp + i) as usize] as u32;
         }
-        sp += len;
+        sp += len as u16;
         self.registers.spL.set_data((sp & 0xff) as u8);
         self.registers.spH.set_data(((sp >> 8) & 0xff) as u8);
         data
@@ -129,6 +119,7 @@ impl<'a> Sim<'a> {
     pub unsafe fn execute_inst(&mut self) -> Result<()> {
         unsafe {
             let instruction = self.memory.flash.get(self.memory.program_couter as usize).ok_or(anyhow!("cant access : {}",self.memory.program_couter))?.clone();
+            println!("{:?}",instruction);
             let op1 = match &instruction.operands {
                 Some(o) => match o.get(0) {
                     Some(v) => v.value.clone(),
@@ -205,7 +196,7 @@ impl<'a> Sim<'a> {
                     Ok(true)
                 }
                 Opcode::ADIW => {
-                    let data: u16 = ((reg[ind1+1] as u16) << 8) + (reg[ind1] as u16);
+                    let data: u16 = ((reg[ind1+1] as u16)) + (reg[ind1] as u16);
                     let (res, ov) = data.overflowing_add(op2 as u16);
                     println!("data:{},res:{}",data,res);
                     let n = (res >> 15) == 1;
@@ -447,7 +438,7 @@ impl<'a> Sim<'a> {
                     Ok(true)
                 }
                 Opcode::CALL => {
-                    self.push(self.memory.program_couter + 2, self.ram_size.clone().into());
+                    self.push(self.memory.program_couter + 2, self.pc_bytesize);
                     self.memory.program_couter = op1 as u32;
                     Ok(false)
                 }
@@ -592,27 +583,37 @@ impl<'a> Sim<'a> {
                     Err(anyhow!("not implemented"))
                 }
                 Opcode::EICALL => {
-                    match self.ram_size {
-                        RamSize::Size16 => {
+                    match self.pc_bytesize {
+                        2 => {
                             self.push(self.memory.program_couter + 1, 2);
-                            self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8)
+                            self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8);
+                            Ok(())
                         }
-                        RamSize::Size24 => {
+                        3 => {
                             self.push(self.memory.program_couter + 1, 3);
-                            self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.eind.get_data() as u32) << 16)
+                            self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.eind.get_data() as u32) << 16);
+                            Ok(())
                         }
-                    }
+                        _=>{
+                            Err(anyhow!("invalid pc_bytesize: {}",self.pc_bytesize))
+                        }
+                    }?;
                     Ok(false)
                 }
                 Opcode::EIJMP => {
-                    match self.ram_size {
-                        RamSize::Size16 => {
-                            self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8)
+                    match self.pc_bytesize {
+                        2 => {
+                            self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8);
+                            Ok(())
                         }
-                        RamSize::Size24 => {
-                            self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.eind.get_data() as u32) << 16)
+                        3 => {
+                            self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.eind.get_data() as u32) << 16);
+                            Ok(())
                         }
-                    }
+                        _=>{
+                            Err(anyhow!("invalid pc_bytesize: {}",self.pc_bytesize))
+                        }
+                    }?;
                     Ok(false)
                 }
                 Opcode::ELPM => { //todo might have issues
@@ -677,7 +678,7 @@ impl<'a> Sim<'a> {
                     Ok(true)
                 }
                 Opcode::ICALL => {
-                    self.push(self.memory.program_couter + 1, self.ram_size.clone().into());
+                    self.push(self.memory.program_couter + 1, self.pc_bytesize);
                     self.memory.program_couter = 0;
                     self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8);
                     Ok(false)
@@ -936,7 +937,7 @@ impl<'a> Sim<'a> {
                     Ok(true)
                 }
                 Opcode::RCALL => {
-                    self.push(self.memory.program_couter + 1, self.ram_size.clone().into());
+                    self.push(self.memory.program_couter + 1, self.pc_bytesize.clone().into());
                     if op1 >=0{
                         self.memory.program_couter += op1 as u32 +1;
                     }else{
@@ -945,11 +946,11 @@ impl<'a> Sim<'a> {
                     Ok(false)
                 }
                 Opcode::RET => {
-                    self.memory.program_couter = self.pop(self.ram_size.clone().into());
+                    self.memory.program_couter = self.pop(self.pc_bytesize);
                     Ok(false)
                 }
                 Opcode::RETI => {
-                    self.memory.program_couter = self.pop(self.ram_size.clone().into());
+                    self.memory.program_couter = self.pop(self.pc_bytesize);
                     self.set_flag(Flags::I,true);
                     Ok(false)
                 }

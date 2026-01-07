@@ -78,5 +78,5 @@ wrap_anyhow!(menu_save()->(){
 });
 
 wrap_anyhow!(sim_action(action:Action)->(){
-   Controller::do_action(action) 
+   Controller::do_action(action)
 });
