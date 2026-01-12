@@ -24,7 +24,7 @@ impl Debug for Instruction{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Instruction")
             .field("opcode",&self.get_raw_inst().map_err(|_| std::fmt::Error)?.name)
-            .field("adress",&self.address)
+            .field("adress",&format!("{:x?}",&self.address))
             .field("operands",&self.operands)
             .field("comment",&self.comment)
             .field("comment_display",&self.comment_display)

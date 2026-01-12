@@ -75,6 +75,8 @@ pub enum Error{
     
     #[error("Project Handler Error: {0}")]
     ProjectError(&'static str)
+
+
 }
 
 impl<T> From<PoisonError<T>> for Error {

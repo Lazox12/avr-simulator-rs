@@ -4,7 +4,7 @@ use std::time::Duration;
 use anyhow::anyhow;
 use tauri::{AppHandle, Manager};
 use error::Result;
-use crate::sim::controller::{Action, Controller};
+use crate::sim::controller::Controller;
 
 mod error;
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/

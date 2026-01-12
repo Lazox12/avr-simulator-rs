@@ -1,3 +1,4 @@
+use std::slice::SliceIndex;
 use crate::error::Result;
 use device_parser::AvrDeviceFile;
 use opcode_gen::CustomOpcodes;
@@ -72,6 +73,23 @@ impl DataMemory {
         self.io.resize(io_size as usize, 0);
         self.ram.resize(ram_size as usize, 0);
         Ok(())
+    }
+    pub fn len(&self) -> usize {
+        self.registers.len()+self.io.len()+self.ram.len()
+    }
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut u8> {
+        if index < self.len() {
+            Some(&mut self[index])
+        }else{
+            None
+        }
+    }
+    pub fn get(&mut self, index: usize) -> Option<&u8> {
+        if index < self.len() {
+            Some(&mut self[index])
+        }else{
+            None
+        }
     }
 
 }

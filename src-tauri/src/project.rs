@@ -124,6 +124,7 @@ impl Project {
     }
     pub fn insert_instruction_list(&mut self,inst:&Vec<Instruction>) -> Result<()>{
         self.table_exists(Tables::instruction)?;
+        self.connection.as_mut().unwrap().execute("DELETE FROM instruction",[])?;
         let tx = self.connection.as_mut().unwrap().transaction()?;
         {
         let mut stmt = tx.prepare("INSERT INTO instruction (address,opcode,RawOpcode,operands,comment,commentDisplay) VALUES (?,?,?,?,?,?)")?;

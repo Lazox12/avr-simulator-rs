@@ -1,16 +1,15 @@
 #![allow(unused_mut)]
 
-use std::ops::DerefMut;
+use std::io::Write;
 use std::sync::LazyLock;
 use anyhow::anyhow;
 use bin_expr_parser_macro::execute;
-use device_parser::{get_common_registers, get_tree_map, AvrDeviceFile, CommonRegisters};
+use device_parser::{get_common_registers, AvrDeviceFile, CommonRegisters};
 use device_parser::r#struct::common_registers::Flags;
 use opcode_gen::{CustomOpcodes, Opcode, RawInst};
-use opcode_gen::Opcode::MOV;
 use crate::sim::memory::Memory;
 use crate::error::Result;
-use crate::project::{Project, PROJECT};
+use crate::project::Project;
 use crate::sim::instruction::Instruction;
 
 
@@ -42,7 +41,8 @@ impl<'a> Sim<'a> {
     }
     pub fn init_iner(&mut self, atdf: &'static AvrDeviceFile, inst: Vec<Instruction>, eeprom: Vec<u8>) -> Result<()> {
         let mut inst_vec: Vec<Instruction> = Vec::new();
-        inst_vec.resize((atdf.devices.address_spaces.iter().find(|x| { x.id == "prog" }).unwrap().size / 2) as usize, Instruction::decode_from_opcode(CustomOpcodes::EMPTY as u16)?);
+        inst_vec.resize((atdf.devices.address_spaces.iter().find(|x| { x.id == "prog" }).unwrap().size / 2) as usize,
+                        Instruction::new("".to_string(),CustomOpcodes::EMPTY as usize,vec![],0));
         inst.into_iter().map(|x| {
             let raw_inst = RawInst::get_inst_from_id(x.opcode_id)?;
             let address = x.address.clone();
@@ -71,7 +71,7 @@ impl<'a> Sim<'a> {
 
         Ok(())
     }
-    pub fn init_debug(atdf: &'static AvrDeviceFile, flash: Vec<Instruction>) -> Result<Sim> {
+    pub fn init_debug(atdf: &'static AvrDeviceFile, flash: Vec<Instruction>) -> Result<Sim<'static>> {
         let mut s = Sim::default();
         s.init_iner(atdf, flash, vec![])?;
         Ok(s)
@@ -89,37 +89,38 @@ impl<'a> Sim<'a> {
         }
         Ok(())
     }
-    unsafe fn set_flag(&mut self,flags: Flags, value: bool){ self.registers.set_flag(flags, value) }
-    unsafe fn get_flag(&mut self,flags: Flags)->bool { self.registers.get_flag(flags) }
+    unsafe fn set_flag(&mut self,flags: Flags, value: bool){ unsafe { self.registers.set_flag(flags, value) }}
+    unsafe fn get_flag(&mut self,flags: Flags)->bool { unsafe { self.registers.get_flag(flags) }}
 
-    unsafe fn push(&mut self, data:u32,len:u32){
+    unsafe fn push(&mut self, data:u32,len:u32)->Result<()>{ unsafe {
         let mut sp: u16 = ((self.registers.spH.try_get().or(Some(0)).unwrap() as u16) << 8) + (self.registers.spL.get_data() as u16);
-        sp &= 2u16.pow(self.pc_len)-1;
+        //sp &= 2u16.pow(self.pc_len)-1;
         for i in 0..(len as u16) {
-            self.memory.data.ram[(sp - i) as usize] = ((data >> (8 * i)) & 0xff) as u8;
+            *self.memory.data.get_mut(sp as usize - i as usize).ok_or(anyhow!("invalid ram offset: {}",sp))? = ((data >> (8 * i)) & 0xff) as u8;
         }
         sp -= len as u16;
         self.registers.spL.set_data((sp & 0xff) as u8);
         self.registers.spH.try_set(((sp >> 8) & 0xff) as u8);
-    }
-    unsafe fn pop(&mut self,len:u32)->u32{
+        Ok(())
+    }}
+    unsafe fn pop(&mut self,len:u32)->Result<u32>{ unsafe {
         let mut sp: u16 = ((self.registers.spH.try_get().or(Some(0)).unwrap() as u16) << 8) + (self.registers.spL.get_data() as u16);
-        sp &= 2u16.pow(self.pc_len)-1;
+        //sp &= 2u16.pow(self.pc_len)-1;
         let mut data: u32 = 0;
         for i in 0..(len as u16) {
             data = data << 8;
-            data += self.memory.data.ram[(sp + i) as usize] as u32;
+            data += *self.memory.data.get((sp + i) as usize).ok_or(anyhow!("invalid ram offset: {}",sp))? as u32;
         }
         sp += len as u16;
         self.registers.spL.set_data((sp & 0xff) as u8);
         self.registers.spH.set_data(((sp >> 8) & 0xff) as u8);
-        data
+        Ok(data)
 
-    }
+    }}
     pub unsafe fn execute_inst(&mut self) -> Result<()> {
         unsafe {
             let instruction = self.memory.flash.get(self.memory.program_couter as usize).ok_or(anyhow!("cant access : {}",self.memory.program_couter))?.clone();
-            println!("{:?}",instruction);
+            //println!("{:?}",instruction);
             let op1 = match &instruction.operands {
                 Some(o) => match o.get(0) {
                     Some(v) => v.value.clone(),
@@ -148,11 +149,11 @@ impl<'a> Sim<'a> {
             let reg_ptr = reg.as_mut_ptr();
 
             let (mut ra, mut rb) = unsafe {
-                let ra = match (ind1 < reg.len()) {
+                let ra = match ind1 < reg.len() {
                     true => Ok(&mut *reg_ptr.add(ind1)),
                     false => Err(anyhow!("invalid reg index")),
                 };
-                let rb = match (ind2 < reg.len()) {
+                let rb = match ind2 < reg.len() {
                     true => Ok(&mut *reg_ptr.add(ind2)),
                     false => Err(anyhow!("invalid reg index")),
                 };
@@ -196,9 +197,8 @@ impl<'a> Sim<'a> {
                     Ok(true)
                 }
                 Opcode::ADIW => {
-                    let data: u16 = ((reg[ind1+1] as u16)) + (reg[ind1] as u16);
+                    let data: u16 = ((reg[ind1+1] as u16)<<8) + (reg[ind1] as u16);
                     let (res, ov) = data.overflowing_add(op2 as u16);
-                    println!("data:{},res:{}",data,res);
                     let n = (res >> 15) == 1;
                     self.set_flag(Flags::N, n);
                     self.set_flag(Flags::Z, res == 0);
@@ -260,8 +260,8 @@ impl<'a> Sim<'a> {
                 }
                 Opcode::BLD => {
                     reg[ind1] =match self.get_flag(Flags::T){
-                        true => {(*ra? | (1<<op2))}
-                        false=>{{(*ra? & 0xff-(1<<op2))}}
+                        true => {*ra? | (1<<op2)}
+                        false=>{*ra? & 0xff-(1<<op2)}
                     };
                     Ok(true)
                 }
@@ -535,7 +535,7 @@ impl<'a> Sim<'a> {
                     let v = execute![(ra7&!rb7&!res7)|(!ra7&rb7&res7)]?;
                     self.set_flag(Flags::V, v);
                     self.set_flag(Flags::S, execute![n^v]?);
-                    if (res != 0) {
+                    if res != 0 {
                         self.set_flag(Flags::Z, false)
                     }
                     self.set_flag(Flags::C, ovr|ovr1);
@@ -552,11 +552,11 @@ impl<'a> Sim<'a> {
                     self.set_flag(Flags::V, v);
                     self.set_flag(Flags::S, execute![n^v]?);
                     self.set_flag(Flags::Z, res == 0);
-                    self.set_flag(Flags::V, ovr);
+                    self.set_flag(Flags::C, ovr);
                     Ok(true)
                 }
                 Opcode::CPSE => {
-                    if (ra? == rb?) {
+                    if ra? == rb? {
                         if RawInst::get_inst_from_id(self.memory.flash[(self.memory.program_couter + 1) as usize].opcode_id)?.len == 2 {
                             self.memory.program_couter += 2
                         } else {
@@ -781,10 +781,10 @@ impl<'a> Sim<'a> {
                 Opcode::LDD => {
                     let ptr = match op2 {
                         1 => { //y
-                            Ok((reg[28] as u32) + ((reg[29] as u32) << 8)) //+ ((self.registers.rampy.get_data() as u32) << 16)+op3 as u32)
+                            Ok((reg[28] as u32) + ((reg[29] as u32) << 8)+ ((self.registers.rampy.try_get().or(Some(0)).unwrap() as u32) << 16)+op3 as u32)
                         }
                         0 => { //z
-                            Ok((reg[30] as u32) + ((reg[31] as u32) << 8)) //+ ((self.registers.rampz.get_data() as u32) << 16)+op3 as u32)
+                            Ok((reg[30] as u32) + ((reg[31] as u32) << 8)+ ((self.registers.rampy.try_get().or(Some(0)).unwrap() as u32) << 16)+op3 as u32)
                         }
                         _ => {
                             Err(anyhow!("invalid opcode"))
@@ -929,15 +929,15 @@ impl<'a> Sim<'a> {
                     Ok(true)
                 }
                 Opcode::POP => {
-                    reg[ind1] = self.pop(1) as u8;
+                    reg[ind1] = self.pop(1)? as u8;
                     Ok(true)
                 }
                 Opcode::PUSH => {
-                    self.push(*ra? as u32,1);
+                    self.push(*ra? as u32,1)?;
                     Ok(true)
                 }
                 Opcode::RCALL => {
-                    self.push(self.memory.program_couter + 1, self.pc_bytesize.clone().into());
+                    self.push(self.memory.program_couter + 1, self.pc_bytesize.clone().into())?;
                     if op1 >=0{
                         self.memory.program_couter += op1 as u32 +1;
                     }else{
@@ -946,21 +946,21 @@ impl<'a> Sim<'a> {
                     Ok(false)
                 }
                 Opcode::RET => {
-                    self.memory.program_couter = self.pop(self.pc_bytesize);
+                    self.memory.program_couter = self.pop(self.pc_bytesize)?;
                     Ok(false)
                 }
                 Opcode::RETI => {
-                    self.memory.program_couter = self.pop(self.pc_bytesize);
+                    self.memory.program_couter = self.pop(self.pc_bytesize)?;
                     self.set_flag(Flags::I,true);
                     Ok(false)
                 }
                 Opcode::RJMP => {
                     if op1 >=0{
-                        self.memory.program_couter += op1 as u32 +1;
+                        self.memory.program_couter += op1 as u32;
                     }else{
-                        self.memory.program_couter -= op1 as u32 +1;
+                        self.memory.program_couter -= (-op1) as u32;
                     }
-                    Ok(false)
+                    Ok(true)
                 }
                 Opcode::ROL => {
                     let ra = *ra?;
@@ -985,7 +985,7 @@ impl<'a> Sim<'a> {
                     let ra = *ra?;
                     let mut res = ra>>1;
                     if self.get_flag(Flags::C) {
-                        res+=(1<<7);
+                        res+=1<<7;
                     }
                     self.set_flag(Flags::Z,res==0);
                     let c = execute![ra0]?;
@@ -1008,7 +1008,7 @@ impl<'a> Sim<'a> {
                     (res,ovr1) = ra.overflowing_sub(rb);
                     (res,ovr2) = res.overflowing_sub(self.get_flag(Flags::C) as u8);
 
-                    if(res !=0){
+                    if res !=0 {
                         self.set_flag(Flags::Z,true);
                     }
                     self.set_flag(Flags::C,ovr1|ovr2);
@@ -1030,7 +1030,7 @@ impl<'a> Sim<'a> {
                     (res,ovr1) = ra.overflowing_sub(rb);
                     (res,ovr2) = res.overflowing_sub(self.get_flag(Flags::C) as u8);
 
-                    if(res !=0){
+                    if res !=0 {
                         self.set_flag(Flags::Z,true);
                     }
                     self.set_flag(Flags::C,ovr1|ovr2);
@@ -1150,13 +1150,13 @@ impl<'a> Sim<'a> {
                     let mut ptr = match op1 {
                         3 => { //x
 
-                            Ok((reg[26] as u32) + ((reg[27] as u32) << 8) )//+ ((self.registers.rampx.get_data() as u32) << 16))
+                            Ok((reg[26] as u32) + ((reg[27] as u32) << 8)+((self.registers.rampx.try_get().or(Some(0)).unwrap() as u32) << 16))
                         }
                         2 => { //y
-                            Ok((reg[28] as u32) + ((reg[29] as u32) << 8) )//+ ((self.registers.rampy.get_data() as u32) << 16))
+                            Ok((reg[28] as u32) + ((reg[29] as u32) << 8)+((self.registers.rampy.try_get().or(Some(0)).unwrap() as u32) << 16))
                         }
                         0 => { //z
-                            Ok((reg[30] as u32) + ((reg[31] as u32) << 8) )//+ ((self.registers.rampz.get_data() as u32) << 16))
+                            Ok((reg[30] as u32) + ((reg[31] as u32) << 8)+((self.registers.rampz.try_get().or(Some(0)).unwrap() as u32) << 16))
                         }
                         x => {
                             Err(anyhow!("invalid opcode:{}",x))
@@ -1175,19 +1175,19 @@ impl<'a> Sim<'a> {
                         3 => { //x
                             reg[26] = (ptr &0xff) as u8;
                             reg[27] = ((ptr &0xff)>>8) as u8;
-                            //self.registers.rampx.set_data(((ptr &0xff)>>16) as u8);
+                            self.registers.rampx.try_set(((ptr &0xff)>>16) as u8);
                             Ok(())
                         }
                         2 => { //y
                             reg[26] = (ptr &0xff) as u8;
                             reg[27] = ((ptr &0xff)>>8) as u8;
-                            //self.registers.rampx.set_data(((ptr &0xff)>>16) as u8);
+                            self.registers.rampx.try_set(((ptr &0xff)>>16) as u8);
                             Ok(())
                         }
                         0 => { //z
                             reg[26] = (ptr &0xff) as u8;
                             reg[27] = ((ptr &0xff)>>8) as u8;
-                            //self.registers.rampx.set_data(((ptr &0xff)>>16) as u8);
+                            self.registers.rampx.try_set(((ptr &0xff)>>16) as u8);
                             Ok(())
                         }
                         _ => {
@@ -1199,10 +1199,10 @@ impl<'a> Sim<'a> {
                 Opcode::STD => {
                     let ptr = match op1 {
                         1 => { //y
-                            Ok((reg[28] as u32) + ((reg[29] as u32) << 8) + ((self.registers.rampy.get_data() as u32) << 16)+op2 as u32)
+                            Ok((reg[28] as u32) + ((reg[29] as u32) << 8) + ((self.registers.rampy.try_get().or(Some(0)).unwrap() as u32) << 16)+op2 as u32)
                         }
                         0 => { //z
-                            Ok((reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.rampz.get_data() as u32) << 16)+op2 as u32)
+                            Ok((reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.rampz.try_get().or(Some(0)).unwrap() as u32) << 16)+op2 as u32)
                         }
                         x => {
                             Err(anyhow!("invalid opcode {}",x))
@@ -1278,7 +1278,7 @@ impl<'a> Sim<'a> {
                 }
             }?;
             if res{
-                self.memory.program_couter += instruction.get_raw_inst()?.len as u32;
+                self.memory.program_couter += (instruction.get_raw_inst()?.len *2) as u32;
             }
             self.memory.data.registers = reg;
             Ok(())
@@ -1295,7 +1295,7 @@ mod opcode_tests {
     use crate::sim::operand::Operand;
     use opcode_gen::RawInst;
     use std::env;
-    use log::warn;
+    use device_parser::get_tree_map;
 
     // 1. Define the helper macro
     // 1. Define the helper macro

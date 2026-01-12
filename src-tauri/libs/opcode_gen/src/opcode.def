@@ -61,18 +61,18 @@
 1001010111101000;1;spm;PS(RAMPZ:Z) ← R1:R0;Store Program Memory
 10010101111+1000;1;spm;z;PS(RAMPZ:Z) ← R1:R0,Z ← Z + 2;Store Program Memory and PostIncrement by 2
 
-000111rdddddrrrr;1;adc;r,r;Rd ← Rd + Rr + C;Add with Carry
-000011rdddddrrrr;1;add;r,r;Rd ← Rd + Rr;Add without Carry
-001000rdddddrrrr;1;and;r,r;Rd ← Rd ∧ Rr;Logical AND
-000101rdddddrrrr;1;cp;r,r;Rd - Rr;Compare
-000001rdddddrrrr;1;cpc;r,r;Rd - Rr - C;Compare with Carry
-000100rdddddrrrr;1;cpse;r,r;if (Rd == Rr) PC ← PC + 2 or 3;Compare, skip if Equal
-001001rdddddrrrr;1;eor;r,r;Rd ← Rd ⊕ Rr;Exclusive OR
-001011rdddddrrrr;1;mov;r,r;Rd ← Rr;Copy Register
-100111rdddddrrrr;1;mul;r,r;R1:R0 ← Rd x Rr (UU);Multiply Unsigned
-001010rdddddrrrr;1;or;r,r;Rd ← Rd v Rr;Logical OR
-000010rdddddrrrr;1;sbc;r,r;Rd ← Rd - Rr - C;Subtract with Carry
-000110rdddddrrrr;1;sub;r,r;Rd ← Rd - Rr;Subtract without Carry
+000111rdddddrrrr;1;adc;rd,r;Rd ← Rd + Rr + C;Add with Carry
+000011rdddddrrrr;1;add;rd,r;Rd ← Rd + Rr;Add without Carry
+001000rdddddrrrr;1;and;rd,r;Rd ← Rd ∧ Rr;Logical AND
+000101rdddddrrrr;1;cp;rd,r;Rd - Rr;Compare
+000001rdddddrrrr;1;cpc;rd,r;Rd - Rr - C;Compare with Carry
+000100rdddddrrrr;1;cpse;rd,r;if (Rd == Rr) PC ← PC + 2 or 3;Compare, skip if Equal
+001001rdddddrrrr;1;eor;rd,r;Rd ← Rd ⊕ Rr;Exclusive OR
+001011rdddddrrrr;1;mov;rd,r;Rd ← Rr;Copy Register
+100111rdddddrrrr;1;mul;rd,r;R1:R0 ← Rd x Rr (UU);Multiply Unsigned
+001010rdddddrrrr;1;or;rd,r;Rd ← Rd v Rr;Logical OR
+000010rdddddrrrr;1;sbc;rd,r;Rd ← Rd - Rr - C;Subtract with Carry
+000110rdddddrrrr;1;sub;rd,r;Rd ← Rd - Rr;Subtract without Carry
 
 001001rdddddrrrr;1;clr;r;Rd ← Rd ⊕ Rd;Clear Register
 000011rdddddrrrr;1;lsl;r;C ← Rd(7),Rd(n+1) ← Rd(n) n=6..0,Rd(0) ← 0;Logical Shift Left

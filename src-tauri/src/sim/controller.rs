@@ -1,5 +1,3 @@
-use std::any::Any;
-use std::ops::DerefMut;
 use std::sync::{mpsc,mpsc::{Sender,Receiver,TryRecvError}, Mutex, MutexGuard};
 use std::thread::sleep;
 use std::time::Duration;
@@ -28,7 +26,8 @@ pub enum Action{
 }
 enum Response{
     BreakPoints(Vec<u32>),
-    Res(Result<()>)
+    Res(Result<()>),
+    Join
 }
 
 
@@ -40,6 +39,7 @@ struct Worker<'a>{
     sim:Sim<'a>,
     action: Action,
     action_prev:Action,
+    action_executed:bool,
     breakpoints:Vec<u32>,
     rx:Option<Receiver<Action>>,
     tx:Option<Sender<Response>>
@@ -80,12 +80,17 @@ impl<'a> Worker<'a> {
                     self.action = Action::Pause;
                     Ok(())
                 }else{
-
                     unsafe{self.sim.execute_inst()}
                 }
 
             }
             Action::Pause => {
+                if !self.action_executed {
+                    self.action_executed = true;
+                    emit!("sim-status",Action::Pause);
+                    emit!("sim-location",self.memory.program_couter);
+                    emit!("sim-register-status",self.memory.data.registers.clone());
+                }
                 sleep(Duration::from_millis(100)); //to not hold up the core
                 Ok(())
             }
@@ -105,7 +110,6 @@ impl<'a> Worker<'a> {
                 Ok(())
             }
             Action::Next => {
-                println!("at:{:x?}",self.memory.program_couter);
                 unsafe{self.sim.execute_inst()?}
                 self.action = Action::Pause;
                 Ok(())
@@ -122,6 +126,7 @@ impl<'a> Worker<'a> {
                             unsafe{ self.iner()?};
                         }
                         Opcode::RET=>{
+                            self.action = Action::Pause;
                             break
                         }
                         _=>{}
@@ -139,6 +144,7 @@ impl<'a> Worker<'a> {
                     Ok(action)=>{
                         self.action_prev = self.action;
                         self.action = action;
+                        self.action_executed = false;
                     }
                     Err(TryRecvError::Empty)=>{}
                     Err(TryRecvError::Disconnected)=>{
@@ -148,8 +154,13 @@ impl<'a> Worker<'a> {
 
             }
             if let Err(e) = unsafe{self.iner()}{
+                self.action = Action::Pause;
                 if let Some(tx) = self.tx.as_ref() {
-                    tx.send(Response::Res(Err(e))).ok();
+                    if e.to_string() == "halt"{
+                        tx.send(Response::Join).ok();
+                    }else{
+                        tx.send(Response::Res(Err(e))).ok();
+                    }
                 }
             };
         }
@@ -201,10 +212,6 @@ impl Controller {
         CONTROLLER.lock().map_err(|e| anyhow!("Poison Error:{}",e))?.do_action_iner(action)
     }
     fn do_action_iner(&mut self, action: Action) -> Result<()>{
-        if action==Action::Stop{
-            self.deinit()?;
-            return Ok(())
-        }
 
         if let Some(tx) = self.tx.as_ref() {
             tx.send(action).map_err(|e| anyhow!("Send Error:{}",e))?;
@@ -228,6 +235,9 @@ impl Controller {
                         }
                         Response::Res(r) => {
                             r
+                        }
+                        Response::Join=>{
+                            self.deinit()
                         }
                     }
                 }

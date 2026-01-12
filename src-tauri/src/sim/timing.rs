@@ -205,7 +205,7 @@ fn get_time(core: Core, inst: Instruction, sim: Sim) -> Result<u8> {
         Opcode::SBRS|
         Opcode::SBIC|
         Opcode::SBIS=>{
-            match(sim.memory.program_couter - inst.address){
+            match sim.memory.program_couter - inst.address {
                 1=>{Ok(1)}
                 2=>{Ok(2)}
                 3=>{match core {

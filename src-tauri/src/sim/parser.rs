@@ -113,16 +113,17 @@ mod tests{
 
     #[test]
     fn test_parse_hex(){ //todo
-       let out = parse_hex("D:\\projects\\avr-simulator-rs\\tests\\disassembly\\main.hex".to_string());
-        let f = fs::read_to_string("D:\\projects\\avr-simulator-rs\\tests\\disassembly\\all.s").unwrap();
+       let out = parse_hex("/opt/projects/avr-simulator-rs/tests/disassembly/main.hex".to_string());
+        let f = fs::read_to_string("/opt/projects/avr-simulator-rs/tests/disassembly/out.txt").unwrap();
         let input = f.split("\n").collect::<Vec<&str>>();
         let mut iter = 1;
-        for i in &out.unwrap()[65..183]{
+        for i in &out.unwrap(){
             iter+=1;
-            if(RawInst::get_inst_from_id(i.opcode_id).unwrap().name.to_string().to_uppercase() != input[iter].split(" ").collect::<Vec<&str>>()[0]){
-                println!("expected : {} got {:?}", input[iter].split(" ").collect::<Vec<&str>>()[0],RawInst::get_inst_from_id(i.opcode_id));
+            let data = input[iter].split(":").collect::<Vec<_>>()[1].chars().collect::<String>();
+            println!("{}",data);
+            if(RawInst::get_inst_from_id(i.opcode_id).unwrap().name.to_string().to_uppercase() != ""){
+                //println!("expected : {} got {:?}", input[iter].split(" ").collect::<Vec<&str>>()[0],RawInst::get_inst_from_id(i.opcode_id));
             }
         }
-        assert_eq!(1,1);
     }
 }

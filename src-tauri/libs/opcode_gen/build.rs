@@ -6,7 +6,8 @@ use std::path::Path;
 #[derive(Debug)]
 pub struct ConstraintMap{
     map:u32,
-    constraint:char
+    constraint:char,
+    ord:u32,
 }
 struct Inst {
     opcode: String,
@@ -117,23 +118,50 @@ fn main(){
         let mut chars: HashSet<char> = v[0].chars().collect();
         chars.remove(&'0');
         chars.remove(&'1');
-        let mut constraints:Vec<&str> = vec![];
+        let mut constraints:Vec<(char,Option<char>,u32)> = vec![];
+
         if v.len()==6 {
-            constraints = v[3].split(",").filter(|s| s.len() > 0).collect();
+            let mut pos = 0;
+            constraints = v[3].split(",").filter(|s| s.len() > 0).map(|c|{
+                let toret ;
+                if c.len()==1{
+                    toret =(c.chars().next().unwrap(),None,pos)
+                }else{
+                    toret =(c.chars().next().unwrap(),Some(c.chars().skip(1).next().unwrap()),pos)
+                }
+                pos +=1;
+                toret
+            }).collect();
+
         }
         let mut c:Vec<ConstraintMap> = vec![];
         println!("{:?}", constraints);
-         constraints.iter().for_each(|s| {
-                let ch = s.chars().next().unwrap();
-                if chars.iter().find(|x| **x == ch).is_none() {
-                    c.push(ConstraintMap{ map: 0,constraint:ch});
+        constraints.iter().for_each(|(ch,key,pos)| {
+          if let Some(key)=key{
+              let mut map = 0u32;
+              for i in v[0].to_string().chars(){
+                  map = map<<1;
+                  if i == *key {
+                      map+=1;
+                  }
+              }
+              chars.remove(key);
+              c.push(ConstraintMap{map,constraint: *key ,ord:*pos})
+          }
+        });
+        constraints.iter().for_each(|(ch,key,pos)| {
+                if key.is_some(){
+                    return;
+                }
+                if chars.iter().find(|x| **x == *ch).is_none() {
+                    c.push(ConstraintMap{ map: 0,constraint: *ch,ord: *pos });
                     return;
                 }
 
                 let mut map = 0;
                 for i in v[0].to_string().chars(){
                     map = map<<1;
-                    if i == ch {
+                    if i == *ch {
                         map+=1;
                     }
                     
@@ -145,13 +173,14 @@ fn main(){
                 if map>0 {
                     chars.remove(&ch);
                 }
-                c.push(ConstraintMap { constraint: ch, map });
+                c.push(ConstraintMap { constraint: *ch, map,ord:*pos });
             });
         print!("{}", v[2]);
         println!("{:?}", c);
 
 
         inst_list.insert(v[2].to_string().to_uppercase());
+        c.sort_by(|a,b| a.ord.cmp(&b.ord));
         c.iter_mut().for_each(|map: &mut ConstraintMap| {
             if map.map >0 {
                 return;
