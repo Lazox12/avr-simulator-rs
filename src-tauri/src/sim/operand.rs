@@ -149,8 +149,8 @@ impl Operand{
             }
             Constraint::l =>{
                 let mut t = Operand::unsigned_to_signed(value, 7);
-                t*=2; // 16 bit wide addresses
                 if t>=-64 && t<64 {
+                    t*=2; // 16 bit wide addresses
                     Ok(t as OperandValue)
                 }
                 else{
@@ -258,9 +258,9 @@ impl Operand{
         }
     }
 
-    pub(crate) fn map_string_from_value(&self) -> Result<String> {
+    pub(crate) fn map_string_from_value(&self) -> Result<String> { //only used for tests
         let value = self.value.clone();
-        match self.constraint {
+        let a =match self.constraint {
             Constraint::r =>{Ok(format!("r{}",value))}
             Constraint::d =>{Ok(format!("r{}",value))}
             Constraint::v =>{Ok(format!("r{}",value))}
@@ -271,17 +271,26 @@ impl Operand{
             Constraint::z =>{Ok(format!("{}",constraint_z_into_pointer(self.value)?))}
             Constraint::M =>{Ok(format!("{:#x}",value))}
             Constraint::n =>{Ok(format!("{:#x}",value))}
-            Constraint::s =>{Ok(format!("{:#x}",value))}
+            Constraint::s =>{Ok(format!("{}",value))}
             Constraint::P =>{Ok(format!("{:#x}",value))}
             Constraint::p =>{Ok(format!("{:#x}",value))}
             Constraint::K =>{Ok(format!("{:#x}",value))}
             Constraint::i =>{Ok(format!("{:#x}",value))}
             Constraint::j =>{Ok(format!("{:#x}",value))}
-            Constraint::l =>{Ok(format!(".{}",value))}
-            Constraint::L =>{Ok(format!(".{}",value))}
-            Constraint::h =>{Ok(format!("{:#x}",value))}
+            Constraint::l|
+            Constraint::L =>{
+                if value>=0{
+                    Ok(format!(".+{}",value))
+                }else{
+                    Ok(format!(".{}",value))
+                }
+            }
+            Constraint::h =>{match value{
+                0=>{Ok("0".to_string())},
+                _=>Ok(format!("{:#x}",value))
+            }}
             Constraint::S =>{Ok(format!("{:#x}",value))}
-            Constraint::E =>{Ok(format!("{:#x}",value))}
+            Constraint::E =>{Ok(format!("{}",value))}
             Constraint::o =>{Ok(format!("+{}",value))}
             Constraint::c =>{match value {
                 0 =>{Ok("".to_string())}
@@ -289,7 +298,17 @@ impl Operand{
                 2 =>{Ok("-".to_string())} //pre decrement
                 _ =>{Err(anyhow!("invalid val"))}
             }}
+        }?;
+        if a =="0x0"{
+            Ok("0x00".to_string())
+        }else{
+            if (a.len()==3) & (a.starts_with("0x")){
+                Ok(format!("0x0{}", a.chars().last().unwrap().to_string()))
+            }else{
+                Ok(a)
+            }
         }
+
     }
     fn unsigned_to_signed(val:u32,len:u32)->i32{ //signed len in bits
         if(val>>len-1)==0{ // positive number

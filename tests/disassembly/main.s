@@ -38,13 +38,13 @@ ASR R10
 ROL R11
 ROR R12
 SWAP R13
-BST R14,0
-BLD R15,1
+BST R14,3
+BLD R15,5
 SBIC 0x1A,2
 SBIS 0x1B,3
 CBI 0x1C,4
 SBI 0x1D,5
-SBRC R16,0
+SBRC R16,2
 SBRS R17,1
 BSET 0
 BCLR 1
@@ -64,6 +64,29 @@ CLS
 CLH
 CLT
 CLI
+label1:
+BRBS 0,label1
+BRBC 1,label1
+BRCC label1
+BRCS label1
+BREQ label1
+BRNE label1
+BRMI label1
+BRPL label1
+BRLT label1
+BRGE label1
+BRLO label1
+BRSH label1
+BRVS label1
+BRVC label1
+BRHS label1
+BRHC label1
+BRTS label1
+BRTC label1
+BRIE label1
+BRID label1
+RJMP label1
+RCALL label1
 BRBS 0,label
 BRBC 1,label
 BRCC label
@@ -86,6 +109,7 @@ BRIE label
 BRID label
 RJMP label
 RCALL label
+
 IJMP
 ICALL
 JMP 0x1234
@@ -103,8 +127,8 @@ LD R0,X
 LDD R1,Y+2
 ST X,R2
 STD Y+4,R3
-LDS R4,0x0100
-STS 0x0100,R5
+LDS R4,0x4ae8
+STS 0x2cb7,R5
 LAC Z,R6
 LAS Z,R7
 LAT Z,R8
@@ -118,5 +142,5 @@ NOP
 SLEEP
 WDR
 BREAK
-DES 15
+DES 0xf
 label:

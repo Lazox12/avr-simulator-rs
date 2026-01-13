@@ -154,10 +154,10 @@
 
 00000001ddddrrrr;1;movw;v,v;R[d + 1]:Rd ← R[r + 1]:Rr;Copy Register Pair
 00000010ddddrrrr;1;muls;d,d;R1:R0 ← Rd x Rr (SS);Multiply Signed
-000000110ddd0rrr;1;mulsu;a,a;R1:R0 ← Rd x Rr (SU);Multiply Signed with Unsigned
-000000110ddd1rrr;1;fmul;a,a;R1:R0 ← Rd x Rr<<1 (UU); Fractional Multiply Unsigned
-000000111ddd0rrr;1;fmuls;a,a;R1:R0 ← Rd x Rr<<1 (SS);Fractional Multiply Signed
-000000111ddd1rrr;1;fmulsu;a,a;R1:R0 ← Rd x Rr<<1 (SU);Fractional Multiply Signed with Unsigned
+000000110ddd0rrr;1;mulsu;ad,a;R1:R0 ← Rd x Rr (SU);Multiply Signed with Unsigned
+000000110ddd1rrr;1;fmul;ad,a;R1:R0 ← Rd x Rr<<1 (UU); Fractional Multiply Unsigned
+000000111ddd0rrr;1;fmuls;ad,a;R1:R0 ← Rd x Rr<<1 (SS);Fractional Multiply Signed
+000000111ddd1rrr;1;fmulsu;ad,a;R1:R0 ← Rd x Rr<<1 (SU);Fractional Multiply Signed with Unsigned
 
 10101kkkddddkkkk;1;sts;j,d;DS(k) ← Rd;Store Direct to Data Space
 1001001rrrrr0000;2;sts;i,r;?;Store Direct to Data Space

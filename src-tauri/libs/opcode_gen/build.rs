@@ -146,7 +146,7 @@ fn main(){
                   }
               }
               chars.remove(key);
-              c.push(ConstraintMap{map,constraint: *key ,ord:*pos})
+              c.push(ConstraintMap{map,constraint: *ch ,ord:*pos})
           }
         });
         constraints.iter().for_each(|(ch,key,pos)| {

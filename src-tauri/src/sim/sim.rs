@@ -284,7 +284,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRCC => {
                     let f = self.get_flag(Flags::C);
                     if !f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -292,7 +292,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRCS => {
                     let f = self.get_flag(Flags::C);
                     if f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -303,7 +303,7 @@ impl<'a> Sim<'a> {
                 Opcode::BREQ => {
                     let f = self.get_flag(Flags::Z);
                     if f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -311,7 +311,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRGE => {
                     let f = self.get_flag(Flags::S);
                     if !f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -319,7 +319,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRHC => {
                     let f = self.get_flag(Flags::H);
                     if !f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -327,7 +327,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRHS => {
                     let f = self.get_flag(Flags::H);
                     if f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -335,7 +335,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRID => {
                     let f = self.get_flag(Flags::I);
                     if !f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -343,7 +343,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRIE => {
                     let f = self.get_flag(Flags::I);
                     if f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -351,7 +351,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRLO => {
                     let f = self.get_flag(Flags::C);
                     if f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -359,7 +359,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRLT => {
                     let f = self.get_flag(Flags::S);
                     if f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -367,7 +367,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRMI => {
                     let f = self.get_flag(Flags::N);
                     if f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -375,7 +375,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRNE => {
                     let f = self.get_flag(Flags::Z);
                     if !f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -383,7 +383,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRPL => {
                     let f = self.get_flag(Flags::N);
                     if !f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -391,7 +391,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRSH => {
                     let f = self.get_flag(Flags::C);
                     if !f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -399,7 +399,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRTC => {
                     let f = self.get_flag(Flags::T);
                     if !f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -407,7 +407,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRTS => {
                     let f = self.get_flag(Flags::T);
                     if f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -415,7 +415,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRVC => {
                     let f = self.get_flag(Flags::V);
                     if !f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)
@@ -423,7 +423,7 @@ impl<'a> Sim<'a> {
                 Opcode::BRVS => {
                     let f = self.get_flag(Flags::V);
                     if f {
-                        self.memory.program_couter = (self.memory.program_couter as i64 + op2) as u32;
+                        self.memory.program_couter = (self.memory.program_couter as i64 + op1) as u32;
                     }
 
                     Ok(true)

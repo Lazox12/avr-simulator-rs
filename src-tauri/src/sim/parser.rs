@@ -107,22 +107,49 @@ fn calculate_checksum(line:&str) -> Result<bool>{
 
 #[cfg(test)]
 mod tests{
+    use std::ops::Deref;
     use super::*;
     use std::process::Command;
     use opcode_gen::RawInst;
 
     #[test]
     fn test_parse_hex(){ //todo
-       let out = parse_hex("/opt/projects/avr-simulator-rs/tests/disassembly/main.hex".to_string());
+        let ignored_opcodes = vec!["ld","ldd","st","std","lac","las","lat","xch","lpm","elpm"];
+       let out = parse_hex("/opt/projects/avr-simulator-rs/tests/disassembly/main.hex".to_string()).unwrap();
         let f = fs::read_to_string("/opt/projects/avr-simulator-rs/tests/disassembly/out.txt").unwrap();
         let input = f.split("\n").collect::<Vec<&str>>();
-        let mut iter = 1;
-        for i in &out.unwrap(){
+        let mut iter = 6;
+        for i in &out{
             iter+=1;
-            let data = input[iter].split(":").collect::<Vec<_>>()[1].chars().collect::<String>();
-            println!("{}",data);
-            if(RawInst::get_inst_from_id(i.opcode_id).unwrap().name.to_string().to_uppercase() != ""){
-                //println!("expected : {} got {:?}", input[iter].split(" ").collect::<Vec<&str>>()[0],RawInst::get_inst_from_id(i.opcode_id));
+            let data:Vec<_> = input[iter].split(":").collect::<Vec<_>>()[1].split(";").collect::<Vec<_>>()[0].trim().split("\t").collect::<Vec<_>>();
+            let opcode = data[1];
+            let mut op1=None;
+            let mut op2=None;
+            let mut op3=None;
+            let mut operands = None;
+            if data.len() >=3{
+                operands = Some(data[2].split(",").collect::<Vec<_>>());
+                op1 = operands.as_ref().unwrap().get(0).clone();
+                op2 = operands.as_ref().unwrap().get(1).clone();
+                op3 = operands.as_ref().unwrap().get(2).clone();
+            }
+
+            assert_eq!(opcode,i.get_raw_inst().unwrap().name.to_string().to_lowercase().as_str());
+            println!("{:#x}",i.address);
+            if ignored_opcodes.contains(&opcode){
+                continue;
+            }
+            if let Some(op1) = op1 {
+                let op =i.operands.as_ref().unwrap();
+                println!("{:?}", op);
+                assert_eq!(*op1.trim().to_lowercase(),op[0].map_string_from_value().unwrap().to_lowercase());
+                if let Some(op2) = op2 {
+
+                    assert_eq!(*op2.trim().to_lowercase(),op[1].map_string_from_value().unwrap().to_lowercase());
+                }
+                if let Some(op3) = op3 {
+                    assert_eq!(*op3.trim().to_lowercase(),op[2].map_string_from_value().unwrap().to_lowercase());
+                }
             }
         }
     }
