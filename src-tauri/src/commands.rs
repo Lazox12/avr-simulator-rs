@@ -70,6 +70,7 @@ wrap_anyhow!(menu_import(file:String)->(){
 });
 
 wrap_anyhow!(menu_close()->(){
+    Controller::do_action(Action::Stop)?;
     get_project()?.close()
 });
 

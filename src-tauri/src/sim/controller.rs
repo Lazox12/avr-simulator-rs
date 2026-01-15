@@ -1,4 +1,6 @@
-use std::sync::{mpsc,mpsc::{Sender,Receiver,TryRecvError}, Mutex, MutexGuard};
+use std::collections::HashMap;
+use std::ops::Deref;
+use std::sync::{mpsc, mpsc::{Sender, Receiver, TryRecvError}, Mutex, MutexGuard};
 use std::thread::sleep;
 use std::time::Duration;
 use anyhow::anyhow;
@@ -23,9 +25,9 @@ pub enum Action{
     Break(u32),//breakpoint
     Next, //next inst
     Skip, //only on call runs until fn returns
+    Watch(u128), //we accept this as string
 }
 enum Response{
-    BreakPoints(Vec<u32>),
     Res(Result<()>),
     Join
 }
@@ -33,7 +35,6 @@ enum Response{
 
 #[derive(Default)]
 struct Worker<'a>{
-    project_lock:Option<MutexGuard<'a,Project>>,
     atdf:&'static AvrDeviceFile,
     memory:Memory,
     sim:Sim<'a>,
@@ -41,6 +42,7 @@ struct Worker<'a>{
     action_prev:Action,
     action_executed:bool,
     breakpoints:Vec<u32>,
+    watch_list:Vec<u32>,
     rx:Option<Receiver<Action>>,
     tx:Option<Sender<Response>>
 }
@@ -56,7 +58,6 @@ impl<'a> Worker<'a> {
             self.tx = Some(tx);
 
             self.sim.init(&mut *project_lock, self.atdf, &mut self.memory)?;
-            self.project_lock = Some(project_lock);
             Ok(())
         };
         match f() {
@@ -76,6 +77,11 @@ impl<'a> Worker<'a> {
     unsafe fn iner(&mut self) ->Result<()>{
         match self.action {
             Action::Run => {
+                if (self.action_prev !=Action::Run){
+                    self.action_prev=Action::Run;
+                    emit!("sim-status",Action::Run);
+                    unsafe{self.sim.execute_inst()?};
+                }
                 if self.check_brekpoint() {
                     self.action = Action::Pause;
                     Ok(())
@@ -90,6 +96,7 @@ impl<'a> Worker<'a> {
                     emit!("sim-status",Action::Pause);
                     emit!("sim-location",self.memory.program_couter);
                     emit!("sim-register-status",self.memory.data.registers.clone());
+                    emit!("sim-watch-list-update",self.watch_list.iter().map(|x| (x.clone(),match self.memory.data.get(x.clone() as usize){Some(t)=>{t.clone()},None=>0u8})).collect::<HashMap<_,_>>());
                 }
                 sleep(Duration::from_millis(100)); //to not hold up the core
                 Ok(())
@@ -104,9 +111,7 @@ impl<'a> Worker<'a> {
                     self.breakpoints.push(address);
                 }
                 self.action= self.action_prev;
-                if let Some(tx) = self.tx.as_ref() {
-                    tx.send(Response::BreakPoints(self.breakpoints.clone())).ok();
-                }
+                emit!("breakpoints-update",self.breakpoints.clone());
                 Ok(())
             }
             Action::Next => {
@@ -132,6 +137,31 @@ impl<'a> Worker<'a> {
                         _=>{}
                     }
                 }
+                Ok(())
+            }
+            Action::Watch(data) => {
+                let address:u32 = *device_parser::get_register_map(&self.atdf.devices.name.to_string())
+                    .ok_or(anyhow!("could not get common regs"))?
+                    .into_iter()
+                    .find(|(_,reg)| match String::from_utf8(
+                        data.to_be_bytes()
+                            .iter()
+                            .cloned()
+                            .skip_while(|&n|  n==0)
+                            .collect::<Vec<u8>>()){
+                        Ok(t)=>{reg.name ==t}
+                        Err(e)=>{false}
+                    }
+                    )
+                    .ok_or(anyhow!("invalid register"))?.0 as u32;
+                if let Some(index)=self.watch_list.iter().position(|x| *x==address){
+                    self.watch_list.remove(index);
+                }else{
+                    self.watch_list.push(address);
+                }
+                self.action= self.action_prev;
+
+                emit!("sim-watch-list-update",self.watch_list.iter().map(|x| (x.clone(),match self.memory.data.get(x.clone() as usize){Some(t)=>{t.clone()},None=>0u8})).collect::<HashMap<_,_>>());
                 Ok(())
             }
         }
@@ -229,10 +259,6 @@ impl Controller {
             match rx.try_recv(){
                 Ok(resp)=>{
                     match resp {
-                        Response::BreakPoints(b) => {
-                            emit!("breakpoints-update",b);
-                            Ok(())
-                        }
                         Response::Res(r) => {
                             r
                         }

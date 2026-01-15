@@ -57,7 +57,7 @@ fn main() {
     toMod+=format!("\npub const MCU_STRUCT: phf::Map<&'static str,&'static AvrDeviceFile>= phf_map!{{{}}};",mods.iter().map(|f| format!("\"{0}\"=>&{0}::{1}",f,f.to_uppercase())).collect::<Vec<String>>().join(",")).as_str();
     toMod+=format!("\npub const MCU_REGISTER_STRUCT: phf::Map<&'static str,&'static phf::Map<u64,&'static Register>>= phf_map!{{{}}};",mods.iter().map(|f| format!("\"{0}\"=>&{0}::REGISTERMAP",f)).collect::<Vec<String>>().join(",")).as_str();
     toMod+=format!("\npub const MCU_COMMON_REGISTER_STRUCT: phf::Map<&'static str,&'static CommonRegisters>= phf_map!{{{}}};",success.iter().map(|f| format!("\"{0}\"=>&{0}::COMMONREGISTERS",f)).collect::<Vec<String>>().join(",")).as_str();
-    fs::write(Path::new(&out_dir).join("avr/mod.rs"), toMod);
+    fs::write(Path::new(&out_dir).join("avr/mod.rs"), toMod).unwrap();
     info!("sucess:{} from:{}",c2,c1);
 }
 
