@@ -48,7 +48,8 @@ wrap_anyhow!(menu_new(file:String)->(){
 });
 
 wrap_anyhow!(menu_open(file:String)->(){
-    get_project()?.open(&*file.to_string())
+    get_project()?.open(&*file.to_string())?;
+    Controller::do_action(Action::Pause)
 });
 
 wrap_anyhow!(menu_import(file:String)->(){

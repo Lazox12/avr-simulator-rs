@@ -6,7 +6,8 @@ use std::time::Duration;
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use tauri::Emitter;
-use device_parser::AvrDeviceFile;
+use phf::phf_map;
+use device_parser::{AvrDeviceFile, Register};
 use opcode_gen::Opcode;
 use crate::project::{Project, PROJECT};
 use crate::sim::sim::Sim;
@@ -25,7 +26,7 @@ pub enum Action{
     Break(u32),//breakpoint
     Next, //next inst
     Skip, //only on call runs until fn returns
-    Watch(u128), //we accept this as string
+    Watch([u8;8]), //we accept this as string
 }
 enum Response{
     Res(Result<()>),
@@ -36,13 +37,14 @@ enum Response{
 #[derive(Default)]
 struct Worker<'a>{
     atdf:&'static AvrDeviceFile,
+    reg_map:Option<&'static phf::Map<u64,&'static Register>>,
     memory:Memory,
     sim:Sim<'a>,
     action: Action,
     action_prev:Action,
     action_executed:bool,
     breakpoints:Vec<u32>,
-    watch_list:Vec<u32>,
+    watch_list:HashMap<String,u32>,
     rx:Option<Receiver<Action>>,
     tx:Option<Sender<Response>>
 }
@@ -96,7 +98,7 @@ impl<'a> Worker<'a> {
                     emit!("sim-status",Action::Pause);
                     emit!("sim-location",self.memory.program_couter);
                     emit!("sim-register-status",self.memory.data.registers.clone());
-                    emit!("sim-watch-list-update",self.watch_list.iter().map(|x| (x.clone(),match self.memory.data.get(x.clone() as usize){Some(t)=>{t.clone()},None=>0u8})).collect::<HashMap<_,_>>());
+                    emit!("sim-watch-list-update",self.watch_list.iter().map(|(key,val)| (key.clone(),match self.memory.data.get(*val as usize){Some(t)=>{t.clone()},None=>0u8})).collect::<HashMap<_,_>>());
                 }
                 sleep(Duration::from_millis(100)); //to not hold up the core
                 Ok(())
@@ -140,28 +142,24 @@ impl<'a> Worker<'a> {
                 Ok(())
             }
             Action::Watch(data) => {
-                let address:u32 = *device_parser::get_register_map(&self.atdf.devices.name.to_string())
-                    .ok_or(anyhow!("could not get common regs"))?
+                if self.reg_map.is_none(){
+                    self.reg_map =device_parser::get_register_map(&PROJECT.lock().map_err(|e| anyhow!("poison error:{}",e))?.get_state()?.mcu);
+                }
+                let mut name:String = String::new();
+                data.iter().for_each(|x1| {if *x1 >0{name+= &*(x1.clone() as char).to_string() }});
+                let address:u32 =
+                    *self.reg_map.ok_or(anyhow!("could not get common regs"))?
                     .into_iter()
-                    .find(|(_,reg)| match String::from_utf8(
-                        data.to_be_bytes()
-                            .iter()
-                            .cloned()
-                            .skip_while(|&n|  n==0)
-                            .collect::<Vec<u8>>()){
-                        Ok(t)=>{reg.name ==t}
-                        Err(e)=>{false}
-                    }
-                    )
+                    .find(|(_,reg)| {reg.name ==name})
                     .ok_or(anyhow!("invalid register"))?.0 as u32;
-                if let Some(index)=self.watch_list.iter().position(|x| *x==address){
-                    self.watch_list.remove(index);
+                if let Some(index)=self.watch_list.iter().position(|(key,_)| *key==name){
+                    self.watch_list.remove(&name.to_string());
                 }else{
-                    self.watch_list.push(address);
+                    self.watch_list.insert(name, address);
                 }
                 self.action= self.action_prev;
 
-                emit!("sim-watch-list-update",self.watch_list.iter().map(|x| (x.clone(),match self.memory.data.get(x.clone() as usize){Some(t)=>{t.clone()},None=>0u8})).collect::<HashMap<_,_>>());
+                emit!("sim-watch-list-update",self.watch_list.iter().map(|(key,val)| (key.clone(),match self.memory.data.get(*val as usize){Some(t)=>{t.clone()},None=>0u8})).collect::<HashMap<_,_>>());
                 Ok(())
             }
         }
