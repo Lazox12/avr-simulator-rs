@@ -1,6 +1,5 @@
 #![allow(unused_mut)]
 
-use std::io::Write;
 use std::sync::LazyLock;
 use anyhow::anyhow;
 use bin_expr_parser_macro::execute;

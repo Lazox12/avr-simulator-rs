@@ -1,16 +1,14 @@
 use std::collections::HashMap;
-use std::ops::Deref;
-use std::sync::{mpsc, mpsc::{Sender, Receiver, TryRecvError}, Mutex, MutexGuard};
+use std::sync::{mpsc, mpsc::{Sender, Receiver, TryRecvError}, Mutex};
 use std::{thread, time};
 use std::thread::sleep;
 use std::time::Duration;
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use tauri::Emitter;
-use phf::phf_map;
 use device_parser::{AvrDeviceFile, Register};
 use opcode_gen::Opcode;
-use crate::project::{Project, PROJECT};
+use crate::project::PROJECT;
 use crate::sim::sim::Sim;
 use crate::error::Result;
 use crate::{emit};
@@ -82,7 +80,7 @@ impl<'a> Worker<'a> {
     unsafe fn iner(&mut self) ->Result<()>{
         match self.action {
             Action::Run => {
-                if (self.action_prev !=Action::Run){
+                if self.action_prev !=Action::Run {
                     self.action_prev=Action::Run;
                     emit!("sim-status",Action::Run);
                     unsafe{self.sim.execute_inst()?};
@@ -162,13 +160,13 @@ impl<'a> Worker<'a> {
                     .into_iter()
                     .find(|(_,reg)| {reg.name ==name})
                     .ok_or(anyhow!("invalid register"))?.0 as u32;
-                if let Some(index)=self.watch_list.iter().position(|(key,_)| *key==name){
+                if let Some(_index)=self.watch_list.iter().position(|(key,_)| *key==name){
                     self.watch_list.remove(&name.to_string());
                 }else{
                     self.watch_list.insert(name, address);
                 }
                 self.action= self.action_prev;
-                self.memory.data.io.watchlist = self.watch_list.iter().map(|(key,val)| val.clone()).collect();
+                self.memory.data.io.watchlist = self.watch_list.iter().map(|(_key,val)| val.clone()).collect();
                 emit!("sim-watch-list-update",self.watch_list.iter().map(|(key,val)| (key.clone(),match self.memory.data.get(*val as usize){Some(t)=>{t.clone()},None=>0u8})).collect::<HashMap<_,_>>());
                 Ok(())
             }
