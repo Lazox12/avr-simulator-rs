@@ -140,6 +140,13 @@ impl Project {
         }
         }
         tx.commit()?;
+
+        emit!("asm-update",
+            self.get_instruction_list()?
+                .into_iter()
+                .map(|x| PartialInstruction::from(x))
+                .collect::<Vec<PartialInstruction>>());
+        
         Ok(())
     }
 

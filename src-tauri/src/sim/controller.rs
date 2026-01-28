@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::{mpsc, mpsc::{Sender, Receiver, TryRecvError}, Mutex, MutexGuard};
+use std::{thread, time};
 use std::thread::sleep;
 use std::time::Duration;
 use anyhow::anyhow;
@@ -27,6 +28,7 @@ pub enum Action{
     Next, //next inst
     Skip, //only on call runs until fn returns
     Watch([u8;8]), //we accept this as string
+    WatchUpdate(bool), // update watchlist variables when running
 }
 enum Response{
     Res(Result<()>),
@@ -45,8 +47,9 @@ struct Worker<'a>{
     action_executed:bool,
     breakpoints:Vec<u32>,
     watch_list:HashMap<String,u32>,
+    update_watch_list:bool,
     rx:Option<Receiver<Action>>,
-    tx:Option<Sender<Response>>
+    tx:Option<Sender<Response>>,
 }
 impl<'a> Worker<'a> {
 
@@ -86,10 +89,15 @@ impl<'a> Worker<'a> {
                 }
                 if self.check_brekpoint() {
                     self.action = Action::Pause;
-                    Ok(())
                 }else{
-                    unsafe{self.sim.execute_inst()}
+                    unsafe{self.sim.execute_inst()?}
                 }
+                if self.update_watch_list && self.memory.data.io.write_status{
+                    self.memory.data.io.write_status = false;
+                    emit!("sim-watch-list-update",self.watch_list.iter().map(|(key,val)| (key.clone(),match self.memory.data.get(*val as usize){Some(t)=>{t.clone()},None=>0u8})).collect::<HashMap<_,_>>());
+                    thread::sleep(time::Duration::from_millis(10));
+                }
+                Ok(())
 
             }
             Action::Pause => {
@@ -98,6 +106,7 @@ impl<'a> Worker<'a> {
                     emit!("sim-status",Action::Pause);
                     emit!("sim-location",self.memory.program_couter);
                     emit!("sim-register-status",self.memory.data.registers.clone());
+                    println!("{:?}",self.watch_list);
                     emit!("sim-watch-list-update",self.watch_list.iter().map(|(key,val)| (key.clone(),match self.memory.data.get(*val as usize){Some(t)=>{t.clone()},None=>0u8})).collect::<HashMap<_,_>>());
                 }
                 sleep(Duration::from_millis(100)); //to not hold up the core
@@ -147,6 +156,7 @@ impl<'a> Worker<'a> {
                 }
                 let mut name:String = String::new();
                 data.iter().for_each(|x1| {if *x1 >0{name+= &*(x1.clone() as char).to_string() }});
+                name = name.to_uppercase();
                 let address:u32 =
                     *self.reg_map.ok_or(anyhow!("could not get common regs"))?
                     .into_iter()
@@ -158,8 +168,13 @@ impl<'a> Worker<'a> {
                     self.watch_list.insert(name, address);
                 }
                 self.action= self.action_prev;
-
+                self.memory.data.io.watchlist = self.watch_list.iter().map(|(key,val)| val.clone()).collect();
                 emit!("sim-watch-list-update",self.watch_list.iter().map(|(key,val)| (key.clone(),match self.memory.data.get(*val as usize){Some(t)=>{t.clone()},None=>0u8})).collect::<HashMap<_,_>>());
+                Ok(())
+            }
+            Action::WatchUpdate(data) => {
+                self.action = self.action_prev;
+                self.update_watch_list=data;
                 Ok(())
             }
         }

@@ -54,7 +54,7 @@ impl<'a> Sim<'a> {
         }).collect::<Result<()>>()?;
         self.memory.init(atdf, inst_vec, eeprom)?;
         self.registers = *(get_common_registers(&*atdf.devices.name.to_lowercase()).ok_or(anyhow!("mcu not supported"))?);
-        self.registers.init_regs(atdf, &mut self.memory.data.io)?;
+        self.registers.init_regs(atdf, &mut self.memory.data.io.inner)?;
         let pc_size =atdf.devices.address_spaces.iter().find(|x1| {x1.name=="prog"}).ok_or(anyhow!("invalid pc size"))?.size as u32;
         if pc_size != 0 {
             self.pc_len = pc_size.ilog2()-1;//divide by 2 because instructions are 16bit

@@ -1,7 +1,8 @@
+#include <avr/io.h>
 
 int main(){
-    int a = 0;
-    while (a<=0xf047){
-        a++;
+    while (true){
+        PORTD=1;
+        PORTD=0;
     }
 }

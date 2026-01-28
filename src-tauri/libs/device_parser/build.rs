@@ -33,7 +33,7 @@ fn main() {
             #data
         }.to_string();
         let reg_map = get_register_map(&name);
-        generated+=format!("\npub const REGISTERMAP:phf::Map<u64,&'static super::Register> = super::phf_map!{{{}}};",reg_map.iter().map(|(u1,x1)| {format!("{}=>&{}",u1,(quote! {#x1}.to_string()))}).collect::<Vec<String>>().join(",")).as_str();
+        generated+=format!("\npub const REGISTERMAP:phf::Map<u64,&'static super::Register> = super::phf_map!{{{}}};",reg_map.iter().map(|(u1,x1)| {format!("{}u64=>&{}",u1,(quote! {#x1}.to_string()))}).collect::<Vec<String>>().join(",")).as_str();
         match get_common_registers(&name,&reg_map){
             Some(regs) => {
                 c2 += 1;
