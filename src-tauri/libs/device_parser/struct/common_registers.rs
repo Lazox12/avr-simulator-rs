@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use anyhow::anyhow;
-use build_print::warn;
 use quote::{quote, ToTokens};
 use crate::AvrDeviceFile;
 use crate::r#struct::module::Register;
@@ -30,27 +29,27 @@ impl CommonReg {
             Self{ register: reg, data: None }
         }
     }
-    pub unsafe fn get_data(&self) -> u8 {
+    pub unsafe fn get_data(&self) -> u8 { unsafe {
         match self.data {
             Some(data) => data.read(),
             None => {panic!("read on uninitilized CommonReg")}
         }
-    }
-    pub unsafe fn set_data(&mut self, val: u8) {
+    }}
+    pub unsafe fn set_data(&mut self, val: u8) { unsafe {
         match self.data {
             Some(data) => {
                 data.write(val);
             }
             None => {panic!("write to uninitilized CommonReg")}
         }
-    }
-    pub unsafe fn try_get(&self) -> Option<u8> {
+    }}
+    pub unsafe fn try_get(&self) -> Option<u8> { unsafe {
         match self.data {
             Some(data) => Some(data.read()),
             None => None
         }
-    }
-    pub unsafe fn try_set(&self,value:u8) -> Option<()> {
+    }}
+    pub unsafe fn try_set(&self,value:u8) -> Option<()> { unsafe {
         match self.data {
             Some(data) => {
                 data.write(value);
@@ -58,7 +57,7 @@ impl CommonReg {
             }
             None => {None}
         }
-    }
+    }}
 }
 
 
@@ -127,12 +126,12 @@ impl CommonRegisters{
 
         vec![sreg,eind,spl,sph,rampx,rampy, rampz, rampd,mcucr].into_iter()
     }
-    pub unsafe fn get_flag(&self,flag:Flags)->bool{
+    pub unsafe fn get_flag(&self,flag:Flags)->bool{ unsafe {
         flag.get_value(self.sreg.get_data())
-    }
-    pub unsafe fn set_flag(&mut self, flag:Flags,value: bool) {
+    }}
+    pub unsafe fn set_flag(&mut self, flag:Flags,value: bool) { unsafe {
         self.sreg.set_data(flag.set_value(self.sreg.get_data(),value))
-    }
+    }}
 }
 type FlagDataType=bool;
 pub enum Flags{
