@@ -1,4 +1,4 @@
-use super::instruction::{Instruction, PartialInstruction};
+use super::instruction::{Instruction};
 use crate::error::Result;
 use std::fs;
 use std::io;
@@ -80,11 +80,6 @@ pub(crate) fn parse_hex(path:String) ->Result<Vec<Instruction>>{
     Ok(inst_list)
 }
 
-pub(crate) fn parse_vec(inst :Vec<PartialInstruction>)->Result<Vec<Instruction>>{
-    inst.into_iter()
-        .map(|x| Instruction::try_from(x)).collect()
-    
-}
 fn calculate_checksum(line:&str) -> Result<bool>{
     let checksum = u32::from_str_radix(&line[line.len()-2 ..],16)?;
     
@@ -107,10 +102,7 @@ fn calculate_checksum(line:&str) -> Result<bool>{
 
 #[cfg(test)]
 mod tests{
-    use std::ops::Deref;
     use super::*;
-    use std::process::Command;
-    use opcode_gen::RawInst;
 
     #[test]
     fn test_parse_hex(){ //todo

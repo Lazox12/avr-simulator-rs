@@ -70,16 +70,19 @@ impl<'a> Sim<'a> {
 
         Ok(())
     }
+    #[allow(unused)]
     pub fn init_debug(atdf: &'static AvrDeviceFile, flash: Vec<Instruction>) -> Result<Sim<'static>> {
         let mut s = Sim::default();
         s.init_iner(atdf, flash, vec![])?;
         Ok(s)
     }
+    #[allow(unused)]
     pub fn exec_debug(&mut self) -> Result<()> {
         unsafe {
             self.execute_inst()
         }
     }
+    #[allow(unused)]
     pub unsafe fn debug_init_stack(&mut self)->Result<()>{
         let ramlen = self.memory.data.ram.len();
         unsafe {
@@ -147,7 +150,7 @@ impl<'a> Sim<'a> {
             let mut reg = self.memory.data.registers.clone();
             let reg_ptr = reg.as_mut_ptr();
 
-            let (mut ra, mut rb) = unsafe {
+            let (mut ra, mut rb) = {
                 let ra = match ind1 < reg.len() {
                     true => Ok(&mut *reg_ptr.add(ind1)),
                     false => Err(anyhow!("invalid reg index")),
@@ -158,7 +161,7 @@ impl<'a> Sim<'a> {
                 };
                 (ra, rb)
             };
-            const fn get_bit(data: u8, bit: u8) -> bool { ((data >> bit) & 1) == 1 };
+
             let res = match instruction.get_raw_inst()?.name {
                 Opcode::ADC => {
                     let val_ra: u8 = *ra?;
@@ -437,7 +440,7 @@ impl<'a> Sim<'a> {
                     Ok(true)
                 }
                 Opcode::CALL => {
-                    self.push(self.memory.program_couter + 2, self.pc_bytesize);
+                    let _ = self.push(self.memory.program_couter + 2, self.pc_bytesize);
                     self.memory.program_couter = op1 as u32;
                     Ok(false)
                 }
@@ -584,12 +587,12 @@ impl<'a> Sim<'a> {
                 Opcode::EICALL => {
                     match self.pc_bytesize {
                         2 => {
-                            self.push(self.memory.program_couter + 1, 2);
+                            self.push(self.memory.program_couter + 1, 2)?;
                             self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8);
                             Ok(())
                         }
                         3 => {
-                            self.push(self.memory.program_couter + 1, 3);
+                            self.push(self.memory.program_couter + 1, 3)?;
                             self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.eind.get_data() as u32) << 16);
                             Ok(())
                         }
@@ -677,7 +680,7 @@ impl<'a> Sim<'a> {
                     Ok(true)
                 }
                 Opcode::ICALL => {
-                    self.push(self.memory.program_couter + 1, self.pc_bytesize);
+                    self.push(self.memory.program_couter + 1, self.pc_bytesize)?;
                     self.memory.program_couter = 0;
                     self.memory.program_couter = (reg[30] as u32) + ((reg[31] as u32) << 8);
                     Ok(false)
@@ -848,7 +851,7 @@ impl<'a> Sim<'a> {
                     Ok(true)
                 }
                 Opcode::MOVW => {
-                    reg[ind1] = *rb?;
+                    reg[ind1] = reg[ind2];
                     reg[ind1+1] = reg[ind2+1];
                     Ok(true)
                 }
@@ -1136,8 +1139,7 @@ impl<'a> Sim<'a> {
                     Ok(true)
                 }
                 Opcode::SLEEP => {
-                    todo!();
-                    Ok(true)
+                    Err(anyhow!("halt"))
                 }
                 Opcode::SPM => {
                     let ptr = (reg[30] as u32) + ((reg[31] as u32) << 8) + ((self.registers.rampz.get_data() as u32) << 16);
@@ -1266,7 +1268,6 @@ impl<'a> Sim<'a> {
                 }
                 Opcode::WDR => {
                     todo!();
-                    Ok(true)
                 }
                 Opcode::XCH => {
                     let ptr = reg[30] as u16+(reg[31] as u16)<<8;

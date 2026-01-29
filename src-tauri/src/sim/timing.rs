@@ -5,6 +5,7 @@ use crate::sim::instruction::Instruction;
 use crate::Result;
 use crate::sim::sim::Sim;
 
+#[allow(dead_code)]
 fn get_time(core: Core, inst: Instruction, sim: Sim) -> Result<u8> {
     let err = Err(anyhow!("not supperted on this core"));
     match inst.get_raw_inst()?.name{

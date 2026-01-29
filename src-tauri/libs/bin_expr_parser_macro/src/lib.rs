@@ -8,6 +8,7 @@ use quote::{quote, ToTokens};
 use syn::{parse::{Parse, ParseStream}, parse_macro_input, ExprLit, ExprRange, Ident, Lit, Result, Token};
 
 /// Logical / syntax tokens
+#[allow(dead_code)]
 enum SyntaxToken {
     And(Token![&]),
     Or(Token![|]),
@@ -68,7 +69,7 @@ impl ToTokens for Variable {
         }
     }
 }
-
+#[allow(dead_code)]
 enum VariableExpr {
     Literal(ExprLit),
     Range(ExprRange),

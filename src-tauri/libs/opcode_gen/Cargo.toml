@@ -6,6 +6,3 @@ edition = "2024"
 [dependencies]
 serde = { version = "1.0.219", features = ["derive"] }
 anyhow = {version = "1.0.100", features = ["backtrace"]}
-
-[profile.dev.build-override]
-debug = true

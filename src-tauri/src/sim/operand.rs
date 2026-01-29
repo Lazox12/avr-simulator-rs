@@ -131,12 +131,7 @@ impl Operand{
                 }
             }
             Constraint::i=>{
-                if value>=0 {
-                    Ok(value as OperandValue)
-                }
-                else{
-                    Err(anyhow!(Error::InvalidConstraintValue {err:format!("M: immediate Value, got {}", value),address:0}))
-                }
+                Ok(value as OperandValue)
             }
             Constraint::j=>{
                 value += 0x40;
@@ -168,12 +163,7 @@ impl Operand{
                 }
             }
             Constraint::h=>{
-                if value>=0 {
-                    Ok(value as OperandValue)
-                }
-                else{
-                    Err(anyhow!(Error::InvalidConstraintValue {err:format!("h: absolute code address, got {}", value),address:0}))
-                }
+                Ok(value as OperandValue)
             }
             Constraint::S=>{
                 if value<8 {
@@ -209,6 +199,7 @@ impl Operand{
             }
         }
     }
+    #[allow(unused)]
     pub(crate) fn map_value_from_string(value:&String,constraint: Constraint) -> Result<OperandValue> {
         let mut value =value.clone();
         match constraint {
@@ -257,7 +248,7 @@ impl Operand{
             }
         }
     }
-
+    #[allow(unused)]
     pub(crate) fn map_string_from_value(&self) -> Result<String> { //only used for tests
         let value = self.value.clone();
         let a =match self.constraint {

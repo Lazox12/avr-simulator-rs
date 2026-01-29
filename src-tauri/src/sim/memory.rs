@@ -1,4 +1,3 @@
-use std::slice::SliceIndex;
 use crate::error::Result;
 use device_parser::AvrDeviceFile;
 use opcode_gen::CustomOpcodes;

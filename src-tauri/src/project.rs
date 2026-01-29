@@ -1,5 +1,4 @@
 use std::fmt::Display;
-use std::ops::Deref;
 use std::sync::{Mutex, MutexGuard};
 use anyhow::anyhow;
 use crate::error::{Error, Result};
@@ -18,10 +17,11 @@ pub fn get_project()->Result<MutexGuard<'static, Project>> {
 }
 
 #[derive(Debug, EnumIter,Clone)]
+#[allow(non_camel_case_types)]
 pub enum Tables {
     instruction,
     project,
-    eeprom
+
 }
 impl Display for Tables {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -219,32 +219,7 @@ impl Project {
         Ok(())
     }
     pub fn get_eeprom_data(&mut self) -> Result<Vec<u8>> {
-        self.table_exists(Tables::eeprom)?;
-        let mut stmt = self.connection.as_ref().unwrap().prepare("SELECT * FROM eeprom")?;
-        match stmt.query_one([],|row| {
-            let data:String=row.get(0)?;
-            Ok(data.into_bytes())
-        }){
-            Ok(data) => Ok(data),
-            Err(SqlError::QueryReturnedNoRows) =>{
-                let mut insert_stmt = self.connection.as_ref().unwrap().prepare("INSERT INTO eeprom (data) VALUES ('')")?;
-                let r = insert_stmt.execute([])?;
-                if r !=1  {
-                    return Err(anyhow!(Error::ProjectError("querry returned more than 1 rows")))
-                }
-                drop(stmt);
-                drop(insert_stmt);
-                self.get_eeprom_data()
-            }
-            Err(e) => {Err(anyhow!(e))}
-        }
-
-    }
-    pub fn set_eeprom_data(&mut self, data:Vec<u8>) -> Result<()> {
-        self.table_exists(Tables::eeprom)?;
-        let mut stmt = self.connection.as_ref().unwrap().prepare("UPDATE eeprom SET data =?")?;
-        stmt.execute([String::from_utf8(data)?])?;
-        Ok(())
+        Ok(vec![])
     }
 }
 
@@ -254,19 +229,7 @@ pub struct ProjectState{
     pub mcu:String,
     pub freq:u32,
 }
-//commands
-impl ProjectState{
-    pub fn set_mcu(&mut self, mcu:String) -> Result<()>{
-        let device = device_parser::get_mcu_list().into_iter().find(|x| {
-            **x==mcu
-        });
-        if device.is_some() {
-            self.mcu= device.unwrap().deref().parse().unwrap();
-            return Ok(())
-        }
-        Err(anyhow!(Error::InvalidMcu(mcu)))
-    } 
-}
+
 impl FromSql for ProjectState {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         serde_json::from_str::<ProjectState>(value.as_str()?).map_err(|e| FromSqlError::Other(Box::new(e)))

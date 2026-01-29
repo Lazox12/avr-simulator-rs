@@ -4,23 +4,21 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-xmltree = "0.11.0"
+xmltree = ">0.11.0"
 build-print = "1.0.1"
 serde = { version = "1.0.228", features = ["derive"] }
-quote = {version =  "1.0.42",features = ["proc-macro"], quote = "1.0.42" }
+quote = {version =  "1.0.42",features = ["proc-macro"]}
 syn = "2.0.111"
 proc-macro2 = "1.0.103"
 phf = { version = "0.13.1",features = ["macros"] }
 anyhow = "1.0.100"
-log = "0.4.29"
-
 
 
 [build-dependencies]
-xmltree = "0.11.0"
+xmltree = ">0.11.0"
 build-print = "1.0.1"
 serde = { version = "1.0.228", features = ["derive"] }
-quote = {version =  "1.0.42",features = ["proc-macro"], quote = "1.0.42" }
+quote = {version =  "1.0.42",features = ["proc-macro"]}
 syn = "2.0.111"
 proc-macro2 = "1.0.103"
 anyhow = "1.0.100"

@@ -3,11 +3,10 @@ use std::{env, fs, io};
 use std::fs::DirEntry;
 use std::io::ErrorKind;
 use std::path::Path;
-use anyhow::anyhow;
 use xmltree::Element;
 pub use crate::r#struct::module::Register;
 pub use crate::r#struct::common_registers::CommonRegisters;
-use build_print::{error, info, warn};
+use build_print::{warn};
 use quote::quote;
 pub mod r#struct;
 pub mod utils;
@@ -21,7 +20,7 @@ fn main() {
     let mut c2:u16=0;
     let mut success:Vec<String> = vec!();
     let out_dir = env::var_os("OUT_DIR").unwrap();
-    if(!fs::exists(Path::new(&out_dir).join("avr")).unwrap()){
+    if !fs::exists(Path::new(&out_dir).join("avr")).unwrap(){
         fs::create_dir(Path::new(&out_dir).join("avr")).unwrap();
     }
     let mut mods:Vec<String> = vec!();
@@ -45,27 +44,25 @@ fn main() {
         fs::write(&dest_path, generated).unwrap();
         mods.push(name.clone());
     });
-    info!("{:?}",out_dir);
-    let mut toMod:String = "".to_string();
-    toMod="pub use phf::phf_map;\n".to_string();
-    toMod+="pub use std::ptr::null;\n";
-    toMod+=  mods.iter().map(|x| {
+    let mut to_mod:String ="pub use phf::phf_map;\n".to_string();
+    to_mod +="pub use std::ptr::null;\n";
+    to_mod +=  mods.iter().map(|x| {
         return format!("pub mod {};",x).to_string();
     }).collect::<Vec<String>>().join("\n").as_str();
-    toMod+="\n";
-    toMod+=format!("pub const MCU_LIST:&'static[&'static str] =&[{}];",mods.iter().map(|f|{format!("\"{}\"",f)}).collect::<Vec<String>>().join(",")).as_str();
-    toMod+=format!("\npub const MCU_STRUCT: phf::Map<&'static str,&'static AvrDeviceFile>= phf_map!{{{}}};",mods.iter().map(|f| format!("\"{0}\"=>&{0}::{1}",f,f.to_uppercase())).collect::<Vec<String>>().join(",")).as_str();
-    toMod+=format!("\npub const MCU_REGISTER_STRUCT: phf::Map<&'static str,&'static phf::Map<u64,&'static Register>>= phf_map!{{{}}};",mods.iter().map(|f| format!("\"{0}\"=>&{0}::REGISTERMAP",f)).collect::<Vec<String>>().join(",")).as_str();
-    toMod+=format!("\npub const MCU_COMMON_REGISTER_STRUCT: phf::Map<&'static str,&'static CommonRegisters>= phf_map!{{{}}};",success.iter().map(|f| format!("\"{0}\"=>&{0}::COMMONREGISTERS",f)).collect::<Vec<String>>().join(",")).as_str();
-    fs::write(Path::new(&out_dir).join("avr/mod.rs"), toMod).unwrap();
-    info!("sucess:{} from:{}",c2,c1);
+    to_mod +="\n";
+    to_mod +=format!("pub const MCU_LIST:&'static[&'static str] =&[{}];", mods.iter().map(|f|{format!("\"{}\"", f)}).collect::<Vec<String>>().join(",")).as_str();
+    to_mod +=format!("\npub const MCU_STRUCT: phf::Map<&'static str,&'static AvrDeviceFile>= phf_map!{{{}}};", mods.iter().map(|f| format!("\"{0}\"=>&{0}::{1}", f, f.to_uppercase())).collect::<Vec<String>>().join(",")).as_str();
+    to_mod +=format!("\npub const MCU_REGISTER_STRUCT: phf::Map<&'static str,&'static phf::Map<u64,&'static Register>>= phf_map!{{{}}};", mods.iter().map(|f| format!("\"{0}\"=>&{0}::REGISTERMAP", f)).collect::<Vec<String>>().join(",")).as_str();
+    to_mod +=format!("\npub const MCU_COMMON_REGISTER_STRUCT: phf::Map<&'static str,&'static CommonRegisters>= phf_map!{{{}}};", success.iter().map(|f| format!("\"{0}\"=>&{0}::COMMONREGISTERS", f)).collect::<Vec<String>>().join(",")).as_str();
+    fs::write(Path::new(&out_dir).join("avr/mod.rs"), to_mod).unwrap();
+    //info!("sucess:{} from:{}",c2,c1);
 }
 
 
 static mut TREE_MAP:Option<HashMap<String,AvrDeviceFile>> = None;
 #[allow(static_mut_refs)]
 pub fn get_tree_map() ->Result<&'static HashMap<String,AvrDeviceFile>,xmltree::Error>{
-    if(unsafe{ TREE_MAP.is_none()}){
+    if unsafe{ TREE_MAP.is_none()}{
         let files = std::fs::read_dir(Path::new(env!("CARGO_MANIFEST_DIR")).join("atdf"))?;
         let mut map = HashMap::new();
         for file in files{
@@ -99,10 +96,10 @@ pub fn get_register_map(device_name:&String)->HashMap<u64,&'static Register>{
                                 reg_map.insert(x2.offset,x2);
                             }
                             2=>{
-                                if(x2.size ==2){
+                                if x2.size ==2{
                                     let leaked1: &'static Register = Box::leak(Box::new(Register {
                                         caption: x2.caption.clone(),
-                                        name: &*(Box::leak(Box::new(x2.name.clone().to_owned() + "H"))),
+                                        name: &*(Box::leak(Box::new(x2.name.to_owned() + "H"))),
                                         offset: x2.offset+1,
                                         size: 1,
                                         initval: x2.initval,
@@ -110,7 +107,7 @@ pub fn get_register_map(device_name:&String)->HashMap<u64,&'static Register>{
                                     }));
                                     let leaked2: &'static Register = Box::leak(Box::new(Register {
                                         caption:x2.caption.clone(),
-                                        name: &*(Box::leak(Box::new(x2.name.clone().to_owned() + "L"))),
+                                        name: &*(Box::leak(Box::new(x2.name.to_owned() + "L"))),
                                         offset: x2.offset,
                                         size: 1,
                                         initval: x2.initval,
@@ -161,7 +158,7 @@ pub fn get_common_registers(device_name:&String,reg_map:&HashMap<u64,&'static Re
 #[cfg(test)]
 mod tests{
     use super::*;
-
+    use build_print::info;
 
     #[test]
     fn register_map_test(){

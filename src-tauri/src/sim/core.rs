@@ -1,3 +1,4 @@
+#[allow(unused)]
 pub enum Core{
     AVR,
     AVRe,

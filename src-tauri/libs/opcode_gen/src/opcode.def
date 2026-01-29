@@ -152,7 +152,7 @@
 1001001rrrrr0110;1;lac;r;DS(Z) ← (0xFF – Rd) ∧ DS(Z),Rd ← DS(Z);Load and Clear
 1001001rrrrr0111;1;lat;r;DS(Z) ← Rd ⊕ DS(Z),Rd ← DS(Z);Load and Toggle
 
-00000001ddddrrrr;1;movw;v,v;R[d + 1]:Rd ← R[r + 1]:Rr;Copy Register Pair
+00000001ddddrrrr;1;movw;vd,v;R[d + 1]:Rd ← R[r + 1]:Rr;Copy Register Pair
 00000010ddddrrrr;1;muls;d,d;R1:R0 ← Rd x Rr (SS);Multiply Signed
 000000110ddd0rrr;1;mulsu;ad,a;R1:R0 ← Rd x Rr (SU);Multiply Signed with Unsigned
 000000110ddd1rrr;1;fmul;ad,a;R1:R0 ← Rd x Rr<<1 (UU); Fractional Multiply Unsigned

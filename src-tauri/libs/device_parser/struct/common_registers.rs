@@ -4,7 +4,6 @@ use quote::{quote, ToTokens};
 use crate::AvrDeviceFile;
 use crate::r#struct::module::Register;
 
-static mut ZERO : u8 = 0;
 
 #[derive(Debug,Clone,Copy)]
 pub struct CommonReg {
@@ -15,19 +14,15 @@ pub struct CommonReg {
 
 impl Default for CommonReg {
     fn default() -> Self {
-        unsafe {
-            CommonReg {
-                register: Box::leak(Box::new(Register::default())),
-                data: None
-            }
+        CommonReg {
+            register: Box::leak(Box::new(Register::default())),
+            data: None
         }
     }
 }
 impl CommonReg {
     pub const fn new(reg :&'static Register)->Self{
-        unsafe{
-            Self{ register: reg, data: None }
-        }
+        Self{ register: reg, data: None }
     }
     pub unsafe fn get_data(&self) -> u8 { unsafe {
         match self.data {
@@ -133,7 +128,6 @@ impl CommonRegisters{
         self.sreg.set_data(flag.set_value(self.sreg.get_data(),value))
     }}
 }
-type FlagDataType=bool;
 pub enum Flags{
     I,//interrupt enable
     T,//Bit Copy Storage
