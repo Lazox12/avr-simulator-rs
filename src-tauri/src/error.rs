@@ -1,32 +1,33 @@
-
+use serde::{Serialize, Serializer};
 use std::num::ParseIntError;
 use std::sync::PoisonError;
-use serde::{Serialize, Serializer};
 use strum::ParseError;
 
 pub type Result<T> = anyhow::Result<T>;
 
-#[derive(Debug,thiserror::Error)]
+#[derive(Debug, thiserror::Error)]
 #[allow(dead_code)]
-pub enum Error{
-
+pub enum Error {
     #[error("OpcodeNotFound found: {opcode:?}")]
-    OpcodeNotFound {opcode:u32},
+    OpcodeNotFound { opcode: u32 },
 
     #[error("Invalid input into Conversion expected: {err_val} , got:{val}",val = expected_val.join(","))]
-    InvalidConversion { err_val:String, expected_val:Vec<String> },
+    InvalidConversion {
+        err_val: String,
+        expected_val: Vec<String>,
+    },
 
     #[error("invalid read: trying to read {current} from {expected}")]
-    InvalidReadError{current:String, expected:String},
+    InvalidReadError { current: String, expected: String },
 
-    #[error("constraint Requirements not met: {err} at address {:#x}",address)]
-    InvalidConstraintValue{err:String, address:u32},
+    #[error("constraint Requirements not met: {err} at address {:#x}", address)]
+    InvalidConstraintValue { err: String, address: u32 },
 
     #[error("function not implemented: {err}")]
-    NotImplemented{err:String},
+    NotImplemented { err: String },
 
     #[error("invalid record type must be between 0 and 5 instead got: {err}")]
-    InvalidRecordType{err:String},
+    InvalidRecordType { err: String },
 
     #[error("Failed to parse int:{0}")]
     ParseInt(#[from] ParseIntError),
@@ -36,7 +37,6 @@ pub enum Error{
 
     #[error("IO error: {0}")]
     IOError(#[from] std::io::Error),
-
 
     #[error("SQLite error: {0}")]
     SQLError(#[from] rusqlite::Error),
@@ -57,7 +57,7 @@ pub enum Error{
     InvalidInstructionName(u32),
 
     #[error("Invaild operand count expected:{expected}, instead got:{got}")]
-    InvalidOperandCount{expected:usize, got:usize},
+    InvalidOperandCount { expected: usize, got: usize },
 
     #[error("Invalid Value")]
     InvalidValue,
@@ -75,9 +75,7 @@ pub enum Error{
     DeviceParserError(device_parser::Error),
 
     #[error("Project Handler Error: {0}")]
-    ProjectError(&'static str)
-
-
+    ProjectError(&'static str),
 }
 
 impl<T> From<PoisonError<T>> for Error {
@@ -88,7 +86,7 @@ impl<T> From<PoisonError<T>> for Error {
 impl Serialize for Error {
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: Serializer,
     {
         serializer.serialize_str(&self.to_string())
     }

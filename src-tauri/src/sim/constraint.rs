@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 #[allow(non_camel_case_types)]
-use strum::{EnumIter,EnumString};
-#[derive(Debug, EnumIter, EnumString, Clone, Copy,Serialize,Deserialize,Default,PartialEq)]
+use strum::{EnumIter, EnumString};
+#[derive(Debug, EnumIter, EnumString, Clone, Copy, Serialize, Deserialize, Default, PartialEq)]
 #[allow(non_camel_case_types)]
 pub enum Constraint {
     r, //- any register
@@ -26,6 +26,6 @@ pub enum Constraint {
     h, //- absolute code address (call, jmp)
     S, //- immediate Value from 0 to 7 (S = s << 4)
     E, //- immediate Value from 0 to 15, shifted left by 4 (des)
-    o,  //- Displacement value from 0 to 63 (std,ldd)
+    o, //- Displacement value from 0 to 63 (std,ldd)
     c, // pointer increment/decrement (ld,st)
 }

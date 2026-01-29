@@ -1,73 +1,89 @@
-use std::fmt::Debug;
 use super::operand::{Operand, OperandValue};
 use crate::error::{Error, Result};
+use crate::project::ProjectState;
 use crate::sim::constraint::Constraint;
 use crate::sim::display::Display;
+use anyhow::anyhow;
 use opcode_gen::{Opcode, RawInst};
 use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 use std::str::FromStr;
-use anyhow::anyhow;
-use crate::project::ProjectState;
 
-#[derive(Serialize,Clone,Default)]
+#[derive(Serialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct Instruction{
+pub struct Instruction {
     pub(crate) comment: String,
-    pub(crate) comment_display:Display,
-    pub(crate) opcode_id:usize,
+    pub(crate) comment_display: Display,
+    pub(crate) opcode_id: usize,
     pub(crate) operands: Option<Vec<Operand>>,
     pub(crate) address: u32,
-    pub(crate) break_point:bool,
+    pub(crate) break_point: bool,
     pub(crate) raw_opcode: u32,
 }
-impl Debug for Instruction{
+impl Debug for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Instruction")
-            .field("opcode",&self.get_raw_inst().map_err(|_| std::fmt::Error)?.name)
-            .field("adress",&format!("{:x?}",&self.address))
-            .field("operands",&self.operands)
-            .field("comment",&self.comment)
-            .field("comment_display",&self.comment_display)
-            .field("break_point",&self.break_point)
-            .field("raw_opcode",&self.raw_opcode)
-
+            .field(
+                "opcode",
+                &self.get_raw_inst().map_err(|_| std::fmt::Error)?.name,
+            )
+            .field("adress", &format!("{:x?}", &self.address))
+            .field("operands", &self.operands)
+            .field("comment", &self.comment)
+            .field("comment_display", &self.comment_display)
+            .field("break_point", &self.break_point)
+            .field("raw_opcode", &self.raw_opcode)
             .finish()
     }
 }
 
-
-impl Instruction{
-    pub fn new(comment: String, opcode_id: usize, operands: Vec<Operand>,address:u32) -> Instruction{
-        Instruction{comment, comment_display: Display::None, opcode_id,operands: Some(operands),address,raw_opcode:0,break_point:false}
+impl Instruction {
+    pub fn new(
+        comment: String,
+        opcode_id: usize,
+        operands: Vec<Operand>,
+        address: u32,
+    ) -> Instruction {
+        Instruction {
+            comment,
+            comment_display: Display::None,
+            opcode_id,
+            operands: Some(operands),
+            address,
+            raw_opcode: 0,
+            break_point: false,
+        }
     }
 
-    pub fn get_raw_inst(&self)->Result<&RawInst>{
+    pub fn get_raw_inst(&self) -> Result<&RawInst> {
         RawInst::get_inst_from_id(self.opcode_id)
     }
-    pub fn decode_from_opcode(opcode: u16) -> Result<Instruction>{
-        let inst = Self::match_raw_instruction_from_opcode(opcode).unwrap_or_else(|_x|{
-            999
-        });
-        
-        Ok(Instruction{
+    pub fn decode_from_opcode(opcode: u16) -> Result<Instruction> {
+        let inst = Self::match_raw_instruction_from_opcode(opcode).unwrap_or_else(|_x| 999);
+
+        Ok(Instruction {
             comment: "".to_string(),
             comment_display: Display::None,
             opcode_id: inst,
             operands: None,
-            address:0,
+            address: 0,
             break_point: false,
-            raw_opcode:opcode as u32
+            raw_opcode: opcode as u32,
         })
     }
 
-    fn match_raw_instruction_from_opcode(opcode: u16) -> Result<usize>{
-        RawInst::get_inst_id_from_opcode_num(opcode).ok_or(anyhow!(Error::OpcodeNotFound{opcode: opcode as u32 }))
+    fn match_raw_instruction_from_opcode(opcode: u16) -> Result<usize> {
+        RawInst::get_inst_id_from_opcode_num(opcode).ok_or(anyhow!(Error::OpcodeNotFound {
+            opcode: opcode as u32
+        }))
     }
-    pub(crate) fn mach_registers(&mut self) ->Result<()>{
-
+    pub(crate) fn mach_registers(&mut self) -> Result<()> {
         match self.get_raw_inst()? {
-            RawInst{name:Opcode::CUSTOM_INST(_),..  } => {
-                self.operands = Some(vec![Operand{
+            RawInst {
+                name: Opcode::CUSTOM_INST(_),
+                ..
+            } => {
+                self.operands = Some(vec![Operand {
                     name: "".to_string(),
                     constraint: Constraint::h,
                     value: self.raw_opcode.clone() as OperandValue,
@@ -75,42 +91,48 @@ impl Instruction{
                 }]);
                 Ok(())
             }
-            i=>{
-                if self.get_raw_inst()?.constraints.is_none(){
+            i => {
+                if self.get_raw_inst()?.constraints.is_none() {
                     return Ok(());
                 }
-                match i.constraints.unwrap().iter()
+                match i
+                    .constraints
+                    .unwrap()
+                    .iter()
                     .map(|x| {
                         let constraint = Constraint::from_str(String::from(x.constraint).as_str())?;
-                        let rresult = Operand::map_value(Instruction::map_register_number(Instruction::decode_val(x.map, self.raw_opcode), constraint), constraint);
+                        let rresult = Operand::map_value(
+                            Instruction::map_register_number(
+                                Instruction::decode_val(x.map, self.raw_opcode),
+                                constraint,
+                            ),
+                            constraint,
+                        );
                         let result: OperandValue;
-                        let mut name:String = "".to_string();
+                        let mut name: String = "".to_string();
                         if rresult.is_err() {
                             result = 1;
                             name = "opcode:".to_string();
-                            name+= self.raw_opcode.to_string().as_str();
+                            name += self.raw_opcode.to_string().as_str();
                             name += &*"error: ".to_string();
                             name += rresult.err().unwrap().to_string().as_str();
-                        }else{
+                        } else {
                             result = rresult.unwrap();
                         }
-                        return Ok(Operand{
+                        return Ok(Operand {
                             name,
                             constraint,
-                            value:result,
+                            value: result,
                             operand_info: None,
-                        }
-                        );
+                        });
                     })
                     .collect::<Result<Vec<Operand>>>()
                 {
-                    Ok(i)=>{
+                    Ok(i) => {
                         self.operands = Some(i);
                         Ok(())
                     }
-                    Err(e)=>{
-                        Err(e)
-                    }
+                    Err(e) => Err(e),
                 }
             }
         }
@@ -129,34 +151,23 @@ impl Instruction{
 
         result
     }
-    fn map_register_number(mut value:u32,constraint: Constraint)->u32{
+    fn map_register_number(mut value: u32, constraint: Constraint) -> u32 {
         match constraint {
-            Constraint::d =>{
-                value +16
+            Constraint::d => value + 16,
+            Constraint::v => value * 2,
+            Constraint::a => value + 16,
+            Constraint::w => {
+                value *= 2;
+                value + 24
             }
-            Constraint::v =>{
-                value*2
-            }
-            Constraint::a =>{
-                value +16
-            }
-            Constraint::w =>{
-                value *=2;
-                value +24
-            }
-            Constraint::h =>{
-                value*2
-            }
-            _ =>{
-                value
-            }
+            Constraint::h => value * 2,
+            _ => value,
         }
     }
-    
 
-    pub(crate) fn gen_comment(&mut self,state:&ProjectState)->Result<()>{
+    pub(crate) fn gen_comment(&mut self, state: &ProjectState) -> Result<()> {
         super::gen_comment::gen_comment(self)?;
-        super::gen_comment::gen_operand_details(self,state)?;
+        super::gen_comment::gen_operand_details(self, state)?;
         Ok(())
     }
 }
@@ -164,47 +175,44 @@ impl Instruction{
 impl TryFrom<PartialInstruction> for Instruction {
     type Error = anyhow::Error;
 
-    fn try_from(value:PartialInstruction) -> std::result::Result<Instruction, anyhow::Error> { //todo
+    fn try_from(value: PartialInstruction) -> std::result::Result<Instruction, anyhow::Error> {
+        //todo
 
-        let _opcode =RawInst::get_inst_from_id(value.opcode_id)?;
-        let  comment_display = Display::decode(&*value.comment);
+        let _opcode = RawInst::get_inst_from_id(value.opcode_id)?;
+        let comment_display = Display::decode(&*value.comment);
 
-        Ok(Instruction{
-            comment:value.comment,
+        Ok(Instruction {
+            comment: value.comment,
             comment_display,
-            opcode_id:value.opcode_id,
-            operands:value.operands,
-            break_point:value.break_point,
-            address:value.address,
-            raw_opcode:0
+            opcode_id: value.opcode_id,
+            operands: value.operands,
+            break_point: value.break_point,
+            address: value.address,
+            raw_opcode: 0,
         })
     }
 }
 
-#[derive(Debug,Serialize,Deserialize,Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct PartialInstruction{
+pub struct PartialInstruction {
     pub(crate) comment: String,
     pub(crate) comment_display: Display,
     pub(crate) operands: Option<Vec<Operand>>,
     pub(crate) break_point: bool,
     pub(crate) address: u32,
-    pub(crate) opcode_id:usize,
+    pub(crate) opcode_id: usize,
 }
 
 impl From<Instruction> for PartialInstruction {
-    fn from(value:Instruction) -> PartialInstruction {
-        PartialInstruction{
+    fn from(value: Instruction) -> PartialInstruction {
+        PartialInstruction {
             comment: value.comment,
-            comment_display:value.comment_display,
-            operands: value.operands,          
+            comment_display: value.comment_display,
+            operands: value.operands,
             address: value.address,
-            break_point:value.break_point,
+            break_point: value.break_point,
             opcode_id: value.opcode_id,
         }
     }
 }
-
-
-
-

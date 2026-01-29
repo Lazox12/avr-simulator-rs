@@ -1,11 +1,11 @@
-pub mod parser;
-pub mod instruction;
-pub mod operand;
 pub mod constraint;
-mod gen_comment;
+pub mod controller;
+mod core;
 mod display;
+mod gen_comment;
+pub mod instruction;
 mod memory;
+pub mod operand;
+pub mod parser;
 mod sim;
 mod timing;
-mod core;
-pub mod controller;

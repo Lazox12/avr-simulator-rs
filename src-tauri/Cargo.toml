@@ -32,3 +32,4 @@ rusqlite  = {version = "0.37.0", features = ["bundled", "functions"] }
 anyhow = { version = "1.0.100",features = ["backtrace"] }
 bin_expr_parser_macro= {path = "libs/bin_expr_parser_macro" }
 tokio = "1.48.0"
+tauri-plugin-opener = "2"

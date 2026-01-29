@@ -1,10 +1,9 @@
 #[allow(unused)]
-pub enum Core{
+pub enum Core {
     AVR,
     AVRe,
     AVRep,
     AVRxm,
     AVRxt,
     AVRrc,
-
 }

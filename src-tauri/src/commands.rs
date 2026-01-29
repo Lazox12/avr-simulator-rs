@@ -1,10 +1,9 @@
-use tauri::ipc::Invoke;
-use opcode_gen::RawInst;
-use crate::project::{get_project, ProjectState};
+use crate::project::{ProjectState, get_project};
+use crate::sim::controller::{Action, Controller};
 use crate::sim::parser::parse_hex;
 use crate::wrap_anyhow;
-use crate::sim::controller::{Controller,Action};
-
+use opcode_gen::RawInst;
+use tauri::ipc::Invoke;
 
 pub(crate) const HANDLER: fn(Invoke) -> bool = tauri::generate_handler![
     get_instruction_list,
@@ -19,16 +18,13 @@ pub(crate) const HANDLER: fn(Invoke) -> bool = tauri::generate_handler![
     sim_action
 ];
 
-
 wrap_anyhow!(get_instruction_list() -> Vec<RawInst> {
     Ok(Vec::from(opcode_gen::OPCODE_LIST))
 });
 
-
 wrap_anyhow!(get_mcu_list() -> &'static [&'static str] {
     Ok(device_parser::get_mcu_list())
 });
-
 
 wrap_anyhow!(set_project_data(project:ProjectState) ->(){
 
@@ -36,12 +32,9 @@ wrap_anyhow!(set_project_data(project:ProjectState) ->(){
     Ok(())
 });
 
-
 wrap_anyhow!(get_project_info() -> ProjectState {
     get_project()?.get_state().cloned()
 });
-
-
 
 wrap_anyhow!(menu_new(file:String)->(){
     get_project()?.create(&*file.to_string())

@@ -1,11 +1,16 @@
 {
   "private": true,
-  "workspaces": ["src-fe"],
+  "workspaces": [
+    "src-fe"
+  ],
   "scripts": {
     "dev": "npm run dev -w src-fe",
     "build": "npm run build -w src-fe",
     "preview": "npm run preview -w src-fe",
     "build-only": "npm run build-only -w src-fe",
     "type-check": "npm run type-check -w src-fe"
+  },
+  "dependencies": {
+    "@tauri-apps/plugin-opener": "^2.5.3"
   }
 }

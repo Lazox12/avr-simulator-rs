@@ -1,0 +1,4 @@
+node_modules
+target/debug
+src-tauri
+src-fe

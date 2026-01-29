@@ -7,7 +7,8 @@
   ],
   "permissions": [
     "core:default",
-    "opener:default",
-    "dialog:default"
+    "opener:allow-default-urls",
+    "dialog:default",
+    "opener:default"
   ]
 }
