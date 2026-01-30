@@ -30,7 +30,7 @@ impl Display for Tables {
 
 pub struct Project {
     connection: Option<Connection>,
-    pub state: Option<ProjectState>,
+    state: Option<ProjectState>,
 }
 
 //db

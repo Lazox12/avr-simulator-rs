@@ -38,7 +38,7 @@ pub fn run() {
             tauri::async_runtime::spawn(async move {
                 loop {
                     Controller::update().unwrap();
-                    sleep(Duration::from_millis(100)).await;
+                    sleep(Duration::from_millis(1000)).await;
                 }
             });
             Ok(())

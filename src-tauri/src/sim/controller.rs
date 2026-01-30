@@ -16,6 +16,8 @@ use std::sync::{
 use std::thread::sleep;
 use std::time::Duration;
 use std::{thread, time};
+use std::cmp::PartialEq;
+use std::ops::Deref;
 use tauri::Emitter;
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Clone, Copy)]
@@ -56,10 +58,7 @@ impl<'a> Worker<'a> {
         let f = || -> Result<()> {
             let mut project_lock = PROJECT.lock().map_err(|e| anyhow!("Poison Error:{}", e))?;
             let mcu = project_lock
-                .state
-                .clone()
-                .ok_or(anyhow!("invalid project state"))?
-                .mcu;
+                .get_state()?.mcu.clone();
             self.atdf = device_parser::get_tree_map()
                 .get(&*mcu)
                 .ok_or(anyhow!("invalid mcu"))?;
@@ -248,12 +247,14 @@ impl<'a> Worker<'a> {
     }
     fn thread_run(&mut self) {
         loop {
+            let mut return_res=false;
             if let Some(rx) = self.rx.as_ref() {
                 match rx.try_recv() {
                     Ok(action) => {
                         self.action_prev = self.action;
                         self.action = action;
                         self.action_executed = false;
+                        return_res = true
                     }
                     Err(TryRecvError::Empty) => {}
                     Err(TryRecvError::Disconnected) => {
@@ -271,17 +272,31 @@ impl<'a> Worker<'a> {
                     }
                 }
             };
+            if return_res {
+                if let Some(tx) = self.tx.as_ref() {
+                    tx.send(Response::Res(Ok(()))).ok();
+                }
+            }
         }
     }
 }
 
 static CONTROLLER: Mutex<Controller> = Mutex::new(Controller::new());
+#[derive(Debug,Default,PartialEq)]
+pub enum WorkerState{
+    #[default]
+    NotInitialized,
+    Running,
+    Error(String),
+    
+}
 
 #[derive(Debug, Default)]
 pub struct Controller {
     tx: Option<Sender<Action>>,
     rx: Option<Receiver<Response>>,
     handle: Option<std::thread::JoinHandle<()>>,
+    worker_state: WorkerState
 }
 impl Controller {
     pub const fn new() -> Controller {
@@ -289,13 +304,12 @@ impl Controller {
             tx: None,
             rx: None,
             handle: None,
+            worker_state: WorkerState::NotInitialized,
         }
     }
-    pub fn init(&mut self) -> Result<()> {
+    fn init(&mut self) -> Result<()> {
         let (tx, rx) = mpsc::channel::<Action>();
-        self.tx = Some(tx);
         let (tx2, rx2) = mpsc::channel::<Response>();
-        self.rx = Some(rx2);
         self.handle = Some(std::thread::spawn(|| {
             let tx = tx2;
             let rx = rx;
@@ -308,21 +322,27 @@ impl Controller {
                 worker.thread_run();
             }
         }));
+        self.rx = Some(rx2);
+        self.tx = Some(tx);
+        self.worker_state = WorkerState::Running;
         Ok(())
     }
-    pub fn deinit(&mut self) -> Result<()> {
-        if let Some(tx) = self.tx.as_ref() {
-            tx.send(Action::Stop)
-                .map_err(|e| anyhow!("Send Error:{}", e))?;
-        }
+    fn deinit(&mut self) -> Result<()> {
+        self.tx.take().ok_or(anyhow!("no tx available"))?.send(Action::Stop)?;
+        self.rx = None;
         self.handle
             .take()
             .ok_or(anyhow!("no handle"))?
             .join()
             .map_err(|e| anyhow!("JoinError:{:?}", e))?;
-        self.tx = None;
-        self.rx = None;
+        self.worker_state = WorkerState::NotInitialized;
         Ok(())
+    }
+    pub fn stop()-> Result<()> {
+        CONTROLLER
+            .lock()
+            .map_err(|e| anyhow!("Poison Error:{}", e))?
+            .deinit()
     }
     pub fn do_action(action: Action) -> Result<()> {
         CONTROLLER
@@ -339,6 +359,20 @@ impl Controller {
         }
         Ok(())
     }
+    pub async fn do_action_and_wait(action: Action) -> Result<()> {
+        let mut control = CONTROLLER.lock().map_err(|e| anyhow!("Poison Error:{}", e))?;
+
+        control.do_action_iner(action)?;
+
+        if let Some(rx) = control.rx.as_mut() {
+            match rx.recv() {
+                Ok(Response::Res(res)) => res,
+                _ => Err(anyhow!("Thread communication failed")),
+            }
+        } else {
+            Err(anyhow!("Controller not initialized"))
+        }
+    }
     pub fn update() -> Result<()> {
         CONTROLLER
             .lock()
@@ -346,20 +380,30 @@ impl Controller {
             .update_iner()
     }
     fn update_iner(&mut self) -> Result<()> {
-        if let Some(rx) = self.rx.as_mut() {
-            match rx.try_recv() {
-                Ok(resp) => match resp {
-                    Response::Res(r) => r,
-                    Response::Join => self.deinit(),
-                },
-                Err(TryRecvError::Empty) => Ok(()),
-                Err(TryRecvError::Disconnected) => {
-                    self.deinit()?;
+        match &self.worker_state {
+            WorkerState::NotInitialized => {
+                Ok(())
+            }
+            WorkerState::Running => {
+                if let Some(rx) = self.rx.as_mut() {
+                    match rx.try_recv() {
+                        Ok(Response::Join)=> self.deinit(),
+                        Ok(Response::Res(Ok(_))) => Ok(()),
+                        Ok(Response::Res(Err(e))) => { self.worker_state = WorkerState::Error(e.to_string()); Ok(())},
+                        Err(TryRecvError::Empty) => Ok(()),
+                        Err(TryRecvError::Disconnected) => {
+                            self.deinit()
+                        }
+                    }
+                } else {
                     Ok(())
                 }
             }
-        } else {
-            Ok(())
+            WorkerState::Error(e) => {
+                println!("{:?}",e);
+                Ok(())
+            }
         }
+        
     }
 }

@@ -28,7 +28,7 @@ wrap_anyhow!(get_mcu_list() -> &'static [&'static str] {
 
 wrap_anyhow!(set_project_data(project:ProjectState) ->(){
 
-    get_project()?.state = Some(project);
+    *get_project()?.get_state()? = project;
     Ok(())
 });
 
@@ -41,8 +41,8 @@ wrap_anyhow!(menu_new(file:String)->(){
 });
 
 wrap_anyhow!(menu_open(file:String)->(){
-    get_project()?.open(&*file.to_string())?;
-    Controller::do_action(Action::Pause)
+    get_project()?.open(&*file.to_string())
+
 });
 
 wrap_anyhow!(menu_import(file:String)->(){
@@ -64,7 +64,7 @@ wrap_anyhow!(menu_import(file:String)->(){
 });
 
 wrap_anyhow!(menu_close()->(){
-    Controller::do_action(Action::Stop)?;
+    Controller::stop()?;
     get_project()?.close()
 });
 
@@ -72,6 +72,6 @@ wrap_anyhow!(menu_save()->(){
     get_project()?.save()
 });
 
-wrap_anyhow!(sim_action(action:Action)->(){
-   Controller::do_action(action)
+wrap_anyhow!(async sim_action(action:Action)->(){
+   Controller::do_action_and_wait(action).await
 });
