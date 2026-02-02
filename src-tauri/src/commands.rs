@@ -8,8 +8,7 @@ use tauri::ipc::Invoke;
 pub(crate) const HANDLER: fn(Invoke) -> bool = tauri::generate_handler![
     get_instruction_list,
     get_mcu_list,
-    set_freq,
-    set_mcu,
+    set_project_data,
     get_project_info,
     menu_new,
     menu_open,
@@ -46,8 +45,7 @@ wrap_anyhow!(menu_new(file:String)->(){
 });
 
 wrap_anyhow!(menu_open(file:String)->(){
-    get_project()?.open(&*file.to_string())?;
-    Controller::do_action(Action::Pause)
+    get_project()?.open(&*file.to_string())
 });
 
 wrap_anyhow!(menu_import(file:String)->(){
@@ -69,7 +67,7 @@ wrap_anyhow!(menu_import(file:String)->(){
 });
 
 wrap_anyhow!(menu_close()->(){
-    Controller::do_action(Action::Stop)?;
+    Controller::stop()?;
     get_project()?.close()
 });
 
@@ -77,6 +75,6 @@ wrap_anyhow!(menu_save()->(){
     get_project()?.save()
 });
 
-wrap_anyhow!(sim_action(action:Action)->(){
-   Controller::do_action(action)
+wrap_anyhow!(async sim_action(action:Action)->(){
+   Controller::do_action_and_wait(action).await
 });

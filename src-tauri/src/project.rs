@@ -31,7 +31,7 @@ impl Display for Tables {
 #[derive(Default)]
 pub struct Project {
     connection: Option<Connection>,
-    pub state: ProjectState,
+    state: ProjectState,
 }
 
 //db
