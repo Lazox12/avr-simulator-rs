@@ -22,6 +22,15 @@ pub fn get_app_handle() -> Result<MutexGuard<'static, AppHandle>> {
         .lock()
         .map_err(|e| anyhow!("Poison Error:{}", e))
 }
+pub fn set_app_title(app_title: &str) ->Result<()> {
+    let title = format!("{} - avr simulator", app_title);
+    println!("Setting app title to {}", title);
+    get_app_handle()?
+        .get_webview_window("main")
+        .ok_or(anyhow!("Couldn't get window"))?
+        .set_title(title.as_str())?;
+    Ok(())
+}
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[cfg(debug_assertions)] // only enable instrumentation in development builds

@@ -56,10 +56,7 @@ impl<'a> Worker<'a> {
         let f = || -> Result<()> {
             let mut project_lock = PROJECT.lock().map_err(|e| anyhow!("Poison Error:{}", e))?;
             let mcu = project_lock
-                .state
-                .clone()
-                .ok_or(anyhow!("invalid project state"))?
-                .mcu;
+                .state.mcu.clone();
             self.atdf = device_parser::get_tree_map()
                 .get(&*mcu)
                 .ok_or(anyhow!("invalid mcu"))?;

@@ -8,7 +8,8 @@ use tauri::ipc::Invoke;
 pub(crate) const HANDLER: fn(Invoke) -> bool = tauri::generate_handler![
     get_instruction_list,
     get_mcu_list,
-    set_project_data,
+    set_freq,
+    set_mcu,
     get_project_info,
     menu_new,
     menu_open,
@@ -26,9 +27,13 @@ wrap_anyhow!(get_mcu_list() -> &'static [&'static str] {
     Ok(device_parser::get_mcu_list())
 });
 
-wrap_anyhow!(set_project_data(project:ProjectState) ->(){
+wrap_anyhow!(set_mcu(mcu:String) ->(){
 
-    get_project()?.state = Some(project);
+    get_project()?.get_state()?.mcu = mcu;
+    Ok(())
+});
+wrap_anyhow!(set_freq(freq:u32)->(){
+    get_project()?.get_state()?.freq = freq;
     Ok(())
 });
 
