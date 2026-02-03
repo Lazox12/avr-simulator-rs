@@ -17,7 +17,6 @@ use std::thread::sleep;
 use std::time::Duration;
 use std::{thread, time};
 use std::cmp::PartialEq;
-use std::ops::Deref;
 use tauri::Emitter;
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Clone, Copy)]
@@ -33,6 +32,7 @@ pub enum Action {
     Watch([u8; 8]),    //we accept this as string
     WatchUpdate(bool), // update watchlist variables when running
 }
+#[derive(Debug)]
 enum Response {
     Res(Result<()>),
     Join,
@@ -57,7 +57,7 @@ impl<'a> Worker<'a> {
     pub fn init(&mut self, rx: Receiver<Action>, tx: Sender<Response>) -> Option<()> {
         let f = || -> Result<()> {
             let mut project_lock = PROJECT.lock().map_err(|e| anyhow!("Poison Error:{}", e))?;
-            let mcu = project_lock.state.mcu.clone();
+            let mcu = project_lock.get_state()?.mcu.clone();
             self.atdf = device_parser::get_tree_map()
                 .get(&*mcu)
                 .ok_or(anyhow!("invalid mcu"))?;
@@ -257,6 +257,7 @@ impl<'a> Worker<'a> {
                     }
                     Err(TryRecvError::Empty) => {}
                     Err(TryRecvError::Disconnected) => {
+                        println!("Worker::disconnect");
                         self.action = Action::Stop;
                     }
                 };
@@ -308,16 +309,14 @@ impl Controller {
         }
     }
     fn init(&mut self) -> Result<()> {
+        println!("contoller::init");
         let (tx, rx) = mpsc::channel::<Action>();
         let (tx2, rx2) = mpsc::channel::<Response>();
-        self.handle = Some(std::thread::spawn(|| {
+        self.handle = Some(thread::spawn(|| {
             let tx = tx2;
             let rx = rx;
             let mut worker = Worker::default();
-            let res = worker.init(rx, tx);
-            if res.is_none() {
-                return;
-            }
+            worker.init(rx, tx);
             loop {
                 worker.thread_run();
             }
@@ -327,8 +326,30 @@ impl Controller {
         self.worker_state = WorkerState::Running;
         Ok(())
     }
+    pub fn start()->Result<()>{
+        CONTROLLER
+            .lock()
+            .map_err(|e| anyhow!("Poison Error:{}", e))?
+            .init()
+    }
     fn deinit(&mut self) -> Result<()> {
+        println!("contoller::deinit");
+        if  self.worker_state ==WorkerState::NotInitialized{
+            return Ok(());
+        }
         self.tx.take().ok_or(anyhow!("no tx available"))?.send(Action::Stop)?;
+        if let Some(rx) = self.rx.take(){
+            loop {
+                match rx.try_recv(){
+                    Ok(d) => {
+                        println!("contoller::deinit::recvData:{:?}",d);
+                    }
+                    Err(_) => {
+                        break
+                    }
+                }
+            }
+        }
         self.rx = None;
         self.handle
             .take()
@@ -344,6 +365,8 @@ impl Controller {
             .map_err(|e| anyhow!("Poison Error:{}", e))?
             .deinit()
     }
+
+    #[allow(dead_code)]
     pub fn do_action(action: Action) -> Result<()> {
         CONTROLLER
             .lock()
@@ -389,7 +412,7 @@ impl Controller {
                     match rx.try_recv() {
                         Ok(Response::Join)=> self.deinit(),
                         Ok(Response::Res(Ok(_))) => Ok(()),
-                        Ok(Response::Res(Err(e))) => { self.worker_state = WorkerState::Error(e.to_string()); Ok(())},
+                        Ok(Response::Res(Err(e))) => { println!("recieved error from worker: {}",e);self.worker_state = WorkerState::Error(e.to_string()); Ok(())},
                         Err(TryRecvError::Empty) => Ok(()),
                         Err(TryRecvError::Disconnected) => {
                             self.deinit()

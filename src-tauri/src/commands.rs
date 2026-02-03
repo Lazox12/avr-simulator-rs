@@ -8,7 +8,8 @@ use tauri::ipc::Invoke;
 pub(crate) const HANDLER: fn(Invoke) -> bool = tauri::generate_handler![
     get_instruction_list,
     get_mcu_list,
-    set_project_data,
+    set_mcu,
+    set_freq,
     get_project_info,
     menu_new,
     menu_open,
@@ -45,7 +46,9 @@ wrap_anyhow!(menu_new(file:String)->(){
 });
 
 wrap_anyhow!(menu_open(file:String)->(){
-    get_project()?.open(&*file.to_string())
+    get_project()?.open(&*file.to_string())?;
+    Controller::start()?;
+    Ok(())
 });
 
 wrap_anyhow!(menu_import(file:String)->(){
