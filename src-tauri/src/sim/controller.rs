@@ -8,15 +8,15 @@ use anyhow::anyhow;
 use device_parser::{AvrDeviceFile, Register};
 use opcode_gen::Opcode;
 use serde::{Deserialize, Serialize};
+use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::sync::{
-    Mutex, mpsc,
-    mpsc::{Receiver, Sender, TryRecvError},
+    mpsc, mpsc::{Receiver, Sender, RecvError,TryRecvError},
+    Mutex,
 };
 use std::thread::sleep;
 use std::time::Duration;
 use std::{thread, time};
-use std::cmp::PartialEq;
 use tauri::Emitter;
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Clone, Copy)]
@@ -36,6 +36,7 @@ pub enum Action {
 enum Response {
     Res(Result<()>),
     Join,
+    Ready,
 }
 
 #[derive(Default)]
@@ -55,6 +56,9 @@ struct Worker<'a> {
 }
 impl<'a> Worker<'a> {
     pub fn init(&mut self, rx: Receiver<Action>, tx: Sender<Response>) -> Option<()> {
+        self.rx = Some(rx);
+        self.tx = Some(tx);
+
         let f = || -> Result<()> {
             let mut project_lock = PROJECT.lock().map_err(|e| anyhow!("Poison Error:{}", e))?;
             let mcu = project_lock.get_state()?.mcu.clone();
@@ -62,20 +66,24 @@ impl<'a> Worker<'a> {
                 .get(&*mcu)
                 .ok_or(anyhow!("invalid mcu"))?;
 
-            self.rx = Some(rx);
-            self.tx = Some(tx);
 
             self.sim
                 .init(&mut *project_lock, self.atdf, &mut self.memory)?;
             Ok(())
-        };
-        match f() {
-            Ok(()) => Some(()),
+        }();
+        match f {
+            Ok(()) => {
+                if let Some(tx) = self.tx.as_ref() {
+                    tx.send(Response::Ready).ok()?;
+                }
+                Some(())
+            },
             Err(e) => {
                 if let Some(tx) = self.tx.as_ref() {
                     tx.send(Response::Res(Err(e))).ok()?;
                 }
-                None
+                self.action = Action::Pause;
+                Some(())
             }
         }
     }
@@ -86,7 +94,7 @@ impl<'a> Worker<'a> {
             .is_some()
     }
 
-    unsafe fn iner(&mut self) -> Result<()> {
+    unsafe fn iner(&mut self) -> Result<bool> { // true terminates
         match self.action {
             Action::Run => {
                 if self.action_prev != Action::Run {
@@ -118,7 +126,7 @@ impl<'a> Worker<'a> {
                     );
                     thread::sleep(time::Duration::from_millis(10));
                 }
-                Ok(())
+                Ok(false)
             }
             Action::Pause => {
                 if !self.action_executed {
@@ -144,10 +152,10 @@ impl<'a> Worker<'a> {
                     );
                 }
                 sleep(Duration::from_millis(100)); //to not hold up the core
-                Ok(())
+                Ok(false)
             }
             Action::Stop => {
-                Err(anyhow!("halt")) //caught in handler
+                Ok(true)
             }
             Action::Break(address) => {
                 if let Some(index) = self.breakpoints.iter().position(|x| *x == address) {
@@ -157,12 +165,12 @@ impl<'a> Worker<'a> {
                 }
                 self.action = self.action_prev;
                 emit!("breakpoints-update", self.breakpoints.clone());
-                Ok(())
+                Ok(false)
             }
             Action::Next => {
                 unsafe { self.sim.execute_inst()? }
                 self.action = Action::Pause;
-                Ok(())
+                Ok(false)
             }
             Action::Skip => {
                 loop {
@@ -183,7 +191,7 @@ impl<'a> Worker<'a> {
                         _ => {}
                     }
                 }
-                Ok(())
+                Ok(false)
             }
             Action::Watch(data) => {
                 if self.reg_map.is_none() {
@@ -235,47 +243,52 @@ impl<'a> Worker<'a> {
                         ))
                         .collect::<HashMap<_, _>>()
                 );
-                Ok(())
+                Ok(false)
             }
             Action::WatchUpdate(data) => {
                 self.action = self.action_prev;
                 self.update_watch_list = data;
-                Ok(())
+                Ok(false)
             }
         }
     }
-    fn thread_run(&mut self) {
-        loop {
-            let mut return_res=false;
-            if let Some(rx) = self.rx.as_ref() {
-                match rx.try_recv() {
-                    Ok(action) => {
-                        self.action_prev = self.action;
-                        self.action = action;
-                        self.action_executed = false;
-                        return_res = true
-                    }
-                    Err(TryRecvError::Empty) => {}
-                    Err(TryRecvError::Disconnected) => {
-                        println!("Worker::disconnect");
-                        self.action = Action::Stop;
-                    }
-                };
-            }
-            if let Err(e) = unsafe { self.iner() } {
-                self.action = Action::Pause;
-                if let Some(tx) = self.tx.as_ref() {
-                    if e.to_string() == "halt" {
-                        tx.send(Response::Join).ok();
-                    } else {
-                        tx.send(Response::Res(Err(e))).ok();
-                    }
+    fn thread_run(&mut self) ->bool {
+        let mut return_res=false;
+        if let Some(rx) = self.rx.as_ref() {
+            match rx.try_recv() {
+                Ok(action) => {
+                    self.action_prev = self.action;
+                    self.action = action;
+                    self.action_executed = false;
+                    return_res = true
+                }
+                Err(TryRecvError::Empty) => {}
+                Err(TryRecvError::Disconnected) => {
+                    println!("Worker::disconnect");
+                    self.action = Action::Stop;
                 }
             };
-            if return_res {
+        }
+        if return_res {
+            if let Some(tx) = self.tx.as_ref() {
+                tx.send(Response::Res(Ok(()))).unwrap();
+            }
+        }
+        match unsafe{self.iner()} {
+            Err(e) => {
+                self.action = Action::Pause;
                 if let Some(tx) = self.tx.as_ref() {
-                    tx.send(Response::Res(Ok(()))).ok();
+                    tx.send(Response::Res(Err(e))).unwrap();
                 }
+                false
+            }
+            Ok(false) => { false }
+            Ok(true) => {
+                if let Some(tx) = self.tx.as_ref() {
+                    println!("stoping controller");
+                    tx.send(Response::Join).unwrap();
+                }
+                true
             }
         }
     }
@@ -289,14 +302,22 @@ pub enum WorkerState{
     NotInitialized,
     Running,
     Error(String),
+    Initializing,
 
+}
+impl WorkerState {
+    pub fn set(&mut self, state: WorkerState) {
+        println!("WorkerState::set::{:?}",state);
+        *self = state;
+
+    }
 }
 
 #[derive(Debug, Default)]
 pub struct Controller {
     tx: Option<Sender<Action>>,
     rx: Option<Receiver<Response>>,
-    handle: Option<std::thread::JoinHandle<()>>,
+    handle: Option<thread::JoinHandle<()>>,
     worker_state: WorkerState
 }
 impl Controller {
@@ -310,20 +331,23 @@ impl Controller {
     }
     fn init(&mut self) -> Result<()> {
         println!("contoller::init");
-        let (tx, rx) = mpsc::channel::<Action>();
-        let (tx2, rx2) = mpsc::channel::<Response>();
-        self.handle = Some(thread::spawn(|| {
-            let tx = tx2;
-            let rx = rx;
-            let mut worker = Worker::default();
-            worker.init(rx, tx);
-            loop {
-                worker.thread_run();
-            }
-        }));
-        self.rx = Some(rx2);
+        let (tx, rx_t) = mpsc::channel::<Action>();
         self.tx = Some(tx);
-        self.worker_state = WorkerState::Running;
+        let (tx_t, rx) = mpsc::channel::<Response>();
+        self.rx = Some(rx);
+        self.handle = Some(thread::spawn(|| {
+            println!("thread id : {:?}",thread::current().id());
+            let mut worker = Worker::default();
+            worker.init(rx_t, tx_t);
+            loop {
+                if worker.thread_run() {
+                    break;
+                };
+            }
+            println!("thread finished");
+
+        }));
+        self.worker_state.set(WorkerState::Initializing);
         Ok(())
     }
     pub fn start()->Result<()>{
@@ -356,7 +380,7 @@ impl Controller {
             .ok_or(anyhow!("no handle"))?
             .join()
             .map_err(|e| anyhow!("JoinError:{:?}", e))?;
-        self.worker_state = WorkerState::NotInitialized;
+        self.worker_state.set(WorkerState::NotInitialized);
         Ok(())
     }
     pub fn stop()-> Result<()> {
@@ -403,29 +427,23 @@ impl Controller {
             .update_iner()
     }
     fn update_iner(&mut self) -> Result<()> {
-        match &self.worker_state {
-            WorkerState::NotInitialized => {
-                Ok(())
-            }
-            WorkerState::Running => {
-                if let Some(rx) = self.rx.as_mut() {
-                    match rx.try_recv() {
-                        Ok(Response::Join)=> self.deinit(),
-                        Ok(Response::Res(Ok(_))) => Ok(()),
-                        Ok(Response::Res(Err(e))) => { println!("recieved error from worker: {}",e);self.worker_state = WorkerState::Error(e.to_string()); Ok(())},
-                        Err(TryRecvError::Empty) => Ok(()),
-                        Err(TryRecvError::Disconnected) => {
-                            self.deinit()
-                        }
-                    }
-                } else {
+        if let Some(rx) = self.rx.as_mut() {
+            let data = rx.recv();
+            println!("recieved: {:?}",data);
+            match  data{
+                Ok(Response::Join)=> {Ok(()) },
+                Ok(Response::Res(Ok(_))) => Ok(()),
+                Ok(Response::Res(Err(e))) => {
+                    self.worker_state.set(WorkerState::Error(e.to_string()));
                     Ok(())
+                },
+                Ok(Response::Ready)=>{self.worker_state.set(WorkerState::Running);Ok(())}
+                Err(RecvError) => {
+                    Err(anyhow!("Worker thread disconnected"))
                 }
             }
-            WorkerState::Error(e) => {
-                println!("{:?}",e);
-                Ok(())
-            }
+        } else {
+            Ok(())
         }
 
     }

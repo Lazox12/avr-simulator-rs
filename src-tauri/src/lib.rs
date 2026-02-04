@@ -2,9 +2,7 @@ use crate::sim::controller::Controller;
 use anyhow::anyhow;
 use error::Result;
 use std::sync::{Mutex, MutexGuard, OnceLock};
-use std::time::Duration;
 use tauri::{AppHandle, Manager};
-use tokio::time::sleep;
 
 mod error;
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -47,7 +45,6 @@ pub fn run() {
             tauri::async_runtime::spawn(async move {
                 loop {
                     Controller::update().unwrap();
-                    sleep(Duration::from_millis(1000)).await;
                 }
             });
             Ok(())

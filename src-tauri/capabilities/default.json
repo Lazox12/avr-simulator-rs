@@ -9,6 +9,7 @@
     "core:default",
     "opener:allow-default-urls",
     "dialog:default",
-    "opener:default"
+    "opener:default",
+    "core:window:allow-set-title"
   ]
 }
