@@ -428,8 +428,7 @@ impl Controller {
     }
     fn update_iner(&mut self) -> Result<()> {
         if let Some(rx) = self.rx.as_mut() {
-            let data = rx.recv();
-            println!("recieved: {:?}",data);
+            let data = rx.try_recv();
             match  data{
                 Ok(Response::Join)=> {Ok(()) },
                 Ok(Response::Res(Ok(_))) => Ok(()),
@@ -438,9 +437,10 @@ impl Controller {
                     Ok(())
                 },
                 Ok(Response::Ready)=>{self.worker_state.set(WorkerState::Running);Ok(())}
-                Err(RecvError) => {
+                Err(TryRecvError::Disconnected) => {
                     Err(anyhow!("Worker thread disconnected"))
                 }
+                Err(TryRecvError::Empty)=>{Ok(())}
             }
         } else {
             Ok(())

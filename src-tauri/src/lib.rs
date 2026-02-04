@@ -2,7 +2,9 @@ use crate::sim::controller::Controller;
 use anyhow::anyhow;
 use error::Result;
 use std::sync::{Mutex, MutexGuard, OnceLock};
+use std::time::Duration;
 use tauri::{AppHandle, Manager};
+use tokio::time::sleep;
 
 mod error;
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -11,14 +13,12 @@ mod macros;
 mod project;
 mod sim;
 
-static APP_HANDLE: OnceLock<Mutex<AppHandle>> = OnceLock::new();
+static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 
-pub fn get_app_handle() -> Result<MutexGuard<'static, AppHandle>> {
+pub fn get_app_handle() -> Result<&'static AppHandle> {
     APP_HANDLE
         .get()
-        .unwrap()
-        .lock()
-        .map_err(|e| anyhow!("Poison Error:{}", e))
+        .ok_or_else(|| anyhow!("AppHandle not initialized"))
 }
 pub fn set_app_title(app_title: &str) ->Result<()> {
     let title = format!("{} - avr simulator", app_title);
@@ -26,7 +26,7 @@ pub fn set_app_title(app_title: &str) ->Result<()> {
     get_app_handle()?
         .get_webview_window("main")
         .ok_or(anyhow!("Couldn't get window"))?
-        .set_title(title.as_str())?;
+        .set_title(&title)?;
     Ok(())
 }
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -40,11 +40,12 @@ pub fn run() {
         .invoke_handler(commands::HANDLER)
         .setup(|app| {
             APP_HANDLE
-                .set(Mutex::new(app.app_handle().to_owned()))
+                .set(app.app_handle().to_owned())
                 .unwrap();
             tauri::async_runtime::spawn(async move {
                 loop {
                     Controller::update().unwrap();
+                    sleep(Duration::from_millis(100)).await;
                 }
             });
             Ok(())
