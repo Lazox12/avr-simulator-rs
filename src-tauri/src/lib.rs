@@ -1,7 +1,7 @@
 use crate::sim::controller::Controller;
 use anyhow::anyhow;
 use error::Result;
-use std::sync::{Mutex, MutexGuard, OnceLock};
+use std::sync::{OnceLock};
 use std::time::Duration;
 use tauri::{AppHandle, Manager};
 use tokio::time::sleep;

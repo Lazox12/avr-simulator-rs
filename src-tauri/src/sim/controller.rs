@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::collections::HashMap;
 use std::sync::{
-    mpsc, mpsc::{Receiver, Sender, RecvError,TryRecvError},
+    mpsc, mpsc::{Receiver, Sender,TryRecvError},
     Mutex,
 };
 use std::thread::sleep;
@@ -248,6 +248,7 @@ impl<'a> Worker<'a> {
             Action::WatchUpdate(data) => {
                 self.action = self.action_prev;
                 self.update_watch_list = data;
+                emit!("auto_update_status", self.update_watch_list);
                 Ok(false)
             }
         }
@@ -269,11 +270,7 @@ impl<'a> Worker<'a> {
                 }
             };
         }
-        if return_res {
-            if let Some(tx) = self.tx.as_ref() {
-                tx.send(Response::Res(Ok(()))).unwrap();
-            }
-        }
+
         match unsafe{self.iner()} {
             Err(e) => {
                 self.action = Action::Pause;
@@ -282,7 +279,14 @@ impl<'a> Worker<'a> {
                 }
                 false
             }
-            Ok(false) => { false }
+            Ok(false) => {
+                if return_res {
+                    if let Some(tx) = self.tx.as_ref() {
+                        tx.send(Response::Res(Ok(()))).unwrap();
+                    }
+                }
+                false
+            }
             Ok(true) => {
                 if let Some(tx) = self.tx.as_ref() {
                     println!("stoping controller");
@@ -296,7 +300,7 @@ impl<'a> Worker<'a> {
 
 static CONTROLLER: Mutex<Controller> = Mutex::new(Controller::new());
 
-#[derive(Debug,Default,PartialEq)]
+#[derive(Debug,Default,PartialEq, Serialize, Clone)]
 pub enum WorkerState{
     #[default]
     NotInitialized,
@@ -306,9 +310,11 @@ pub enum WorkerState{
 
 }
 impl WorkerState {
-    pub fn set(&mut self, state: WorkerState) {
+    pub fn set(&mut self, state: WorkerState)->Result<()> {
         println!("WorkerState::set::{:?}",state);
+        emit!("sim_state", &state);
         *self = state;
+        Ok(())
 
     }
 }
@@ -362,25 +368,33 @@ impl Controller {
             return Ok(());
         }
         self.tx.take().ok_or(anyhow!("no tx available"))?.send(Action::Stop)?;
-        if let Some(rx) = self.rx.take(){
-            loop {
-                match rx.try_recv(){
-                    Ok(d) => {
-                        println!("contoller::deinit::recvData:{:?}",d);
-                    }
-                    Err(_) => {
-                        break
+        ||->Result<()>{
+            if let Some(rx) = self.rx.take(){
+                loop {
+                    match rx.try_recv(){
+                        Ok(Response::Join)=>{
+                            return Ok(());
+                        }
+                        Ok(d) => {
+                            println!("contoller::deinit::recvData:{:?}",d);
+                        }
+                        Err(TryRecvError::Disconnected) => {
+                            return Err(anyhow!("thread disconnected"));
+                        }
+                        Err(TryRecvError::Empty)=>{}
                     }
                 }
             }
-        }
-        self.rx = None;
+            Err(anyhow!("invalid case"))
+        }()?;
+
         self.handle
             .take()
             .ok_or(anyhow!("no handle"))?
             .join()
             .map_err(|e| anyhow!("JoinError:{:?}", e))?;
         self.worker_state.set(WorkerState::NotInitialized);
+        self.rx = None;
         Ok(())
     }
     pub fn stop()-> Result<()> {
@@ -412,10 +426,8 @@ impl Controller {
         control.do_action_iner(action)?;
 
         if let Some(rx) = control.rx.as_mut() {
-            match rx.recv() {
-                Ok(Response::Res(res)) => res,
-                _ => Err(anyhow!("Thread communication failed")),
-            }
+            let data = rx.recv().map_err(|_| TryRecvError::Disconnected);
+            control.eval_update(data)
         } else {
             Err(anyhow!("Controller not initialized"))
         }
@@ -427,24 +439,37 @@ impl Controller {
             .update_iner()
     }
     fn update_iner(&mut self) -> Result<()> {
+        match &self.worker_state{
+            WorkerState::NotInitialized => { return Ok(())}
+            WorkerState::Running => {}
+            WorkerState::Error(e) => {
+                emit!("error",e);
+                self.deinit()?;
+                return Ok(())
+            }
+            WorkerState::Initializing => {}
+        }
         if let Some(rx) = self.rx.as_mut() {
             let data = rx.try_recv();
-            match  data{
-                Ok(Response::Join)=> {Ok(()) },
-                Ok(Response::Res(Ok(_))) => Ok(()),
-                Ok(Response::Res(Err(e))) => {
-                    self.worker_state.set(WorkerState::Error(e.to_string()));
-                    Ok(())
-                },
-                Ok(Response::Ready)=>{self.worker_state.set(WorkerState::Running);Ok(())}
-                Err(TryRecvError::Disconnected) => {
-                    Err(anyhow!("Worker thread disconnected"))
-                }
-                Err(TryRecvError::Empty)=>{Ok(())}
-            }
+            self.eval_update(data)
         } else {
             Ok(())
         }
 
+    }
+    fn eval_update(&mut self, data:std::result::Result<Response, TryRecvError>) -> Result<()> {
+        match  data{
+            Ok(Response::Join)=> {Err(anyhow!("Invalid state")) },
+            Ok(Response::Res(Ok(_))) => Ok(()),
+            Ok(Response::Res(Err(e))) => {
+                self.worker_state.set(WorkerState::Error(e.to_string()))?;
+                Ok(())
+            },
+            Ok(Response::Ready)=>{self.worker_state.set(WorkerState::Running)?;Ok(())}
+            Err(TryRecvError::Disconnected) => {
+                Err(anyhow!("Worker thread disconnected"))
+            }
+            Err(TryRecvError::Empty)=>{Ok(())}
+        }
     }
 }
