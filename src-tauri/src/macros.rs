@@ -70,8 +70,8 @@ macro_rules! wrap_anyhow {
 }
 #[macro_export]
 macro_rules! emit {
-    // Change 1: '$name:expr' instead of 'stmt'
     ($name:expr, $val:expr) => {{
+        use tauri::Emitter;
         println!("emitting: {}, params: {:?}", $name, $val);
 
         crate::get_app_handle()?.emit($name, $val)?;

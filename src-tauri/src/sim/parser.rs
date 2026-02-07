@@ -160,7 +160,7 @@ mod tests {
             let mut op1 = None;
             let mut op2 = None;
             let mut op3 = None;
-            let mut operands = None;
+            let operands;
             if data.len() >= 3 {
                 operands = Some(data[2].split(",").collect::<Vec<_>>());
                 op1 = operands.as_ref().unwrap().get(0).clone();

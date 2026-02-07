@@ -1422,7 +1422,7 @@ impl<'a> Sim<'a> {
     }
 }
 
-#[allow(unused_mut)]
+#[allow(unused)]
 #[cfg(test)]
 mod opcode_tests {
     use super::*;

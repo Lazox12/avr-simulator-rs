@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::sync::{LazyLock, Mutex, MutexGuard};
 use strum::{EnumIter, IntoEnumIterator};
-use tauri::Emitter;
 
 pub static PROJECT: LazyLock<Mutex<Project>> = LazyLock::new(|| Mutex::new(Project::default()));
 pub fn get_project() -> Result<MutexGuard<'static, Project>> {

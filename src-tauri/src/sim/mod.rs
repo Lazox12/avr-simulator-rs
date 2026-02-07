@@ -9,3 +9,4 @@ pub mod operand;
 pub mod parser;
 mod sim;
 mod timing;
+mod worker;
