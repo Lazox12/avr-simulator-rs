@@ -104,11 +104,13 @@ impl<'a> Sim<'a> {
         Ok(())
     }
     #[allow(unused)]
-    pub fn init_debug(
-        atdf: &'static AvrDeviceFile,
-        flash: Vec<Instruction>,
-    ) -> Result<Sim<'static>> {
-        let mut s = Sim::default();
+    pub fn init_debug(atdf: &'static AvrDeviceFile, flash: Vec<Instruction>, memory: &'a mut Memory) -> Result<Sim<'a>> {
+        let mut s = Sim {
+            memory,
+            registers: CommonRegisters::default(),
+            pc_len: 0,
+            pc_bytesize: 0,
+        };
         s.init_iner(atdf, flash, vec![])?;
         Ok(s)
     }
@@ -1469,7 +1471,12 @@ mod opcode_tests {
                     let nop_id = RawInst::get_inst_id_from_opcode(Opcode::NOP).unwrap();
                     let nop = Instruction::new("".to_string(), nop_id, vec![],inst.get_raw_inst()?.len as u32);
 
-                    let mut s = Sim::init_debug(get_tree(), vec![inst, nop])?;
+                    let mut local_memory = Memory::default();
+
+                    // Pass the local memory to init_debug
+                    let mut s = Sim::init_debug(get_tree(), vec![inst, nop], &mut local_memory)?;
+                    // --- CHANGED BLOCK END ---
+
                     unsafe{s.debug_init_stack()?};
                     let setup_fn: fn(&mut Sim) = $setup;
                     setup_fn(&mut s);
