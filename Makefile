@@ -1,10 +1,13 @@
 container_name = avr-simulator-rs-debian
 
 
+cargo_build: sync_repo
+	cargo tauri build
+
 sync_repo:
 	git submodule update --remote
 
-docker_build:
+docker_build: cargo_build
 	docker build -t $(container_name) .
 
 docker_run:
