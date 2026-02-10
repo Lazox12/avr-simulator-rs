@@ -30,11 +30,13 @@ wrap_anyhow!(get_mcu_list() -> &'static [&'static str] {
 wrap_anyhow!(set_mcu(mcu:String) ->(){
 
     get_project()?.get_state()?.mcu = mcu;
-    get_project()?.reload_instruction_list();
+    get_project()?.reload_instruction_list()?;
+    get_project()?.save()?;
     Ok(())
 });
 wrap_anyhow!(set_freq(freq:u32)->(){
     get_project()?.get_state()?.freq = freq;
+    get_project()?.save()?;
     Ok(())
 });
 

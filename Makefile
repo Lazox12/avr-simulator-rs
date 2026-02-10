@@ -38,7 +38,7 @@ docker_linux_connect_rdp:
 docker_linux: docker_linux_build docker_linux_run docker_linux_connect_rdp
 docker_windows_build: sync_repo
 	cargo tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc
-docker_windows_run: docker_windows_stop
+docker_windows_run:
 	docker volume create $(win_data_vol)
 
 	docker run -d --rm \
@@ -67,3 +67,4 @@ docker_windows_connect_rdp:
 docker_windows_connect_web:
 	$(CHROME) http://127.0.0.1:8006/
 
+docker_windows: docker_windows_build docker_windows_run docker_windows_connect_rdp
