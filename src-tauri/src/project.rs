@@ -1,4 +1,4 @@
-use crate::{emit, set_app_title};
+use crate::{emit, get_app_handle, set_app_title};
 use crate::error::{Error, Result};
 use crate::sim::instruction::{Instruction, PartialInstruction};
 use anyhow::anyhow;
@@ -9,6 +9,8 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::sync::{LazyLock, Mutex, MutexGuard};
 use strum::{EnumIter, IntoEnumIterator};
+use tauri::Manager;
+use tauri::path::BaseDirectory;
 
 pub static PROJECT: LazyLock<Mutex<Project>> = LazyLock::new(|| Mutex::new(Project::default()));
 pub fn get_project() -> Result<MutexGuard<'static, Project>> {
@@ -35,10 +37,17 @@ pub struct Project {
 
 //db
 impl Project {
+    fn get_resource_path(path:&str)->Result<String> {
+        Ok(get_app_handle()?.path().resolve(path, BaseDirectory::Resource)?.to_str().ok_or(anyhow!("Path not UTF-8"))?.to_string())
+    }
     pub fn create(&mut self, path: &str) -> Result<()> {
+        if(self.is_open().is_ok()){
+            self.close()?;
+        }
         let name = std::path::Path::new(path).file_name().unwrap();
+        println!("path:{}",path);
         if std::fs::exists(path)? {
-            return Err(anyhow!(Error::FileExists(path.to_string())));
+            std::fs::remove_file(path)?;
         }
         self.open_conn(path)?;
 
@@ -55,6 +64,16 @@ impl Project {
     pub fn get_state(&mut self) -> Result<&mut ProjectState> {
         self.is_open()?;
         Ok(&mut self.state)
+    }
+    pub fn reload_instruction_list(&mut self)->Result<()> {
+        emit!(
+            "asm-update",
+            self.get_instruction_list()?
+                .into_iter()
+                .map(|x| PartialInstruction::from(x))
+                .collect::<Vec<PartialInstruction>>()
+        );
+        Ok(())
     }
     pub fn open(&mut self, path: &str) -> Result<()> {
         match self.open_db(path) {
@@ -81,13 +100,7 @@ impl Project {
             })
             .collect::<Result<()>>()?;
         self.state = *self.get_project()?;
-        emit!(
-            "asm-update",
-            self.get_instruction_list()?
-                .into_iter()
-                .map(|x| PartialInstruction::from(x))
-                .collect::<Vec<PartialInstruction>>()
-        );
+        self.reload_instruction_list()?;
 
         emit!("project-update", self.state.clone());
         Ok(())
@@ -119,7 +132,7 @@ impl Project {
     pub fn create_table(&mut self, name: Tables) -> Result<()> {
         self.is_open()?;
         let query =
-            std::fs::read_to_string(format!("{}/sql/{:?}.sql", env!("CARGO_MANIFEST_DIR"), name))?;
+            std::fs::read_to_string(Project::get_resource_path(format!("sql/{:?}.sql", name).as_str())?)?;
         self.connection.as_ref().unwrap().execute(&*query, ())?;
 
         Ok(())

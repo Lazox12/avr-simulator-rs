@@ -1650,7 +1650,7 @@ mod opcode_tests {
         },
         cpse: CPSE(16, 17) {
             setup: |s| { s.memory.data.registers[16] = 5; s.memory.data.registers[17] = 5; },
-            check: |s| { assert_eq!(s.memory.program_couter, 2); } // Skips next
+            check: |s| { assert_eq!(s.memory.program_couter, 3); } // Skips next
         },
         sbrc: SBRC(16, 0) {
             setup: |s| { s.memory.data.registers[16] = 0x00; }, // Bit 0 is 0

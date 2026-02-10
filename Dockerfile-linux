@@ -1,6 +1,9 @@
 FROM debian:latest
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 WORKDIR /app
+
 RUN apt-get update -y && \
     apt-get install -y --fix-missing \
     libayatana-appindicator3-1 \
@@ -10,13 +13,36 @@ RUN apt-get update -y && \
     libgl1-mesa-dri \
     libgl1 \
     libglu1-mesa \
-    dbus-x11
+    dbus-x11 \
+    xrdp \
+    xorgxrdp \
+    xfce4 \
+    xfce4-goodies \
+    sudo
 
 RUN dbus-uuidgen > /etc/machine-id
+
 COPY target/release/bundle/deb .
 COPY tests ./tests
 RUN apt-get install ./*.deb -y
 
 ENV NO_AT_BRIDGE=1
 
-CMD ["avr-simulator-rs"]
+RUN adduser xrdp ssl-cert && \
+    echo "#!/bin/sh" > /etc/xrdp/startwm.sh && \
+    echo "unset DBUS_SESSION_BUS_ADDRESS" >> /etc/xrdp/startwm.sh && \
+    echo "unset XDG_RUNTIME_DIR" >> /etc/xrdp/startwm.sh && \
+    echo "exec startxfce4" >> /etc/xrdp/startwm.sh && \
+    chmod +x /etc/xrdp/startwm.sh
+
+RUN useradd -m -s /bin/bash docker && \
+    adduser docker sudo && \
+    echo "startxfce4" > /home/docker/.xsession && \
+    chown docker:docker /home/docker/.xsession
+
+EXPOSE 3389
+
+CMD echo "docker:${PASSWORD:-Password123!}" | chpasswd && \
+    service dbus start && \
+    /usr/sbin/xrdp-sesman && \
+    /usr/sbin/xrdp -n
