@@ -36,6 +36,9 @@
       "sql/*"
     ],
     "windows": {
+      "nsis": {
+        "template": "scripts/install-vcredist.nsh"
+      },
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
       }

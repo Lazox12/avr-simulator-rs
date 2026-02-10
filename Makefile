@@ -19,7 +19,10 @@ cargo_test:
 
 cargo_build: sync_repo
 	cargo tauri build
-
+cargo_build_win:sync_repo
+	npm run build
+	cargo xwin build --target x86_64-pc-windows-msvc --release
+	cargo tauri bundle --target x86_64-pc-windows-msvc
 sync_repo:
 	git submodule update --remote
 
@@ -36,6 +39,8 @@ docker_linux_connect_rdp:
 	docker stop $(container_name) -t 10
 
 docker_linux: docker_linux_build docker_linux_run docker_linux_connect_rdp
+
+
 docker_windows_build: sync_repo
 	cargo tauri build --runner cargo-xwin --target x86_64-pc-windows-msvc
 docker_windows_run:
@@ -52,7 +57,7 @@ docker_windows_run:
     		-e CPU_CORES=$(CORES) \
     		-e PASSWORD=$(PASSWORD) \
     		-v $(win_data_vol):/storage \
-    		-v $(shell pwd)/target/x86_64-pc-windows-msvc/release:/shared/dist \
+    		-v $(shell pwd)/target/x86_64-pc-windows-msvc/release/bundle:/shared/dist \
     		-v $(shell pwd)/tests:/shared/tests \
     		dockurr/windows
 	docker ps
@@ -71,4 +76,4 @@ docker_windows_connect_web:
 docker_windows_sleep:
 	sleep 10
 
-docker_windows: docker_windows_build docker_windows_run docker_windows_sleep docker_windows_connect_rdp
+docker_windows: cargo_build_win docker_windows_run docker_windows_sleep docker_windows_connect_rdp
