@@ -42,7 +42,7 @@ RUN useradd -m -s /bin/bash docker && \
 
 EXPOSE 3389
 
-CMD echo "docker:${PASSWORD:-Password123!}" | chpasswd && \
+CMD echo "docker:${PASSWORD:-admin}" | chpasswd && \
     service dbus start && \
     /usr/sbin/xrdp-sesman && \
     /usr/sbin/xrdp -n
