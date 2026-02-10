@@ -41,7 +41,7 @@ impl Project {
         Ok(get_app_handle()?.path().resolve(path, BaseDirectory::Resource)?.to_str().ok_or(anyhow!("Path not UTF-8"))?.to_string())
     }
     pub fn create(&mut self, path: &str) -> Result<()> {
-        if(self.is_open().is_ok()){
+        if self.is_open().is_ok(){
             self.close()?;
         }
         let name = std::path::Path::new(path).file_name().unwrap();

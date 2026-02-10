@@ -1,3 +1,4 @@
 [submodule "src-fe"]
 	path = src-fe
 	url = git@github.com:Lazox12/avr-simulator-fe.git
+	branch = master

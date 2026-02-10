@@ -67,4 +67,8 @@ docker_windows_connect_rdp:
 docker_windows_connect_web:
 	$(CHROME) http://127.0.0.1:8006/
 
-docker_windows: docker_windows_build docker_windows_run docker_windows_connect_rdp
+# to let windows boot
+docker_windows_sleep:
+	sleep 10
+
+docker_windows: docker_windows_build docker_windows_run docker_windows_sleep docker_windows_connect_rdp
