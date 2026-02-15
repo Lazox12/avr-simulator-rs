@@ -83,3 +83,6 @@ docker_windows_sleep:
 	sleep 10
 
 docker_windows: cargo_build_win docker_windows_run docker_windows_sleep docker_windows_connect_rdp
+
+native: sync_repo
+	cargo tauri dev
