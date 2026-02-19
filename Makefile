@@ -14,7 +14,10 @@ container_name_win = avr-simulator-rs-win
 win_build_path = ./target/x86_64-pc-windows-msvc/release
 win_data_vol := avr-simulator-rs-win-storage
 win_base_storage := ./win-storage
-cargo_test:
+
+all:native
+
+test:
 	cargo test
 
 cargo_build: sync_repo
@@ -85,4 +88,6 @@ docker_windows_sleep:
 docker_windows: cargo_build_win docker_windows_run docker_windows_sleep docker_windows_connect_rdp
 
 native: sync_repo
-	cargo tauri dev
+	WEBKIT_DISABLE_DMABUF_RENDERER=1 cargo tauri dev
+
+

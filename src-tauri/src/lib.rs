@@ -21,6 +21,7 @@ pub fn get_app_handle() -> Result<&'static AppHandle> {
         .ok_or_else(|| anyhow!("AppHandle not initialized"))
 }
 pub fn set_app_title(app_title: &str) ->Result<()> {
+    emit!("project_state",app_title);
     let title = format!("{} - avr simulator", app_title);
     println!("Setting app title to {}", title);
     get_app_handle()?

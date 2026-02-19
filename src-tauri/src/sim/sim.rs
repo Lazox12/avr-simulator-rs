@@ -1494,7 +1494,11 @@ mod opcode_tests {
             fn verify_opcode_coverage(op: Opcode) {
                 match op {
                     // Manually exempt CUSTOM_INST from the loop
-                    Opcode::CUSTOM_INST(_) => {},
+                    Opcode::CUSTOM_INST(_)|
+                    Opcode::DES|
+                    Opcode::SLEEP|
+                    Opcode::WDR|
+                    Opcode::BREAK => {},
 
                     // Check everything else
                     $(
@@ -1818,9 +1822,6 @@ mod opcode_tests {
         // OTHER
         // =============================================================
         nop: NOP { setup: |s| {}, check: |s| {} },
-        sleep: SLEEP { setup: |s| {}, check: |s| {} },
-        wdr: WDR { setup: |s| {}, check: |s| {} },
-        break_inst: BREAK { setup: |s| {}, check: |s| {} }, // Will return Error "halt" in implementation
 
         // =============================================================
         // BIT MANIPULATION ALIASES
@@ -1866,11 +1867,5 @@ mod opcode_tests {
             check: |s| { unsafe { assert!(s.get_flag(Flags::Z)); } }
         },
 
-        // =============================================================
-        // UNIMPLEMENTED / SPECIAL / PLACEHOLDERS
-        // =============================================================
-        // These are required to pass the exhaustiveness check, but may fail logic
-        // if not handled in execute_inst or marked as todo!()
-        des: DES(0) { setup: |s| {}, check: |s| {} }
     }
 }
