@@ -25,7 +25,8 @@ cargo_build: sync_repo
 cargo_build_win:sync_repo
 	 cargo tauri build --target x86_64-pc-windows-msvc --runner cargo-xwin
 sync_repo:
-	git submodule update --remote
+	git submodule update --remote --init --recursive
+	npm i -w src-fe
 
 docker_linux_build: cargo_build
 	docker build -t $(container_name) -f Dockerfile-linux .
