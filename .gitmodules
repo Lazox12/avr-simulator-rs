@@ -1,4 +1,4 @@
 [submodule "src-fe"]
 	path = src-fe
-	url = git@github.com:Lazox12/avr-simulator-fe.git
+	url = git@gl2.aws.paperboat.cz:lazox12/avr-simulator-fe.git
     ignore = all
